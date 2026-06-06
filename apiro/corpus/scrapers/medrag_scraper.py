@@ -37,8 +37,7 @@ Each record dict is already a final chunk:
 import logging
 from pathlib import Path
 
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 
 logger = logging.getLogger(__name__)
 

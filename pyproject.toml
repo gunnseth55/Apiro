@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "apiro"
+version = "0.1.0"
+description = "A biomedical belief-graph engine using LLM token-entropy heuristics."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "chromadb>=0.5.0",
+    "networkx>=3.3",
+    "requests>=2.31.0",
+    "requests-cache>=1.2.0",
+    "numpy>=1.26.0",
+    "sentence-transformers>=2.5.0",
+    "datasets>=2.18.0",
+    "biopython>=1.83",
+    "nltk>=3.8.1",
+    "certifi>=2024.2.2",
+    "pydantic>=2.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["apiro*"]

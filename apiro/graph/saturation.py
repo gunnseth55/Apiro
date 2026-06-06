@@ -14,12 +14,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from graph.belief_graph import BeliefGraph
-
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import SATURATION_WINDOW, SATURATION_MAX_VARIANCE, THETA_BY_DOMAIN, DEFAULT_THETA
+from apiro.graph.belief_graph import BeliefGraph
+from apiro.config import SATURATION_WINDOW, SATURATION_MAX_VARIANCE, THETA_BY_DOMAIN, DEFAULT_THETA
 
 
 class SaturationDetector:

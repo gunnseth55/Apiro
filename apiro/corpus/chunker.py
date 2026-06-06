@@ -35,10 +35,7 @@ from typing import Sequence
 import nltk
 import certifi
 
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import CHUNK_SIZE_TOKENS, CHUNK_OVERLAP_TOKENS
+from apiro.config import CHUNK_SIZE_TOKENS, CHUNK_OVERLAP_TOKENS
 
 logger = logging.getLogger(__name__)
 

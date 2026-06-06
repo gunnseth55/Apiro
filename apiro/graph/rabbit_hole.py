@@ -11,13 +11,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from graph.belief_graph import BeliefGraph
-from graph.node import Node
-
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import RABBIT_HOLE_MIN_DEPTH, RABBIT_HOLE_REVERSAL_WINDOW
+from apiro.graph.belief_graph import BeliefGraph
+from apiro.graph.node import Node
+from apiro.config import RABBIT_HOLE_MIN_DEPTH, RABBIT_HOLE_REVERSAL_WINDOW
 
 
 class RabbitHoleDetector:

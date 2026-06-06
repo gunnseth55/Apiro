@@ -14,8 +14,8 @@ from typing import Optional
 import networkx as nx
 import numpy as np
 
-from graph.node import Node
-from graph.edge import Edge
+from apiro.graph.node import Node
+from apiro.graph.edge import Edge
 
 
 class BeliefGraph:
@@ -204,8 +204,8 @@ class BeliefGraph:
     @classmethod
     def from_json(cls, path: Path) -> "BeliefGraph":
         """Load a previously exported graph back into memory."""
-        from graph.node import Node
-        from graph.edge import Edge
+        from apiro.graph.node import Node
+        from apiro.graph.edge import Edge
         with open(path) as f:
             data = json.load(f)
         g = cls()

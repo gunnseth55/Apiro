@@ -7,7 +7,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-ROOT_DIR   = Path(__file__).parent
+ROOT_DIR   = Path(__file__).parent.parent
 DATA_DIR   = ROOT_DIR / "data"
 CORPUS_DIR = DATA_DIR / "corpus"
 CHROMA_DIR = DATA_DIR / "chroma_db"

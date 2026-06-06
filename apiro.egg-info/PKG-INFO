@@ -1,0 +1,21 @@
+Metadata-Version: 2.4
+Name: apiro
+Version: 0.1.0
+Summary: A biomedical belief-graph engine using LLM token-entropy heuristics.
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: chromadb>=0.5.0
+Requires-Dist: networkx>=3.3
+Requires-Dist: requests>=2.31.0
+Requires-Dist: requests-cache>=1.2.0
+Requires-Dist: numpy>=1.26.0
+Requires-Dist: sentence-transformers>=2.5.0
+Requires-Dist: datasets>=2.18.0
+Requires-Dist: biopython>=1.83
+Requires-Dist: nltk>=3.8.1
+Requires-Dist: certifi>=2024.2.2
+Requires-Dist: pydantic>=2.7.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0.0; extra == "dev"

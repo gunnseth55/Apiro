@@ -22,10 +22,7 @@ from typing import Optional
 import numpy as np
 import requests
 
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import (
+from apiro.config import (
     OLLAMA_BASE_URL, PRIMARY_MODEL, TOP_LOGPROBS,
     MAX_FIRST_TOKEN, ENTROPY_TEMPERATURES, ENTROPY_TEMP_WEIGHTS,
 )

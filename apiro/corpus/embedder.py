@@ -17,16 +17,14 @@ Usage:
 """
 
 import logging
+from pathlib import Path
 from typing import Sequence
 
 import chromadb
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import EMBED_MODEL, EMBED_DIM, CHROMA_DIR, CHROMA_COLLECTION, RAG_TOP_K
+from apiro.config import EMBED_MODEL, EMBED_DIM, CHROMA_DIR, CHROMA_COLLECTION, RAG_TOP_K
 
 logger = logging.getLogger(__name__)
 

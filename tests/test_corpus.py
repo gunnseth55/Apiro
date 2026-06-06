@@ -18,10 +18,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT))
-
-from corpus.chunker import Chunker, _approx_tokens, _make_chunk_id
+from apiro.corpus.chunker import Chunker, _approx_tokens, _make_chunk_id
 
 
 # ============================================================
@@ -152,8 +149,8 @@ class TestEmbedder:
     def _make_embedder(self):
         """Return an Embedder with mocked internals."""
         with (
-            patch("corpus.embedder.SentenceTransformer") as mock_st,
-            patch("corpus.embedder.chromadb.PersistentClient") as mock_chroma,
+            patch("apiro.corpus.embedder.SentenceTransformer") as mock_st,
+            patch("apiro.corpus.embedder.chromadb.PersistentClient") as mock_chroma,
         ):
             # Set up mock encoder
             import numpy as np
@@ -168,7 +165,7 @@ class TestEmbedder:
             mock_client.get_or_create_collection.return_value = mock_collection
             mock_chroma.return_value = mock_client
 
-            from corpus.embedder import Embedder
+            from apiro.corpus.embedder import Embedder
             embedder = Embedder.__new__(Embedder)
             embedder.model_name      = "all-mpnet-base-v2"
             embedder.collection_name = "test_collection"
@@ -249,7 +246,7 @@ class TestEmbedder:
 
     def test_metadata_sanitization(self):
         """Lists and None values in metadata should be coerced to strings."""
-        from corpus.embedder import _sanitize_metadata
+        from apiro.corpus.embedder import _sanitize_metadata
         raw = {
             "pmid":    "12345",
             "authors": ["Smith J", "Doe J"],   # list → should become string

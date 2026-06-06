@@ -50,9 +50,7 @@ from typing import Iterator
 
 import requests
 
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import CORPUS_DIR
+from apiro.config import CORPUS_DIR
 
 logger = logging.getLogger(__name__)
 

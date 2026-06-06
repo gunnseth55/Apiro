@@ -21,14 +21,11 @@ from pathlib import Path
 import pytest
 
 # Ensure project root is on path
-ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT))
-
-from graph.node import Node
-from graph.edge import Edge
-from graph.belief_graph import BeliefGraph
-from graph.saturation import SaturationDetector
-from graph.rabbit_hole import RabbitHoleDetector
+from apiro.graph.node import Node
+from apiro.graph.edge import Edge
+from apiro.graph.belief_graph import BeliefGraph
+from apiro.graph.saturation import SaturationDetector
+from apiro.graph.rabbit_hole import RabbitHoleDetector
 
 
 # ============================================================
@@ -338,7 +335,7 @@ class TestSaturationDetector:
         assert det.theta == 0.20
 
     def test_for_domain_unknown_uses_default(self):
-        from config import DEFAULT_THETA
+        from apiro.config import DEFAULT_THETA
         det = SaturationDetector.for_domain("unknown_domain")
         assert det.theta == DEFAULT_THETA
 

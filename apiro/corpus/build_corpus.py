@@ -31,12 +31,9 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT))
-
-from config import DATA_DIR
-from corpus.chunker import Chunker
-from corpus.embedder import Embedder
+from apiro.config import DATA_DIR
+from apiro.corpus.chunker import Chunker
+from apiro.corpus.embedder import Embedder
 
 logging.basicConfig(
     level=logging.INFO,
@@ -55,19 +52,19 @@ def scrape(source: str, max_records: int) -> list[dict]:
     """Dispatch to the correct scraper and return raw records."""
 
     if source == "medrag":
-        from corpus.scrapers.medrag_scraper import MedRAGScraper
+        from apiro.corpus.scrapers.medrag_scraper import MedRAGScraper
         return MedRAGScraper(max_records=max_records).fetch()
 
     elif source == "hpo":
-        from corpus.scrapers.hpo_scraper import HPOScraper
+        from apiro.corpus.scrapers.hpo_scraper import HPOScraper
         return HPOScraper(max_records=max_records).fetch()
 
     elif source == "clinvar":
-        from corpus.scrapers.clinvar_scraper import ClinVarScraper
+        from apiro.corpus.scrapers.clinvar_scraper import ClinVarScraper
         return ClinVarScraper().fetch(max_records=max_records)
 
     elif source == "openfda":
-        from corpus.scrapers.openfda_chembl_scraper import OpenFDAChEMBLScraper
+        from apiro.corpus.scrapers.openfda_chembl_scraper import OpenFDAChEMBLScraper
         return OpenFDAChEMBLScraper(
             max_openfda=min(max_records, 500),
             max_chembl=min(max_records, 1000),
