@@ -11,13 +11,13 @@ class Edge:
     Attributes:
         parent_id:          Source node ID.
         child_id:           Target node ID.
-        relation:           Semantic relationship type.
+        relation:           Semantic relationship type (default: "expands").
         contradiction_flag: True if ContradictionDetector flagged this pair.
         confidence:         Score from the contradiction detector (0–1).
     """
     parent_id:          str
     child_id:           str
-    relation:           str    # supports | contradicts | refines | expands
+    relation:           str   = "expands"   # supports | contradicts | refines | expands
     contradiction_flag: bool  = False
     confidence:         float = 1.0
 

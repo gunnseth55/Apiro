@@ -17,6 +17,7 @@ class Node:
         resolved:        True once this node has been expanded (children generated).
         is_rabbit_hole:  True if RabbitHoleDetector flagged this node.
         depth:           Depth from the seed node (0 = seed).
+        parent_id:       ID of the node that generated this one (None for seeds).
         sources:         List of PubMed IDs supporting this node's claim.
         metadata:        Arbitrary key-value store for extra data.
     """
@@ -24,15 +25,21 @@ class Node:
     claim:         str
     domain:        str
     entropy_score: float
-    resolved:      bool       = False
-    is_rabbit_hole: bool      = False
-    depth:         int        = 0
-    sources:       list[str]  = field(default_factory=list)
-    metadata:      dict       = field(default_factory=dict)
+    resolved:      bool          = False
+    is_rabbit_hole: bool         = False
+    depth:         int           = 0
+    parent_id:     str | None    = None
+    sources:       list[str]     = field(default_factory=list)
+    metadata:      dict          = field(default_factory=dict)
 
     def __post_init__(self):
         if self.entropy_score < 0:
             raise ValueError(f"entropy_score must be >= 0, got {self.entropy_score}")
+
+    @property
+    def entropy(self) -> float:
+        """Alias for entropy_score — used by traversal/expander code."""
+        return self.entropy_score
 
     def __repr__(self) -> str:
         status = "✓" if self.resolved else ("🐇" if self.is_rabbit_hole else "○")

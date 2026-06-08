@@ -118,6 +118,10 @@ class BeliefGraph:
         """Return direct parents of a node."""
         return [self.nodes[p] for p in self._graph.predecessors(node_id) if p in self.nodes]
 
+    def node_count(self) -> int:
+        """Return total number of nodes (alias for n_nodes, used by traversal)."""
+        return len(self.nodes)
+
     # ------------------------------------------------------------------
     # Statistics
     # ------------------------------------------------------------------
@@ -151,9 +155,11 @@ class BeliefGraph:
         """Return the underlying NetworkX DiGraph (read-only view)."""
         return self._graph
 
-    def export_json(self, path: Path) -> None:
+    def export_json(self, path: Path | None = None) -> dict:
         """
-        Export the full graph to a JSON file.
+        Serialise the graph to a dict (always returned) and optionally write
+        it to a JSON file when `path` is given.
+
         Format:
           {
             "nodes": [{id, claim, domain, entropy_score, resolved, depth, ...}],
@@ -162,8 +168,6 @@ class BeliefGraph:
             "stats": {n_nodes, n_edges, n_resolved, n_rabbit_holes, mean_entropy}
           }
         """
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
         data = {
             "nodes": [
                 {
@@ -174,6 +178,7 @@ class BeliefGraph:
                     "resolved":      n.resolved,
                     "is_rabbit_hole": n.is_rabbit_hole,
                     "depth":         n.depth,
+                    "parent_id":     n.parent_id,
                     "sources":       n.sources,
                     "metadata":      n.metadata,
                 }
@@ -198,8 +203,12 @@ class BeliefGraph:
                 "mean_entropy":   self.mean_entropy,
             },
         }
-        with open(path, "w") as f:
-            json.dump(data, f, indent=2)
+        if path is not None:
+            p = Path(path)
+            p.parent.mkdir(parents=True, exist_ok=True)
+            with open(p, "w") as f:
+                json.dump(data, f, indent=2)
+        return data
 
     @classmethod
     def from_json(cls, path: Path) -> "BeliefGraph":
