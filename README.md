@@ -15,6 +15,40 @@ Apiro translates this clinical reasoning process into a graph traversal algorith
 
 ---
 
+## 📁 Repository Layout
+
+```
+.
+├── README.md                   # Main project documentation (this file)
+├── PROJECT_STATUS.md           # Active state, benchmarks, and known risks
+├── pyproject.toml              # Project configuration and packaging
+├── requirements.txt            # Python dependencies
+├── scripts/
+│   └── run_phase3_eval.py      # Entry point for running Phase 3 benchmarks
+├── data/
+│   ├── phase3_results.json     # Stored results of Phase 3 evaluations
+│   └── traversal_log_ef_eval.jsonl # Traversal step logs for debugging
+├── tests/
+│   ├── test_html_spec.py       # Integration and data validation tests
+│   └── test_phase2.py          # Unit tests for the graph engine
+└── apiro/
+    ├── corpus/                 # Corpus parsing, chunking, and ChromaDB indexing
+    ├── entropy/
+    │   └── engine.py           # Epistemic uncertainty calculation
+    ├── eval/
+    │   └── evaluator.py        # CaseEvaluator logic and metrics
+    └── graph/
+        ├── belief_graph.py     # BeliefGraph structure and frontier queue sorting
+        ├── node.py             # Node schema (depth, claim, entropy)
+        ├── edge.py             # Edge schema (relation mapping)
+        ├── expander.py         # RAG-based node expansion and top-3 synthesis
+        ├── traversal.py        # ApiroTraversal (Entropy-First algorithm)
+        ├── breadth_first.py    # BreadthFirstTraversal (Baseline algorithm)
+        └── contradiction.py    # NLI Cross-Encoder + NegEx contradiction detector
+```
+
+---
+
 ## 📐 Architecture & Key Design Principles
 
 Apiro's traversal strategy is defined by three main pillars:
@@ -28,20 +62,50 @@ graph TD
 ```
 
 ### 1. Epistemic Uncertainty (The Entropy Engine)
-Instead of semantic search, Apiro's navigation is guided by **epistemic uncertainty**.
-For any claim, we query the model's confidence boundary by forcing its response into a binary `{Yes, No}` vocabulary when asked if the claim is clinically supported by context:
-* If the model is certain the claim is true or false: $P(Yes) \to 1$ or $0 \implies H \to 0$ (Low Entropy).
-* If the model is genuinely uncertain: $P(Yes) \approx P(No) \approx 0.5 \implies H \to \ln(2) \approx 0.693$ (High Entropy).
+Instead of semantic similarity search, Apiro's navigation is guided by **epistemic uncertainty**.
+For any claim, we query the model's confidence boundary by forcing its response into a binary `{Yes, No}` vocabulary when asked if the claim is clinically supported by retrieved context:
+
+$$\text{Prompt} \implies P(\text{Yes}) + P(\text{No}) = 1.0$$
+
+We calculate the Shannon Entropy ($H$) over these token probabilities:
+
+$$H = -P(\text{Yes})\log_2 P(\text{Yes}) - P(\text{No})\log_2 P(\text{No})$$
+
+* If the model is certain the claim is true or false: $P(\text{Yes}) \to 1$ or $0 \implies H \to 0$ (Low Entropy).
+* If the model is genuinely uncertain of its clinical support: $P(\text{Yes}) \approx P(\text{No}) \approx 0.5 \implies H \to \log_2(2) = 1.0$ (High Entropy).
+
+This mathematically captures the decision boundary where medical opinions or clinical guidelines diverge.
 
 ### 2. Depth-Aware Frontier Scoring (Anchor vs. Explore)
-To prevent the engine from jumping to wild conclusions or getting lost in tangents, we implement a depth-aware scoring heuristic to sort our exploration frontier:
-* **Depth 0 (Anchors):** Sort by **lowest entropy** ($1.0 - H$). The engine anchors on solid facts and lab values.
-* **Depth $\ge$ 1 (Exploration):** Sort by **highest entropy** ($H$). The engine actively targets uncertainty and unexplored clinical claims.
+To prevent the engine from jumping to wild conclusions or getting lost in tangents, we implement a depth-aware scoring heuristic to sort our exploration frontier queue (`get_frontier()` in `belief_graph.py`):
+* **Depth 0 (Anchors):** Sort by **lowest entropy** ($1.0 - H$). The engine anchors on solid facts and lab values first (e.g., establishing a certain ground truth of "Elevated AST/ALT").
+* **Depth $\ge$ 1 (Exploration):** Sort by **highest entropy** ($H$). The engine actively targets uncertainty, exploring competing hypotheses and rare conditions.
 
-### 3. Verification & Synthesis
-* **Contradiction Detection:** Natural Language Inference (NLI) Cross-Encoders detect conflicting claims in the active belief graph to flag medical anomalies.
-* **Saturation:** Traversal terminates when the change in average graph entropy stabilizes, signifying that no new information can be learned.
-* **Synthesis:** The gathered evidence in the final belief graph is summarized by a reasoning model to output a ranked top-3 differential diagnosis.
+### 3. Traversal Control Logic
+* **Contradiction Detection (`contradiction.py`):** Uses a MiniLM cross-encoder NLI model combined with a NegEx (negation detection) layer. If the cross-encoder flags an NLI contradiction between two active nodes and there is no negation mismatch, a contradiction edge is written in the graph.
+* **Rabbit Hole Prevention (`traversal.py`):** Halts expansion down a specific branch if the engine hits consecutive zero-entropy steps (signifying that we are stuck in a cycle of trivial, low-information facts).
+* **Saturation Detection (`traversal.py`):** Terminates the entire traversal when the change in average graph entropy stabilizes (i.e. rolling average entropy variance drops below a set threshold), indicating that the engine has learned all it can.
+
+---
+
+## 🛠️ Step-by-Step Traversal Trace
+
+When a patient case (e.g. `synthetic_case_1.json`) is run, the engine executes the following loop:
+
+```
+1. Initialize BeliefGraph with seed nodes (symptoms, lab findings at Depth 0).
+2. For each seed node, compute baseline Entropy using the EntropyEngine.
+3. LOOP (until Saturation, Max Nodes, or Frontier is empty):
+    a. Sort the frontier queue using Depth-Aware Scoring.
+    b. Dequeue the highest-scoring Node (the current "clue").
+    c. Retrieve relevant corpus text chunks using ChromaDB.
+    d. Call NodeExpander (RAG + LLM) to generate exactly 3 child hypotheses.
+    e. Add child nodes to the graph (assigned Depth = Parent Depth + 1).
+    f. Compute Entropy for each child node.
+    g. Run ContradictionDetector against existing nodes.
+    h. Evaluate Saturation and Rabbit Hole conditions.
+4. Call NodeExpander.synthesize_differential(graph) to produce the final top-3 diagnoses.
+```
 
 ---
 
