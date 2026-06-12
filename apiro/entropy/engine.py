@@ -100,8 +100,8 @@ class EntropyEngine:
 
         Why this works:
           - The first token must be "Yes" or "No".
-          - If the model is certain the claim is supported, P(Yes) → 1 → H → 0.
-          - If the model is genuinely uncertain, P(Yes) ≈ P(No) ≈ 0.5 → H → ln(2).
+          - If the model is certain the claim is true or false, P(Yes) -> 1 or 0 -> H -> 0.
+          - If the model is genuinely uncertain of its clinical support, P(Yes) ≈ P(No) ≈ 0.5 -> H -> ln(2).
           - This directly operationalises "model uncertainty at clinical decision
             boundaries" — the core design principle of Apiro.
 
@@ -136,7 +136,8 @@ class EntropyEngine:
           Answer with Yes or No only.
 
         The strict instruction forces the first generated token into the
-        {Yes, No} vocabulary, making the entropy a clean binary signal.
+        {Yes, No} vocabulary, making the entropy a clean binary signal
+        measuring epistemic uncertainty at a clinical decision boundary.
         """
         if context_chunks:
             evidence_lines = "\n".join(

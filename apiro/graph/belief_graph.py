@@ -90,12 +90,19 @@ class BeliefGraph:
 
     def get_frontier(self) -> list[Node]:
         """
-        Return all unresolved, non-rabbit-hole nodes sorted by
-        entropy_score descending (highest uncertainty first).
+        Return all unresolved, non-rabbit-hole nodes sorted by a depth-aware certainty score.
+        At depth 0 (seed nodes), it follows certainty (lowest entropy).
+        At depth >= 1 (derived nodes), it chases uncertainty (highest entropy) to explore differentials.
         """
+        def score(n: Node) -> float:
+            h = n.entropy_score if n.entropy_score is not None else 0.5
+            if n.depth == 0:
+                return 1.0 - h
+            return h
+
         return sorted(
             [n for n in self.nodes.values() if not n.resolved and not n.is_rabbit_hole],
-            key=lambda n: n.entropy_score,
+            key=score,
             reverse=True,
         )
 
