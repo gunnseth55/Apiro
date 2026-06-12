@@ -83,12 +83,17 @@ def build_components(case_id: str, use_real_entropy: bool = False, use_cycling_l
         from apiro.entropy.engine import EntropyEngine
 
         class _EntropyAdapter:
-            """Adapter: wraps EntropyEngine.temperature_corrected_entropy() as .compute()"""
+            """Adapter: wraps EntropyEngine.epistemic_certainty_entropy() as .compute().
+
+            Uses the correct yes/no verification prompt so that entropy measures
+            model uncertainty at the clinical decision boundary, not open-ended
+            generation diversity.
+            """
             def __init__(self):
                 self._engine = EntropyEngine()
 
             def compute(self, claim: str, context_chunks=None) -> float:
-                result = self._engine.temperature_corrected_entropy(claim)
+                result = self._engine.epistemic_certainty_entropy(claim, context_chunks)
                 return result if result is not None else 0.5
 
         entropy_engine = _EntropyAdapter()
