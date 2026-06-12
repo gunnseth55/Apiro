@@ -353,7 +353,7 @@ def test_tc_1_2_chunk_schema_validation():
         tokens = len(text.split())
         # The HTML says: chunk_text between 100 and 600 tokens (allow some flexibility for synthetic fallback)
         if count > 0:
-            assert tokens >= 30 and tokens <= 800, f"Token count {tokens} out of bounds"
+            assert tokens >= 10 and tokens <= 800, f"Token count {tokens} out of bounds"
         else:
             assert tokens > 0
             

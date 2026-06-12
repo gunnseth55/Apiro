@@ -393,3 +393,46 @@ class NodeExpander:
             )
 
         return new_nodes
+
+    def synthesize_differential(self, graph) -> list[str]:
+        """
+        Synthesize a final differential diagnosis from the belief graph.
+        
+        Args:
+            graph: The BeliefGraph containing gathered evidence.
+            
+        Returns:
+            A list of the top 3 most likely specific clinical diagnoses.
+        """
+        logger.info("[NodeExpander] Synthesizing final differential diagnosis...")
+        
+        # Collect all claims
+        claims = [node.claim for node in graph.nodes.values()]
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_claims = []
+        for claim in claims:
+            if claim not in seen:
+                unique_claims.append(claim)
+                seen.add(claim)
+                
+        evidence_text = "\n".join(f"  - {claim}" for claim in unique_claims)
+        
+        prompt = (
+            "You are Apiro, a precise clinical differential-diagnosis engine.\n\n"
+            "Your task: given the following gathered clinical evidence, generate the top 3 most likely specific clinical diagnoses.\n\n"
+            "=== GATHERED EVIDENCE ===\n"
+            f"{evidence_text}\n\n"
+            "=== STRICT RULES ===\n"
+            "1. Output exactly 3 diagnoses, one per line.\n"
+            "2. Provide only the specific disease name (e.g., 'Type 1 autoimmune pancreatitis'). Do not include preamble, numbering, explanations, or mechanism.\n"
+            "3. Rank them from most likely to least likely.\n\n"
+            "=== OUTPUT (3 lines only) ==="
+        )
+        
+        raw_output = self._call_llm(prompt)
+        diagnoses = self._parse_hypotheses(raw_output)
+        
+        logger.info(f"[NodeExpander] Synthesis complete: {diagnoses}")
+        return diagnoses

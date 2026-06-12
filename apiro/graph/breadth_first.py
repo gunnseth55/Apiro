@@ -149,6 +149,14 @@ class BreadthFirstTraversal:
                         pass
 
         duration = round(time.time() - start_time, 2)
+        
+        # ── Synthesize differential ───────────────────────────────────────────
+        try:
+            synthesis = self.expander.synthesize_differential(graph)
+        except Exception as e:
+            logger.error(f"[BreadthFirst] Synthesis failed: {e}")
+            synthesis = ["[Synthesis failed]"]
+
         return TraversalResult(
             graph=graph,
             stop_reason=stop_reason,
@@ -157,4 +165,5 @@ class BreadthFirstTraversal:
             rabbit_hole_count=rabbit_holes,
             contradiction_count=contradictions,
             duration_seconds=duration,
+            synthesis=synthesis,
         )

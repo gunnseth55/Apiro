@@ -52,6 +52,7 @@ class TraversalResult:
     rabbit_hole_count:   int
     contradiction_count: int
     duration_seconds:    float
+    synthesis:           list[str]        # Final differential diagnosis
     saturation_status:   Optional[object] = None  # SaturationStatus if stop was saturation
 
 
@@ -268,11 +269,15 @@ class ApiroTraversal:
         # ── Wrap up ───────────────────────────────────────────────────────────
         duration = round(time.time() - start_time, 2)
 
+        # ── Synthesize differential ───────────────────────────────────────────
+        synthesis = self.expander.synthesize_differential(graph)
+
         self._log({
             "event":            "traversal_complete",
             "stop_reason":      stop_reason,
             "total_nodes":      graph.node_count(),
             "total_edges":      len(graph.edges),
+            "synthesis":        synthesis,
             "duration_seconds": duration,
         })
 
@@ -288,6 +293,7 @@ class ApiroTraversal:
             rabbit_hole_count=len(self.rabbit_hole.events),
             contradiction_count=len(graph.get_contradiction_edges()),
             duration_seconds=duration,
+            synthesis=synthesis,
             saturation_status=sat_status,
         )
 
