@@ -87,6 +87,72 @@ class EntropyEngine:
         weight_total  = sum(ENTROPY_TEMP_WEIGHTS[t] for t in entropies)
         return weighted_sum / weight_total
 
+    def epistemic_certainty_entropy(
+        self,
+        claim: str,
+        context_chunks: list[str] | None = None,
+    ) -> Optional[float]:
+        """
+        THE CORE APIRO SIGNAL — epistemic uncertainty at a clinical decision boundary.
+
+        Constructs a closed-form yes/no verification prompt from the claim and
+        optional RAG context, then measures first-token Shannon entropy on it.
+
+        Why this works:
+          - The first token must be "Yes" or "No".
+          - If the model is certain the claim is supported, P(Yes) → 1 → H → 0.
+          - If the model is genuinely uncertain, P(Yes) ≈ P(No) ≈ 0.5 → H → ln(2).
+          - This directly operationalises "model uncertainty at clinical decision
+            boundaries" — the core design principle of Apiro.
+
+        Contrast with temperature_corrected_entropy(raw_claim):
+          - Raw claim fed to an open-ended model = measuring entropy of the
+            *next continuation word*, which is always high for speculative text.
+          - That measures generation diversity, NOT epistemic certainty.
+
+        Args:
+            claim:          The clinical hypothesis / node claim to evaluate.
+            context_chunks: RAG-retrieved evidence chunks (optional). When
+                            provided, grounds the yes/no question in evidence.
+
+        Returns:
+            Weighted temperature-corrected entropy in nats, or None on failure.
+        """
+        verification_prompt = self._build_verification_prompt(claim, context_chunks)
+        return self.temperature_corrected_entropy(verification_prompt)
+
+    @staticmethod
+    def _build_verification_prompt(
+        claim: str,
+        context_chunks: list[str] | None = None,
+    ) -> str:
+        """
+        Build a tight yes/no clinical verification prompt.
+
+        Structure:
+          [Evidence block — only when context is available]
+          Clinical claim: <claim>
+          Based on the evidence above, is this claim clinically supported?
+          Answer with Yes or No only.
+
+        The strict instruction forces the first generated token into the
+        {Yes, No} vocabulary, making the entropy a clean binary signal.
+        """
+        if context_chunks:
+            evidence_lines = "\n".join(
+                f"  - {chunk.strip()}" for chunk in context_chunks if chunk.strip()
+            )
+            evidence_block = f"Clinical evidence:\n{evidence_lines}\n\n"
+        else:
+            evidence_block = ""
+
+        return (
+            f"{evidence_block}"
+            f"Clinical claim: {claim.strip()}\n\n"
+            f"Based on the evidence above, is this claim clinically supported?"
+            f" Answer with Yes or No only."
+        )
+
     def top1_probability(self, prompt: str, temperature: float = 0.3) -> Optional[float]:
         """
         Return the probability of the single most likely first token.
