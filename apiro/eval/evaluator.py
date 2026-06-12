@@ -46,67 +46,49 @@ logger = logging.getLogger(__name__)
 
 # ── Metric helpers ─────────────────────────────────────────────────────────────
 
-def _contains_diagnosis(graph: BeliefGraph, ground_truth: str) -> tuple[bool, int]:
+def _check_synthesis_hit(synthesis: list[str], ground_truth: str, embedder=None) -> bool:
     """
-    Check if any node claim contains the ground_truth diagnosis, using robust
-    phrase matching (splitting on parentheses/conjunctions and stripping qualifiers).
-
-    When EVAL_EXCLUDE_SEED_HITS=True (config default), seed nodes (depth==0) are
-    excluded from the search. This prevents trivially satisfying the diagnostic-hit
-    criterion when the ground truth is explicitly stated in the input findings.
-
-    Returns (hit: bool, step: int) — step is the node's index in expansion order
-    (0-indexed, counting from the first generated node), or -1 if not found.
+    Check if the ground truth is semantically present in any of the synthesized diagnoses.
     """
+    if not synthesis:
+        return False
+        
     import re
+    import numpy as np
+    
     gt = ground_truth.lower()
-
-    # Extract sub-phrases/acronyms by splitting on parentheticals and key conjunctions
-    delimiters = r"\s+due\s+to\s+|\s+secondary\s+to\s+|\s+associated\s+with\s+|\(|\)|,|\;|\bor\b"
-    parts = re.split(delimiters, gt)
-
-    # Common clinical qualifiers that the LLM may omit
-    qualifiers = r"\b(wild-type|acute|chronic|primary|secondary|mild|severe|suspected|probable|likely)\b"
-
-    match_targets = []
-    for p in parts:
-        p_clean = p.strip()
-        p_clean = re.sub(r"^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "", p_clean)
-        if len(p_clean) >= 3:
-            if p_clean not in match_targets:
-                match_targets.append(p_clean)
-
-            # Add version without qualifiers
-            p_no_qual = re.sub(qualifiers, "", p_clean).strip()
-            p_no_qual = re.sub(r"\s+", " ", p_no_qual)
-            p_no_qual = re.sub(r"^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "", p_no_qual)
-            if len(p_no_qual) >= 3 and p_no_qual not in match_targets:
-                match_targets.append(p_no_qual)
-
-    # Also add the full cleaned string without qualifiers
+    
+    # 1. Simple fallback: substring match (stripped of qualifiers)
     gt_clean = re.sub(r"\s*\([^)]*\)", "", gt).strip()
+    qualifiers = r"\b(wild-type|acute|chronic|primary|secondary|mild|severe|suspected|probable|likely)\b"
     gt_clean = re.sub(qualifiers, "", gt_clean).strip()
     gt_clean = re.sub(r"\s+", " ", gt_clean)
     gt_clean = re.sub(r"^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "", gt_clean)
-    if len(gt_clean) >= 3 and gt_clean not in match_targets:
-        match_targets.append(gt_clean)
-
-    # If no target extracted, fallback to original ground_truth
-    if not match_targets:
-        match_targets = [gt]
-
-    # Iterate only over generated nodes (depth > 0) if EVAL_EXCLUDE_SEED_HITS is set
-    candidate_nodes = [
-        n for n in graph.nodes.values()
-        if not (EVAL_EXCLUDE_SEED_HITS and n.depth == 0)
-    ]
-
-    for i, node in enumerate(candidate_nodes):
-        claim_lower = node.claim.lower()
-        if any(target in claim_lower for target in match_targets):
-            return True, i
-
-    return False, -1
+    
+    for diag in synthesis:
+        diag_lower = diag.lower()
+        if gt_clean and gt_clean in diag_lower:
+            return True
+            
+    # 2. Semantic similarity via SentenceTransformer (if embedder provided)
+    if embedder is not None:
+        try:
+            # Embed ground truth and synthesis strings
+            gt_emb = embedder._model.encode([ground_truth], normalize_embeddings=True)[0]
+            diag_embs = embedder._model.encode(synthesis, normalize_embeddings=True)
+            
+            # Compute cosine similarity
+            similarities = np.dot(diag_embs, gt_emb)
+            max_sim = np.max(similarities)
+            
+            logger.info(f"[_check_synthesis_hit] Semantic similarity: max={max_sim:.3f} for '{ground_truth}' vs {synthesis}")
+            
+            if max_sim > 0.75:
+                return True
+        except Exception as e:
+            logger.error(f"[_check_synthesis_hit] Semantic similarity failed: {e}")
+            
+    return False
 
 
 
@@ -156,6 +138,7 @@ class CaseEvaluator:
         contradiction,
         max_depth: int = 5,
         max_nodes: int = 30,
+        embedder=None,
     ):
         self.expander      = expander
         self.saturation    = saturation
@@ -163,6 +146,7 @@ class CaseEvaluator:
         self.contradiction = contradiction
         self.max_depth     = max_depth
         self.max_nodes     = max_nodes
+        self.embedder      = embedder
 
     # ── Single traversal runner ────────────────────────────────────────────
 
@@ -218,7 +202,8 @@ class CaseEvaluator:
             Metric dict for this case/traversal.
         """
         graph = result.graph
-        hit, step = _contains_diagnosis(graph, ground_truth)
+        synthesis = result.synthesis
+        hit       = _check_synthesis_hit(synthesis, ground_truth, self.embedder)
         auc       = _entropy_auc(graph)
         trend     = graph.get_entropy_trend(window=min(5, len(graph.nodes)))
 
@@ -228,7 +213,7 @@ class CaseEvaluator:
             "traversal_type": traversal_type,
             "stop_reason":    result.stop_reason,
             "diagnostic_hit": hit,
-            "path_length":    step if hit else -1,
+            "synthesis":      synthesis,
             "entropy_auc":    round(auc, 4),
             "entropy_trend":  round(trend, 5),
             "rabbit_holes":   result.rabbit_hole_count,
@@ -272,8 +257,8 @@ class CaseEvaluator:
         winner = _determine_winner(ef_metrics, bf_metrics)
 
         logger.info(
-            f"  Result: EF path={ef_metrics['path_length']} | "
-            f"BF path={bf_metrics['path_length']} | Winner={winner}"
+            f"  Result: EF nodes={ef_metrics['total_nodes']} | "
+            f"BF nodes={bf_metrics['total_nodes']} | Winner={winner}"
         )
 
         return {
@@ -367,8 +352,8 @@ def _determine_winner(ef: dict, bf: dict) -> str:
 
     Rules (in priority order):
       1. If one hit and the other didn't → the hit wins.
-      2. If both hit → shorter path_length wins.
-      3. If path_length is equal → use entropy_auc as secondary tie-breaker.
+      2. If both hit → smaller total_nodes wins.
+      3. If total_nodes is equal → use entropy_auc as secondary tie-breaker.
          EF wins if its AUC is ≥ EVAL_AUC_TIEBREAKER_MARGIN lower than BF's
          (lower AUC = entropy declined faster = better convergence).
       4. Otherwise: "tie".
@@ -384,16 +369,16 @@ def _determine_winner(ef: dict, bf: dict) -> str:
     if not ef_hit and not bf_hit:
         return "both_miss"
 
-    # Both hit — compare path lengths (lower = better)
-    ef_path = ef["path_length"]
-    bf_path = bf["path_length"]
+    # Both hit — compare total nodes (lower = better)
+    ef_nodes = ef["total_nodes"]
+    bf_nodes = bf["total_nodes"]
 
-    if ef_path < bf_path:
+    if ef_nodes < bf_nodes:
         return "entropy_first"
-    if bf_path < ef_path:
+    if bf_nodes < ef_nodes:
         return "breadth_first"
 
-    # Tied path length — use entropy_auc as secondary signal.
+    # Tied nodes — use entropy_auc as secondary signal.
     # EF wins if its AUC is at least EVAL_AUC_TIEBREAKER_MARGIN fraction lower
     # (meaning entropy converged measurably faster, validating the core claim).
     ef_auc = ef["entropy_auc"]
