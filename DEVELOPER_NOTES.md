@@ -31,6 +31,28 @@ These scripts were written for specific diagnostics or setup phases. They are no
 
 ---
 
+## 🗄️ Ingesting and Building the Medical Corpus
+
+The built database (`data/chroma_db/`) and downloaded clinical corpora (`data/corpus/`) contain large datasets and vectors. They are **excluded from the git repository** via `.gitignore` to prevent bloating version control. 
+
+When setting up the project for the first time, you must run the build script to fetch raw records, split them into overlapping text chunks, generate embeddings, and populate your local vector database. **To ensure a statistically viable and rich corpus, you should load at least 50k to 100k records:**
+
+```bash
+# Ingest clinical textbooks (requires sufficient volume for graph paths)
+python -m apiro.corpus.build_corpus --sources textbooks --max-records 50000
+
+# Ingest multiple medical sources (MedRAG/PubMed, HPO, ClinVar, OpenFDA) with full record volume
+python -m apiro.corpus.build_corpus --sources medrag hpo clinvar openfda --max-records 100000
+
+# Rebuild the database from scratch (deletes existing collection first)
+python -m apiro.corpus.build_corpus --sources textbooks medrag --clear --max-records 100000
+```
+
+* **Valid Sources:** `textbooks`, `medrag` (HuggingFace MedRAG/PubMed), `hpo` (Human Phenotype Ontology), `clinvar` (pathogenic variants), `openfda` (drug labels).
+* **API Keys:** None of the default scrapers require API keys or registration.
+
+---
+
 ## 🧹 Repository Cleanup
 
 To clean up temporary logs, belief graph exports, and caches from your local working directory, you can run:

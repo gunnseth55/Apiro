@@ -22,7 +22,8 @@ Apiro translates this clinical reasoning process into a graph traversal algorith
 ```
 .
 ├── README.md                   # Onboarding, architecture, and developer guide
-├── PROJECT_STATUS.md           # Current state of development, metrics, and risks
+├── PROJECT_STATUS.md           # Active state, benchmarks, and known risks
+├── DEVELOPER_NOTES.md          # File classification map (production vs debug), cleanup, and configs
 ├── pyproject.toml              # Project configuration and packaging
 ├── requirements.txt            # Python dependencies
 ├── scripts/
@@ -177,7 +178,21 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-### 2. Testing and Stubs
+### 2. Building the Corpus & Vector Database
+The persistent database directory (`data/chroma_db/`) is excluded from Git to prevent large binary files in version control. After checking out the codebase, you must populate your local vector database. **We recommend loading at least 50k to 100k records for a viable corpus:**
+
+```bash
+# Ingest clinical textbooks (requires sufficient volume for graph paths)
+python -m apiro.corpus.build_corpus --sources textbooks --max-records 50000
+
+# Ingest multiple medical sources (MedRAG/PubMed, HPO, ClinVar, OpenFDA) with full record volume
+python -m apiro.corpus.build_corpus --sources medrag hpo clinvar openfda --max-records 100000
+
+# Rebuild the database from scratch (deletes existing collection first)
+python -m apiro.corpus.build_corpus --sources textbooks medrag --clear --max-records 100000
+```
+
+### 3. Testing and Stubs
 To avoid burning active OpenAI/Anthropic API credits during graph development or unit test runs, we provide a deterministic stub suite:
 * **Stub Clients:** Located in `tests/` and test harnesses. They cycle through preset responses or generate mock clinical nodes deterministically.
 * **Running Tests:**
@@ -185,14 +200,14 @@ To avoid burning active OpenAI/Anthropic API credits during graph development or
   pytest tests/
   ```
 
-### 3. Running a Local Traversal
+### ### 4. Running a Local Traversal
 You can run a traversal with the mock model or actual LLM backend:
 ```bash
 # Runs the engine with the live EntropyEngine model integration
 python -m apiro.run --case data/synthetic_case_1.json --real-entropy
 ```
 
-### 4. Extending Search Strategies
+### 5. Extending Search Strategies
 * **Modifying sorting behavior:** Edit `get_frontier()` in [belief_graph.py](file:///home/theroid/PycharmProjects/Apiro/apiro/graph/belief_graph.py) to implement new heuristic frontier weights.
 * **Adding dynamic stop rules:** Implement new rules inside `check_stop_conditions()` in [traversal.py](file:///home/theroid/PycharmProjects/Apiro/apiro/graph/traversal.py).
 * **Refining hypothesis branching:** Update `expand_node()` inside [expander.py](file:///home/theroid/PycharmProjects/Apiro/apiro/graph/expander.py) to tweak the RAG context templates.
