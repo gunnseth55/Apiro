@@ -2,6 +2,8 @@
 
 Apiro is an agentic "AI Detective" designed to navigate biomedical knowledge graphs by chasing epistemic uncertainty (entropy) to diagnose complex clinical cases. Unlike standard RAG systems or black-box LLM chatbots, Apiro provides a verifiable, auditable, and mathematically grounded traversal path through clinical evidence to arrive at a precise differential diagnosis.
 
+This document serves as the primary **onboarding and contributor guide** for anyone joining the project.
+
 ---
 
 ## 📖 The Core Vision
@@ -15,12 +17,12 @@ Apiro translates this clinical reasoning process into a graph traversal algorith
 
 ---
 
-## 📁 Repository Layout
+## 📁 Repository Layout & File Responsibilities
 
 ```
 .
-├── README.md                   # Main project documentation (this file)
-├── PROJECT_STATUS.md           # Active state, benchmarks, and known risks
+├── README.md                   # Onboarding, architecture, and developer guide
+├── PROJECT_STATUS.md           # Current state of development, metrics, and risks
 ├── pyproject.toml              # Project configuration and packaging
 ├── requirements.txt            # Python dependencies
 ├── scripts/
@@ -109,7 +111,95 @@ When a patient case (e.g. `synthetic_case_1.json`) is run, the engine executes t
 
 ---
 
-## 🎢 Development Ups and Downs (What We Learned)
+## 📋 Key Data Schemas & Formats
+
+### 1. Clinical Case File Input
+Input files are stored in JSON format containing a list of clinical findings (seeds) and the final target diagnosis.
+```json
+{
+  "case_id": "case_01",
+  "target_diagnosis": "Acute Myocardial Infarction",
+  "findings": [
+    {
+      "claim": "Substernal chest pain radiating to left arm",
+      "domain": "symptom"
+    },
+    {
+      "claim": "ST-segment elevation in leads V1-V4",
+      "domain": "ecg"
+    }
+  ]
+}
+```
+
+### 2. Belief Graph Export Schema
+The graph can be exported to JSON via `graph.export_json()`, yielding this format:
+```json
+{
+  "nodes": [
+    {
+      "id": "node_0",
+      "claim": "ST-segment elevation in leads V1-V4",
+      "depth": 0,
+      "entropy_score": 0.05,
+      "domain": "ecg",
+      "resolved": true
+    },
+    {
+      "id": "node_0_c1",
+      "claim": "Anterior myocardial infarction",
+      "depth": 1,
+      "entropy_score": 0.85,
+      "domain": "pathophysiology",
+      "resolved": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "node_0",
+      "target": "node_0_c1",
+      "relation": "expands"
+    }
+  ]
+}
+```
+
+---
+
+## 👩‍💻 Contributor's Quickstart & Development Workflows
+
+### 1. Virtual Environment Setup
+Ensure you run python 3.10+ and install editable package dependencies:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+pip install -e .
+```
+
+### 2. Testing and Stubs
+To avoid burning active OpenAI/Anthropic API credits during graph development or unit test runs, we provide a deterministic stub suite:
+* **Stub Clients:** Located in `tests/` and test harnesses. They cycle through preset responses or generate mock clinical nodes deterministically.
+* **Running Tests:**
+  ```bash
+  pytest tests/
+  ```
+
+### 3. Running a Local Traversal
+You can run a traversal with the mock model or actual LLM backend:
+```bash
+# Runs the engine with the live EntropyEngine model integration
+python -m apiro.run --case data/synthetic_case_1.json --real-entropy
+```
+
+### 4. Extending Search Strategies
+* **Modifying sorting behavior:** Edit `get_frontier()` in [belief_graph.py](file:///home/theroid/PycharmProjects/Apiro/apiro/graph/belief_graph.py) to implement new heuristic frontier weights.
+* **Adding dynamic stop rules:** Implement new rules inside `check_stop_conditions()` in [traversal.py](file:///home/theroid/PycharmProjects/Apiro/apiro/graph/traversal.py).
+* **Refining hypothesis branching:** Update `expand_node()` inside [expander.py](file:///home/theroid/PycharmProjects/Apiro/apiro/graph/expander.py) to tweak the RAG context templates.
+
+---
+
+## 🎢 Project History (The Ups and Downs)
 
 Building Apiro was not a straight path. Over successive cycles of debugging and evaluation, we hit several conceptual and technical roadblocks:
 
@@ -124,46 +214,3 @@ Building Apiro was not a straight path. Over successive cycles of debugging and 
 ### ❌ The Evaluator Metric Trap
 * **What went wrong:** Our Phase 3 evaluator checked for a "diagnostic hit" by scanning all raw expanded graph nodes for exact substring matches of the ground truth. This resulted in false negatives (e.g., the engine successfully synthesized "Systemic Lupus Erythematosus", but the ground truth was "Neuropsychiatric systemic lupus erythematosus [NPSLE]", resulting in a FAIL).
 * **How we fixed it:** We shifted the evaluation target from intermediate nodes to the final synthesized differential diagnosis. We replaced binary substring matching with a combined metric of substring checks and **SentenceTransformer semantic similarity (cosine similarity with a 0.75 threshold)**, matching clinical intents accurately.
-
----
-
-## 🚀 Future Roadmap & Strategies
-
-To scale Apiro into a production-grade biomedical tool, we have mapped out three future directions:
-
-### 1. Medical Ontology-Based Evaluation (Deterministic Grading)
-To avoid the instability of LLMs or simple semantic embedding thresholding, we can leverage standardized medical ontologies (like **SNOMED CT**, **UMLS**, or the **Disease Ontology [DOID]**):
-* Map the engine's output and the ground truth to official Concept IDs.
-* Query their ancestral relationships in the ontology tree.
-* Award partial credit if the engine predicts a parent class (e.g., predicting `SLE` when the ground truth is `NPSLE`).
-* *Implementation Tool:* Using python libraries like `pronto` to parse raw `.obo`/`.owl` ontology files, or querying the official NIH/NLM REST API.
-
-### 2. LLM-as-a-Judge Validation
-Implement a secondary, offline LLM evaluator using a reasoning model to act as a "clinical reviewer." The reviewer is presented with the patient case, the ground truth, and Apiro's top-3 differential, and provides structured feedback on clinical alignment.
-
-### 3. Context Window Optimization
-Scale the chunk retriever and expander context. Currently, the expander operates on localized contexts to manage token usage. Grouping overlapping context windows during expansion will improve graph connection consistency.
-
----
-
-## 🛠️ How to Run & Test
-
-### Installation
-Ensure you have the dependencies installed:
-```bash
-pip install -r requirements.txt
-pip install -e .
-```
-
-### Running the Traversal
-To run the traversal on a specific clinical case:
-```bash
-python -m apiro.run --case data/synthetic_case_1.json --real-entropy
-```
-
-### Running the Phase 3 Evaluation Suite
-To run the benchmark suite comparing the **Entropy-First (EF)** traversal against the **Breadth-First (BF)** baseline:
-```bash
-python scripts/run_phase3_eval.py --n 10
-```
-This script will evaluate the first 10 cases, run both search strategies, compare their efficiency (total nodes expanded to reach synthesis), and save results to `data/phase3_results.json`.
