@@ -59,6 +59,14 @@ class Embedder:
         chroma_path:       Directory for persistent ChromaDB storage.
         collection_name:   ChromaDB collection name.
         batch_size:        Chunks per embedding/upsert batch.
+        device:            PyTorch device for the embedding model.
+                           Defaults to 'cpu' — this is intentional.
+                           GPU (CUDA) crashes mid-run leave ChromaDB in an
+                           inconsistent state with no recovery path.
+                           CPU embedding is stable for any corpus size and
+                           fast enough for our batch sizes (~256 chunks/3s).
+                           Pass device='cuda' explicitly if you need GPU speed
+                           and accept the crash risk.
     """
 
     def __init__(
@@ -67,13 +75,15 @@ class Embedder:
         chroma_path: Path = CHROMA_DIR,
         collection_name: str = CHROMA_COLLECTION,
         batch_size: int = 256,
+        device: str = "cpu",
     ):
         self.model_name      = model_name
         self.collection_name = collection_name
         self.batch_size      = batch_size
+        self.device          = device
 
-        logger.info(f"Loading embedding model: {model_name}")
-        self._model = SentenceTransformer(model_name)
+        logger.info(f"Loading embedding model: {model_name} on device='{device}'")
+        self._model = SentenceTransformer(model_name, device=device)
 
         logger.info(f"Connecting to ChromaDB at {chroma_path}")
         self._client = chromadb.PersistentClient(path=str(chroma_path))
@@ -81,9 +91,11 @@ class Embedder:
             name=collection_name,
             metadata={"hnsw:space": "cosine"},   # cosine similarity for medical text
         )
+        existing = self._collection.count()
         logger.info(
             f"Collection '{collection_name}' has "
-            f"{self._collection.count()} existing documents."
+            f"{existing:,} existing documents. "
+            f"Upsert is idempotent — safe to re-run."
         )
 
     # ------------------------------------------------------------------
@@ -94,12 +106,16 @@ class Embedder:
         """
         Embed and upsert chunks into ChromaDB.
 
+        Each batch is committed independently, so a mid-run failure only
+        loses the current batch. Re-running is safe: upsert is idempotent
+        and duplicate chunk_ids are silently skipped by ChromaDB.
+
         Args:
             chunks:        List of chunk dicts from Chunker.chunk_records().
             show_progress: Log progress every batch.
 
         Returns:
-            Number of chunks actually inserted/updated.
+            Number of chunks successfully inserted/updated this run.
         """
         if not chunks:
             logger.warning("ingest() called with empty chunk list.")
@@ -107,38 +123,51 @@ class Embedder:
 
         total    = len(chunks)
         inserted = 0
+        skipped  = 0
 
         for i in range(0, total, self.batch_size):
             batch = chunks[i : i + self.batch_size]
 
-            texts    = [c["text"] for c in batch]
-            ids      = [c["chunk_id"] for c in batch]
+            texts     = [c["text"] for c in batch]
+            ids       = [c["chunk_id"] for c in batch]
             metadatas = [
                 _sanitize_metadata({k: v for k, v in c.items() if k not in ("text", "chunk_id")})
                 for c in batch
             ]
 
-            # Embed
-            embeddings = self._model.encode(
-                texts,
-                normalize_embeddings=True,
-                batch_size=min(64, len(texts)),
-                show_progress_bar=False,
-            ).tolist()
+            try:
+                # Embed on the configured device (CPU by default)
+                embeddings = self._model.encode(
+                    texts,
+                    normalize_embeddings=True,
+                    batch_size=min(64, len(texts)),
+                    show_progress_bar=False,
+                ).tolist()
 
-            # Upsert (idempotent — safe to re-run)
-            self._collection.upsert(
-                ids=ids,
-                documents=texts,
-                embeddings=embeddings,
-                metadatas=metadatas,
-            )
-            inserted += len(batch)
+                # Upsert (idempotent — safe to re-run; same chunk_id = update)
+                self._collection.upsert(
+                    ids=ids,
+                    documents=texts,
+                    embeddings=embeddings,
+                    metadatas=metadatas,
+                )
+                inserted += len(batch)
 
-            if show_progress:
+            except Exception as e:
+                skipped += len(batch)
+                logger.error(
+                    f"  Batch {i//self.batch_size + 1} failed "
+                    f"(chunks {i}–{i+len(batch)-1}): {e}. "
+                    f"Skipping and continuing."
+                )
+                continue
+
+            if show_progress and (inserted % (self.batch_size * 4) == 0 or inserted == total):
                 logger.info(f"  Embedded {inserted}/{total} chunks...")
 
-        logger.info(f"Ingestion complete. {inserted} chunks in collection '{self.collection_name}'.")
+        if skipped:
+            logger.warning(f"  {skipped} chunks skipped due to errors.")
+        logger.info(f"Ingestion complete. {inserted} chunks embedded into '{self.collection_name}'.")
         return inserted
 
     # ------------------------------------------------------------------

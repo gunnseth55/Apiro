@@ -42,10 +42,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger("build_corpus")
 
-VALID_SOURCES = ["medrag", "hpo", "clinvar", "openfda"]
+VALID_SOURCES = ["medrag", "textbooks", "hpo", "clinvar", "openfda"]
 
 # Sources whose records are already chunked and skip corpus/chunker.py
-PRE_CHUNKED_SOURCES = {"medrag"}
+PRE_CHUNKED_SOURCES = {"medrag", "textbooks"}
 
 
 def scrape(source: str, max_records: int) -> list[dict]:
@@ -54,6 +54,10 @@ def scrape(source: str, max_records: int) -> list[dict]:
     if source == "medrag":
         from apiro.corpus.scrapers.medrag_scraper import MedRAGScraper
         return MedRAGScraper(max_records=max_records).fetch()
+
+    elif source == "textbooks":
+        from apiro.corpus.scrapers.textbooks_scraper import TextbooksScraper
+        return TextbooksScraper(max_records=max_records).fetch()
 
     elif source == "hpo":
         from apiro.corpus.scrapers.hpo_scraper import HPOScraper
@@ -74,15 +78,38 @@ def scrape(source: str, max_records: int) -> list[dict]:
         raise ValueError(f"Unknown source: {source!r}. Must be one of {VALID_SOURCES}")
 
 
-def build(sources: list[str], max_records: int) -> dict:
+def build(sources: list[str], max_records: int, clear: bool = False) -> dict:
     """
-    Run the full pipeline: scrape → chunk (if needed) → embed → stats.
+    Run the full pipeline: [optional clear] → scrape → chunk (if needed) → embed → stats.
+
+    Args:
+        sources:     List of source names to ingest.
+        max_records: Max records per source.
+        clear:       If True, delete the existing ChromaDB collection before
+                     building. Use this when switching corpus composition to
+                     avoid mixing old and new documents.
 
     Returns:
         corpus_stats dict (also written to data/corpus_stats.json).
     """
     chunker  = Chunker()
     embedder = Embedder()
+
+    if clear:
+        logger.warning(
+            "--clear specified: deleting existing ChromaDB collection before rebuild. "
+            "This cannot be undone."
+        )
+        from apiro.config import CHROMA_DIR, CHROMA_COLLECTION
+        import chromadb
+        client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+        try:
+            client.delete_collection(CHROMA_COLLECTION)
+            logger.info(f"  Deleted collection '{CHROMA_COLLECTION}'.")
+        except Exception as e:
+            logger.warning(f"  Could not delete collection (may not exist): {e}")
+        # Re-create Embedder so it creates a fresh collection
+        embedder = Embedder()
 
     stats: dict = {
         "sources":        {},
@@ -166,11 +193,21 @@ Examples:
         """,
     )
     parser.add_argument(
+        "--clear",
+        action="store_true",
+        default=False,
+        help=(
+            "Delete the existing ChromaDB collection before building. "
+            "Use when switching corpus composition (e.g. replacing 1970s papers "
+            "with modern textbooks). Cannot be undone."
+        ),
+    )
+    parser.add_argument(
         "--sources",
         nargs="+",
         choices=VALID_SOURCES,
-        default=["medrag"],
-        help="Which sources to scrape (default: medrag).",
+        default=["textbooks"],
+        help=f"Which sources to scrape (default: textbooks). Options: {VALID_SOURCES}",
     )
     parser.add_argument(
         "--max-records",
@@ -182,8 +219,10 @@ Examples:
 
     logger.info(f"Building corpus from: {args.sources}")
     logger.info(f"Max records per source: {args.max_records:,}")
+    if args.clear:
+        logger.warning("--clear flag set: existing corpus will be deleted first.")
 
-    stats = build(sources=args.sources, max_records=args.max_records)
+    stats = build(sources=args.sources, max_records=args.max_records, clear=args.clear)
 
     print("\n✅ Corpus build complete.")
     print(f"   Total records : {stats['total_records']:,}")

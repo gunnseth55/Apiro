@@ -13,8 +13,12 @@ Scraper integration tests are run manually with real credentials.
 """
 
 import sys
+from unittest.mock import MagicMock
+# Mock sentence_transformers to avoid importing torch/transformers during test execution
+sys.modules["sentence_transformers"] = MagicMock()
+
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
