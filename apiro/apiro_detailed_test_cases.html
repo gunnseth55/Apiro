@@ -1,0 +1,567 @@
+
+<style>
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+*{box-sizing:border-box}
+.wrap{padding:1rem 0 2.5rem}
+.phase-nav{display:flex;gap:6px;margin-bottom:1.5rem;flex-wrap:wrap}
+.pnav-btn{font-size:12px;padding:5px 12px;border-radius:99px;border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer;transition:all .15s}
+.pnav-btn.active{color:var(--color-text-primary);border-color:var(--color-border-primary);background:var(--color-background-secondary)}
+.phase-block{display:none}
+.phase-block.active{display:block}
+.tc-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);margin-bottom:14px;overflow:hidden}
+.tc-header{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);cursor:pointer}
+.tc-num{font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;flex-shrink:0;margin-top:1px}
+.tc-meta{flex:1}
+.tc-name{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.tc-sub{font-size:12px;color:var(--color-text-secondary);margin-top:2px}
+.tc-status{font-size:11px;padding:2px 8px;border-radius:4px;flex-shrink:0;margin-top:1px}
+.tc-chevron{font-size:14px;color:var(--color-text-secondary);transition:transform .2s;margin-top:2px}
+.tc-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.tc-body.open{max-height:2000px}
+.tc-section{padding:10px 14px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.tc-section:last-child{border-bottom:none}
+.tc-sec-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;color:var(--color-text-secondary);margin-bottom:6px}
+.tc-row{display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:13px;color:var(--color-text-primary);line-height:1.5;border-bottom:0.5px solid var(--color-border-tertiary)}
+.tc-row:last-child{border-bottom:none}
+.tc-row-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.pass-row{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:13px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.pass-row:last-child{border-bottom:none}
+.pass-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.pass-text{flex:1;color:var(--color-text-primary);line-height:1.5}
+.fail-text{flex:1;color:var(--color-text-danger);line-height:1.5}
+.phase-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.5rem}
+.ps-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px;text-align:center}
+.ps-n{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.ps-l{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.input-block{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 12px;font-size:12px;color:var(--color-text-primary);line-height:1.6;font-family:var(--font-mono)}
+</style>
+<div class="wrap">
+<h2 class="sr-only">Apiro — detailed test cases for every phase, with inputs, pass criteria, and failure actions</h2>
+
+<div class="phase-nav">
+  <button class="pnav-btn active" onclick="showPhase('p1')">Phase 1 — Corpus</button>
+  <button class="pnav-btn" onclick="showPhase('p2')">Phase 2 — Core engine</button>
+  <button class="pnav-btn" onclick="showPhase('p3')">Phase 3 — Evaluation</button>
+  <button class="pnav-btn" onclick="showPhase('p4')">Phase 4 — Output</button>
+</div>
+
+<div class="phase-block active" id="p1">
+<div class="phase-summary">
+  <div class="ps-card"><div class="ps-n">6</div><div class="ps-l">test cases</div></div>
+  <div class="ps-card"><div class="ps-n">4</div><div class="ps-l">data sources</div></div>
+  <div class="ps-card"><div class="ps-n">500k</div><div class="ps-l">target chunks</div></div>
+  <div class="ps-card"><div class="ps-n">week 1–3</div><div class="ps-l">timeline</div></div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E6F1FB;color:#0C447C">TC-1.1</div>
+    <div class="tc-meta"><div class="tc-name">MedRAG/pubmed ingestion completeness</div><div class="tc-sub">HuggingFace streaming — filtering and chunk count validation</div></div>
+    <div class="tc-status" style="background:#E1F5EE;color:#085041">Data</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Input</div><div class="input-block">load_dataset("MedRAG/pubmed", streaming=True)<br>Filter: medical_domain in [pathophysiology, pharmacology,<br>genetics, imaging, lab_findings, treatment, comorbidity]<br>Target: 300k records</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Total chunk count ≥ 280k after filtering (allow 7% shortfall)</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">All 7 domain buckets populated — no domain has zero records</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Zero records with null pmid AND null title simultaneously</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">evidence_level field populated for ≥ 90% of records</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">If a domain bucket is empty: add targeted MeSH query for that domain via NCBI E-utilities as fallback</div></div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">If chunk count &lt; 280k: lower domain filter strictness, accept adjacent MeSH terms</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E6F1FB;color:#0C447C">TC-1.2</div>
+    <div class="tc-meta"><div class="tc-name">Chunk schema validation</div><div class="tc-sub">Every chunk must have all required metadata fields populated correctly</div></div>
+    <div class="tc-status" style="background:#E1F5EE;color:#085041">Data</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Input</div><div class="input-block">Random sample of 1,000 chunks from each source collection<br>Fields to validate: chunk_id, source_db, pmid, medical_domain,<br>evidence_level, condition_tags, chunk_text</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">chunk_id unique across all 4 collections — zero duplicates</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">chunk_text between 100 and 600 tokens — no outlier chunks</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">evidence_level ∈ {1,2,3,4} — no null or out-of-range values</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">medical_domain ∈ defined 7-item enum — no freeform strings</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">condition_tags is a non-empty list for ≥ 85% of chunks</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Run repair script: fill missing evidence_level from source_db heuristic (pubmed default=2, omim=3, clinvar=1, openfda=2)</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E6F1FB;color:#0C447C">TC-1.3</div>
+    <div class="tc-meta"><div class="tc-name">ChromaDB retrieval quality</div><div class="tc-sub">Top-6 retrieved chunks must be clinically relevant to the query</div></div>
+    <div class="tc-status" style="background:#FAEEDA;color:#633806">Retrieval</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Input — 10 test queries</div><div class="input-block">Q1: "butterfly rash joint pain elevated ANA"<br>Q2: "elevated troponin chest pain diaphoresis"<br>Q3: "BRCA1 mutation breast cancer risk"<br>Q4: "metformin mechanism of action type 2 diabetes"<br>Q5: "elevated CRP ESR bilateral joint swelling"<br>Q6: "barking cough stridor inspiratory wheeze child"<br>Q7: "Kayser-Fleischer rings liver disease neurological"<br>Q8: "renal failure drug contraindication NSAIDs"<br>Q9: "night sweats weight loss lymphadenopathy"<br>Q10: "recurrent DVT young patient thrombophilia"</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">≥ 5/6 top chunks per query judged clinically relevant by manual review</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Q7 (Wilson's disease — rare) retrieves ≥ 1 chunk mentioning copper metabolism</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Evidence-weighted reranking places systematic reviews above case reports for Q1, Q5</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">No retracted papers appear in any top-6 result set</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">If rare disease queries fail: supplement HPO collection with Orphanet disease descriptions (free download)</div></div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">If reranking not working: verify evidence_weight calculation — check score formula 0.6×sim + 0.4×evidence_weight</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E6F1FB;color:#0C447C">TC-1.4</div>
+    <div class="tc-meta"><div class="tc-name">HPO + ClinVar + OpenFDA integration</div><div class="tc-sub">All 3 non-pubmed sources correctly ingested and retrievable</div></div>
+    <div class="tc-status" style="background:#E1F5EE;color:#085041">Data</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">HPO: query "HP:0001369 arthritis" retrieves ≥ 10 associated disease entries</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">ClinVar: query "BRCA1 pathogenic" retrieves ≥ 5 classified pathogenic variant records</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">OpenFDA: query "metformin contraindication" retrieves renal failure warning from drug label</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Cross-collection retrieval works — single query returns chunks from multiple sources</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">If HPO retrieval fails: verify phenotype_annotation.tab was parsed — check gene-to-phenotype mapping file</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E6F1FB;color:#0C447C">TC-1.5</div>
+    <div class="tc-meta"><div class="tc-name">Logprob extraction verification</div><div class="tc-sub">LLaMA 3.1 must return clean top-40 logprobs and entropy separates ambiguous vs unambiguous</div></div>
+    <div class="tc-status" style="background:#EEEDFE;color:#3C3489">Engine</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Input</div><div class="input-block">Unambiguous: "What organ pumps blood through the body?"<br>Ambiguous: "Is joint pain + malar rash lupus or psoriatic arthritis?"<br>T = 0.7, top_logprobs = 40</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">top_logprobs returns exactly 40 tokens for both queries</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Entropy(ambiguous) ≥ 1.5× Entropy(unambiguous) — consistent with calibration result of 1.61×</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Probabilities sum to ≥ 0.95 after exp(logprob) normalization — no numerical issues</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Repeating same query 5 times: entropy variance &lt; 0.05 — signal is stable</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">If &lt;40 tokens returned: check Ollama version — logprobs support requires v0.3.0+</div></div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">If separation &lt; 1.5×: re-run calibration experiment with new prompt templates before proceeding</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E6F1FB;color:#0C447C">TC-1.6</div>
+    <div class="tc-meta"><div class="tc-name">BeliefGraph class unit tests</div><div class="tc-sub">All graph operations behave correctly — insert, traverse, flag, retrieve</div></div>
+    <div class="tc-status" style="background:#EEEDFE;color:#3C3489">Engine</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Insert 10 nodes → NetworkX reports exactly 10 nodes, 9 edges in correct parent-child structure</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Max-heap returns highest entropy node first across 5 random entropy assignments</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">is_rabbit_hole flag sets and retrieves correctly — does not affect entropy ordering</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Hard budget enforced: attempt to insert node 151 raises BudgetExceededError</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Depth enforcement: node at depth 7 rejected when max_depth=6</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Any unit test failure blocks Phase 2 start — fix before proceeding</div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="phase-block" id="p2">
+<div class="phase-summary">
+  <div class="ps-card"><div class="ps-n">7</div><div class="ps-l">test cases</div></div>
+  <div class="ps-card"><div class="ps-n">3</div><div class="ps-l">novel components</div></div>
+  <div class="ps-card"><div class="ps-n">3</div><div class="ps-l">synthetic patients</div></div>
+  <div class="ps-card"><div class="ps-n">week 1–5</div><div class="ps-l">timeline</div></div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E1F5EE;color:#085041">TC-2.1</div>
+    <div class="tc-meta"><div class="tc-name">Entropy traversal heuristic</div><div class="tc-sub">System always expands the highest-entropy frontier node first</div></div>
+    <div class="tc-status" style="background:#EEEDFE;color:#3C3489">Novel</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Input</div><div class="input-block">Seed graph with 5 nodes manually assigned entropy scores:<br>Node A: 0.82, Node B: 0.31, Node C: 0.74, Node D: 0.91, Node E: 0.55<br>Run traversal for 3 steps</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Step 1 expands Node D (0.91) — highest entropy</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Step 2 expands Node A (0.82) — second highest</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Step 3 expands Node C (0.74) — third highest</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Newly inserted child nodes enter the priority queue at correct position</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Resolved nodes are removed from frontier and never re-expanded</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Incorrect order: check max-heap implementation — ensure heapq uses negative entropy (Python heapq is min-heap)</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E1F5EE;color:#085041">TC-2.2</div>
+    <div class="tc-meta"><div class="tc-name">Node expansion pipeline — end to end</div><div class="tc-sub">Single node must expand to exactly 3 child hypotheses with correct metadata</div></div>
+    <div class="tc-status" style="background:#FAEEDA;color:#633806">Pipeline</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Input</div><div class="input-block">Seed node: {claim: "butterfly rash + joint pain + elevated ANA",<br>  domain: "pathophysiology", entropy: 0.87}<br>Run single expansion step</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">RAG retrieves exactly 6 chunks — verify by logging retrieval call</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">LLaMA generates exactly 3 child hypothesis claims</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Each child node has domain classified into one of 7 medical domains</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Each child node has entropy_score computed and in range [0, 1]</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">At least 1 of 3 children is clinically plausible (manual review) — lupus, MCTD, or RA expected</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Parent-child edges inserted correctly in graph</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">If &lt;3 children generated: check prompt template — add explicit instruction "generate exactly 3 distinct clinical hypotheses"</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E1F5EE;color:#085041">TC-2.3</div>
+    <div class="tc-meta"><div class="tc-name">Epistemic saturation stopping condition</div><div class="tc-sub">System must halt at correct time — not too early, not too late</div></div>
+    <div class="tc-status" style="background:#EEEDFE;color:#3C3489">Novel</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Test A — should saturate</div><div class="input-block">Inject synthetic entropy sequence (decreasing):<br>[0.91, 0.85, 0.79, 0.71, 0.62, 0.51, 0.38, 0.24, 0.18, 0.14, 0.13, 0.12]<br>θ = 0.2, window = 5</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Test B — should NOT saturate</div><div class="input-block">Inject synthetic entropy sequence (plateau):<br>[0.91, 0.85, 0.79, 0.71, 0.68, 0.65, 0.64, 0.63, 0.62, 0.61, 0.61, 0.60]<br>Same θ = 0.2</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Test C — rabbit hole interrupts saturation</div><div class="input-block">Decreasing then reversal:<br>[0.91, 0.82, 0.71, 0.59, 0.44, 0.31, 0.47, 0.63, 0.71]<br>Saturation must NOT fire — rabbit hole fires instead</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Test A: saturation fires at step 10–12, not before step 8</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Test B: saturation never fires within 12 steps</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Test C: rabbit_hole event fires at step 7, saturation blocked</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">All 3 saturation sub-conditions (avg, variance, trend) logged separately for inspection</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Premature saturation: increase window size from 5 to 7, retest</div></div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Never saturates on Test A: lower θ from 0.2 to 0.15, retest</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E1F5EE;color:#085041">TC-2.4</div>
+    <div class="tc-meta"><div class="tc-name">Rabbit hole detector</div><div class="tc-sub">Entropy reversal after decline must fire the rabbit_hole event correctly</div></div>
+    <div class="tc-status" style="background:#EEEDFE;color:#3C3489">Novel</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Input — clinical scenario</div><div class="input-block">Patient: Type 2 diabetes converging diagnosis<br>Graph entropy declining normally for 6 steps<br>Step 7: expansion of peripheral neuropathy node<br>RAG retrieves transthyretin amyloidosis literature<br>Entropy spikes upward</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">rabbit_hole event fires exactly once after 3+ consecutive entropy decreases followed by increase</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Event payload contains: triggering node id, depth, entropy_before, entropy_after, path from root</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">is_rabbit_hole flag set on triggering node</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">System does NOT halt — continues exploration after rabbit hole event</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Noise test: single-step entropy blip (up then immediately down) does NOT fire rabbit hole</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">False positive on noise: require 2 consecutive increases (not 1) before firing</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E1F5EE;color:#085041">TC-2.5</div>
+    <div class="tc-meta"><div class="tc-name">Contradiction detector — 3 scoped types</div><div class="tc-sub">Must catch real contradictions and not fire on ambiguous clinical language</div></div>
+    <div class="tc-status" style="background:#FAEEDA;color:#633806">Pipeline</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Test pairs — should fire contradiction</div><div class="input-block">Type 1 — Direct negation:<br>  "Metformin is contraindicated in renal failure"<br>  "Metformin is safe to use in renal failure"<br>Type 2 — Dosage:<br>  "Warfarin 10mg is the standard loading dose"<br>  "Warfarin loading dose above 5mg is dangerous"<br>Type 3 — Population:<br>  "Aspirin is safe in children for fever"<br>  "Aspirin is contraindicated in children under 16"</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Test pairs — should NOT fire</div><div class="input-block">"Metformin should be used with caution in mild renal impairment"<br>"Metformin is contraindicated in severe renal failure (eGFR &lt;30)"<br>→ These are NOT contradictions — different severity levels</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">All 3 "should fire" pairs trigger contradiction_flag = True with confidence ≥ 0.85</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">The "should NOT fire" pair does NOT trigger — routed to entropy as ambiguity</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Below-threshold pairs (confidence 0.6–0.84) route to entropy signal, not contradiction</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">False positive on severity-qualified pair: add negation pre-processor for severity qualifiers (severe/mild/moderate)</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E1F5EE;color:#085041">TC-2.6</div>
+    <div class="tc-meta"><div class="tc-name">Synthetic patient — classic presentation</div><div class="tc-sub">Full end-to-end run: clear diagnosis, entropy should decline smoothly</div></div>
+    <div class="tc-status" style="background:#E1F5EE;color:#085041">Integration</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Patient SP-1 — Classic MI</div><div class="input-block">Findings: {chest_pain: "crushing, radiating to left arm"},<br>  {diaphoresis: True}, {troponin: "elevated 2.1 ng/mL"},<br>  {ECG: "ST elevation leads II, III, aVF"}<br>Known diagnosis: inferior STEMI</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">"STEMI" or "myocardial infarction" appears in graph within 15 node expansions</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Entropy curve shows monotone decline — no rabbit hole events (classic case)</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Saturation fires before node budget (150) is exhausted</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Dominant domain in graph = pathophysiology + treatment (expected for cardiac case)</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Correct diagnosis not appearing: check RAG retrieval on "ST elevation troponin" — verify cardiology chunks in corpus</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#E1F5EE;color:#085041">TC-2.7</div>
+    <div class="tc-meta"><div class="tc-name">Synthetic patient — ambiguous presentation with comorbidity</div><div class="tc-sub">Rabbit hole must fire when hidden rare diagnosis is encountered</div></div>
+    <div class="tc-status" style="background:#EEEDFE;color:#3C3489">Novel</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Patient SP-2 — Wilson's disease hidden under hepatitis</div><div class="input-block">Findings: {liver_enzymes: "elevated ALT/AST"},<br>  {fatigue: True}, {jaundice: "mild"},<br>  {neurological: "tremor, slurred speech"}<br>Surface diagnosis: viral hepatitis<br>Hidden diagnosis: Wilson's disease (copper metabolism disorder)</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Graph initially converges toward hepatitis (entropy declining)</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Rabbit hole event fires when neurological node expanded (tremor triggers copper metabolism literature)</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">"Wilson's disease" or "ceruloplasmin" or "Kayser-Fleischer" appears in graph after rabbit hole</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Final report flags: "Rabbit hole detected at depth 4 — neurological findings suggest rare metabolic disorder"</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Wilson's not surfaced: verify HPO collection contains copper metabolism entries — check Orphanet supplement</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="phase-block" id="p3">
+<div class="phase-summary">
+  <div class="ps-card"><div class="ps-n">5</div><div class="ps-l">test cases</div></div>
+  <div class="ps-card"><div class="ps-n">10</div><div class="ps-l">MIMIC-III cases</div></div>
+  <div class="ps-card"><div class="ps-n">3</div><div class="ps-l">eval layers</div></div>
+  <div class="ps-card"><div class="ps-n">week 5–10</div><div class="ps-l">timeline</div></div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#FAEEDA;color:#633806">TC-3.1</div>
+    <div class="tc-meta"><div class="tc-name">Traversal comparison — entropy-first vs baselines</div><div class="tc-sub">Entropy-first must reach correct diagnosis in fewer expansions than BFS and random</div></div>
+    <div class="tc-status" style="background:#FCEBEB;color:#791F1F">Core claim</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Setup</div><div class="input-block">Run all 10 MIMIC-III cases with 3 traversal strategies:<br>  — Strategy A: entropy-first (Apiro)<br>  — Strategy B: breadth-first (BFS)<br>  — Strategy C: random order<br>Metric: node expansions until correct diagnosis appears in graph<br>Same seed nodes, same corpus, same budget for all 3</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Entropy-first reaches correct diagnosis in fewer expansions than BFS in ≥ 7/10 cases</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Entropy-first reaches correct diagnosis in fewer expansions than random in ≥ 8/10 cases</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Mean expansion count: entropy-first &lt; BFS &lt; random across all 10 cases</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Results table produced with per-case breakdown for paper</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">If entropy-first only wins 5–6/10: analyse losing cases — if they are all common presentations, report that entropy advantage is strongest for complex/rare cases (still a publishable finding)</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#FAEEDA;color:#633806">TC-3.2</div>
+    <div class="tc-meta"><div class="tc-name">Rabbit hole detection on real comorbidity cases</div><div class="tc-sub">Must fire on MIMIC-III cases with known hidden diagnoses</div></div>
+    <div class="tc-status" style="background:#FCEBEB;color:#791F1F">Core claim</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Setup</div><div class="input-block">Select 3 MIMIC-III cases with documented comorbidities:<br>  Case R1: primary diagnosis + documented secondary rare condition<br>  Case R2: presentation where premature closure was recorded<br>  Case R3: multi-system disease (e.g. lupus with renal + cardiac involvement)</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Rabbit hole fires on ≥ 2/3 selected cases</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">For cases where it fires: the secondary diagnosis appears in graph after the rabbit hole event</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Zero false positives on 3 simple single-diagnosis control cases</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Fires 1/3: still report as preliminary evidence — lower threshold to 1/3 with explicit "limited sample" framing</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#FAEEDA;color:#633806">TC-3.3</div>
+    <div class="tc-meta"><div class="tc-name">Saturation ablation study</div><div class="tc-sub">θ parameter must show robustness — correct diagnosis appears across all θ values</div></div>
+    <div class="tc-status" style="background:#FAEEDA;color:#633806">Ablation</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Setup</div><div class="input-block">Run 3 representative cases at θ ∈ {0.10, 0.15, 0.20, 0.30, 0.40}<br>Record for each θ: graph size at saturation, node expansions to correct dx,<br>rabbit hole events fired, total runtime</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Correct diagnosis appears in graph for all 5 θ values — system is robust to parameter choice</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">θ = 0.10 produces largest graph, θ = 0.40 produces smallest — monotone relationship</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Main effect of θ is graph size (thoroughness vs efficiency tradeoff) not diagnostic accuracy</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Ablation table produced for paper — becomes Figure 3</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Correct dx missing at θ=0.40: report this as the efficiency/accuracy boundary — recommend θ ≤ 0.30 for clinical use</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#FAEEDA;color:#633806">TC-3.4</div>
+    <div class="tc-meta"><div class="tc-name">Domain classifier accuracy</div><div class="tc-sub">BioBERT classifier must correctly label nodes into 7 medical domains</div></div>
+    <div class="tc-status" style="background:#FAEEDA;color:#633806">Component</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Input — 35 labeled test claims (5 per domain)</div><div class="input-block">Pathophysiology: "Autoimmune destruction of beta cells causes T1DM"<br>Pharmacology: "Metformin inhibits hepatic gluconeogenesis"<br>Genetics: "BRCA2 mutation increases breast cancer risk 45–85%"<br>Imaging: "CT shows ground-glass opacities bilateral lower lobes"<br>Lab findings: "Elevated ANA titer 1:320 with anti-dsDNA positive"<br>Treatment: "First-line treatment for SLE includes hydroxychloroquine"<br>Comorbidity: "Lupus nephritis occurs in 50% of SLE patients"</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Overall accuracy ≥ 80% (28/35 correctly classified)</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">No domain scores zero — all 7 domains have ≥ 1 correct classification</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Confusion matrix produced — identify which domains get confused most</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Accuracy &lt;80%: merge frequently confused domains (e.g. pathophysiology + lab_findings → clinical_findings) — reduce to 5 domains</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#FAEEDA;color:#633806">TC-3.5</div>
+    <div class="tc-meta"><div class="tc-name">Clinician process review — 5 graph reasoning paths</div><div class="tc-sub">Qualitative validation that graph structure reflects sound clinical reasoning</div></div>
+    <div class="tc-status" style="background:#E1F5EE;color:#085041">Expert</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Setup</div><div class="input-block">Export 5 graph reasoning paths as visual diagrams<br>Present to 1 clinician reviewer (medical professional)<br>Reviewer scores each path on 3 dimensions (1–5 scale):<br>  — Clinical plausibility of node connections<br>  — Appropriateness of exploration direction<br>  — Quality of rabbit hole / saturation decisions</div></div>
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Mean plausibility score ≥ 3.5/5 across all 5 paths</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">No path scores 1/5 on any dimension — no catastrophically wrong reasoning chains</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Reviewer qualitative comments documented verbatim for paper discussion section</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Low plausibility: identify which node expansions the reviewer flagged — check RAG retrieval for those specific nodes</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="phase-block" id="p4">
+<div class="phase-summary">
+  <div class="ps-card"><div class="ps-n">4</div><div class="ps-l">test cases</div></div>
+  <div class="ps-card"><div class="ps-n">3</div><div class="ps-l">output formats</div></div>
+  <div class="ps-card"><div class="ps-n">1</div><div class="ps-l">live demo</div></div>
+  <div class="ps-card"><div class="ps-n">week 9–14</div><div class="ps-l">timeline</div></div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#FAECE7;color:#712B13">TC-4.1</div>
+    <div class="tc-meta"><div class="tc-name">Diagnostic uncertainty report correctness</div><div class="tc-sub">Every claim in the report must be traceable to a graph node and a source</div></div>
+    <div class="tc-status" style="background:#FAEEDA;color:#633806">Output</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Every claim in report has a node_id reference — zero unsourced claims</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Every node_id reference points to a real node in the graph — no dangling references</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Peak-uncertainty domain correctly identified — matches domain with highest mean entropy in graph</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Rabbit hole paths section present when rabbit hole fired, absent when it did not</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Unresolved core node highlighted — the single highest-entropy unsaturated node at termination</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Dangling node_id references: add referential integrity check to report generator before rendering</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#FAECE7;color:#712B13">TC-4.2</div>
+    <div class="tc-meta"><div class="tc-name">Streamlit demo — live graph expansion</div><div class="tc-sub">UI must update in real time and handle errors gracefully</div></div>
+    <div class="tc-status" style="background:#FAEEDA;color:#633806">UI</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Patient findings input form accepts and parses free-text clinical findings</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">PyVis graph renders and updates after each node expansion — not just at the end</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Entropy curve chart updates live — new data point added per expansion</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Saturation event shows visual banner: "System has converged — diagnostic map complete"</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Rabbit hole event shows visual alert on triggering node in graph — highlighted in distinct color</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">LLM timeout (>30s) handled gracefully — shows spinner, does not crash</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Graph not updating live: switch from st.pyplot to st.empty() placeholder with periodic refresh</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#FAECE7;color:#712B13">TC-4.3</div>
+    <div class="tc-meta"><div class="tc-name">Mock mode — development speed test</div><div class="tc-sub">Cached responses must produce identical graph structure to live mode</div></div>
+    <div class="tc-status" style="background:#E6F1FB;color:#0C447C">Infra</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Mock mode completes full patient case in &lt; 10 seconds (vs hours in live mode)</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Graph node count and structure identical between mock and live run on same case</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Saturation and rabbit hole events fire at same steps in both modes</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">Cache miss (uncached prompt) falls back to live mode with warning log — does not crash</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Structure mismatch: check that entropy scores are cached alongside responses — not recomputed</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tc-card">
+  <div class="tc-header" onclick="toggleTC(this)">
+    <div class="tc-num" style="background:#FAECE7;color:#712B13">TC-4.4</div>
+    <div class="tc-meta"><div class="tc-name">GitHub reproducibility — clean environment test</div><div class="tc-sub">Fresh clone must reproduce calibration experiment results within tolerance</div></div>
+    <div class="tc-status" style="background:#E6F1FB;color:#0C447C">Infra</div>
+    <i class="ti ti-chevron-down tc-chevron" aria-hidden="true"></i>
+  </div>
+  <div class="tc-body">
+    <div class="tc-section"><div class="tc-sec-label">Pass criteria</div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">pip install -r requirements.txt succeeds with zero conflicts on clean Python 3.11 environment</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">python run_calibration.py reproduces B/A entropy ratio within ±0.05 of reported 1.61</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">python run_synthetic.py SP-1 completes without error and produces report PDF</div></div>
+      <div class="pass-row"><i class="ti ti-check pass-icon" style="color:var(--color-text-success)" aria-hidden="true"></i><div class="pass-text">README setup instructions complete in &lt;30 minutes for a new user</div></div>
+    </div>
+    <div class="tc-section"><div class="tc-sec-label">Failure action</div>
+      <div class="pass-row"><i class="ti ti-alert-triangle pass-icon" style="color:var(--color-text-warning)" aria-hidden="true"></i><div class="fail-text">Calibration ratio outside ±0.05: pin exact Ollama version and LLaMA model SHA in README — non-determinism from model updates</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+<script>
+function showPhase(id){
+  document.querySelectorAll('.phase-block').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.pnav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+function toggleTC(header){
+  const body=header.nextElementSibling;
+  const chev=header.querySelector('.tc-chevron');
+  const open=body.classList.toggle('open');
+  if(chev) chev.style.transform=open?'rotate(180deg)':'rotate(0deg)';
+}
+</script>

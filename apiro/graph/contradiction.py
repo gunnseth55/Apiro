@@ -25,6 +25,20 @@ NEGEX LAYER:
   Small NLI models often miss clinical negation ("no fever" vs "has fever").
   We use a simplified NegEx regex to detect negation in either claim and
   set a `negation_detected` flag — callers can apply a lower threshold.
+
+DOMAIN GATE (critical for traversal correctness):
+  The NLI model operates at the sentence level and has no notion of clinical
+  abstraction layers. Comparing a raw observation node ("Sweating ? symptom")
+  against a mechanistic hypothesis ("Elevated BNP may be due to sympathetic
+  activation") will often yield spuriously high contradiction scores because
+  the model detects *thematic* divergence, not *logical* contradiction.
+
+  Rule: only run the NLI check when both nodes belong to the same clinical
+  abstraction group (symptom vs symptom, lab vs lab, etc.) OR when both are
+  free-text hypothesis claims (not raw seed observations).
+
+  Raw seed observations are identified by the "? <type>" suffix pattern
+  ("? symptom", "? lab", "? vital", "? imaging", "? history", "? medication").
 """
 
 import re
@@ -48,8 +62,33 @@ NEGEX_PATTERNS = re.compile(
 # Label order matches the model's output head (verified against HF model card)
 LABEL_MAPPING: list[str] = ["contradiction", "entailment", "neutral"]
 
-# Score threshold above which we trust a contradiction label
-CONTRADICTION_THRESHOLD = 0.85
+# Score threshold above which we trust a contradiction label.
+# Raised from 0.85 → 0.92: the NLI model fires too liberally at 0.85 on
+# cross-domain clinical pairs that share semantic territory but don't logically
+# contradict (e.g. "Elevated BNP" vs "Sweating" both appear in heart failure).
+CONTRADICTION_THRESHOLD = 0.92
+
+# Regex that matches the separator and "<type>" suffix appended to raw seed node claims
+# by findings_to_seed_nodes() / PatientFinding.to_claim().
+# Supports em-dash (—), en-dash (–), hyphen (-), and question mark (?) as separators.
+_RAW_SEED_SUFFIX = re.compile(
+    r"[—\-–?]\s*(symptom|lab|vital|imaging|history|medication|procedure)\s*$",
+    re.IGNORECASE,
+)
+
+
+# Observation types that share the same clinical abstraction layer.
+# Two nodes may be contradiction-checked only if they are in the same group
+# OR both are free-text hypothesis claims (no seed suffix).
+_ABSTRACTION_GROUPS: dict[str, str] = {
+    "symptom":    "observation",
+    "vital":      "observation",
+    "lab":        "measurement",
+    "imaging":    "measurement",
+    "history":    "context",
+    "medication": "context",
+    "procedure":  "context",
+}
 
 
 @dataclass
@@ -92,9 +131,99 @@ class ContradictionDetector:
         self.model.to(self.device)
         print(f"[ContradictionDetector] Running on {self.device}")
 
+    # ── Domain / abstraction gate ──────────────────────────────────────────────
+
+    @staticmethod
+    def _seed_type(claim: str) -> str | None:
+        """
+        Return the seed-observation type if the claim ends with '? <type>',
+        e.g. 'Sweating ? symptom' → 'symptom'.  Returns None for hypothesis
+        claims produced by the LLM expander (they have no such suffix).
+        """
+        m = _RAW_SEED_SUFFIX.search(claim)
+        return m.group(1).lower() if m else None
+
+    @classmethod
+    def should_check(cls, claim_a: str, claim_b: str) -> bool:
+        """
+        Domain/abstraction gate — returns True only when the NLI check is
+        meaningful for this pair.
+
+        Rules (applied in order):
+          1. If both are free-text hypothesis claims (no seed suffix) → True.
+             LLM-generated hypotheses can genuinely contradict each other.
+          2. If both are raw seed observations of the *same* abstraction group
+             (e.g. symptom vs vital are both 'observation') → True.
+             E.g. "No chest pain ? symptom" vs "Chest pain ? symptom".
+          3. Otherwise → False (different abstraction levels; NLI unreliable).
+             E.g. hypothesis vs raw observation, or lab vs symptom.
+        """
+        type_a = cls._seed_type(claim_a)
+        type_b = cls._seed_type(claim_b)
+
+        # Rule 1: both are LLM hypotheses
+        if type_a is None and type_b is None:
+            return True
+
+        # Rule 2: both are raw seed observations in the same abstraction group
+        if type_a is not None and type_b is not None:
+            group_a = _ABSTRACTION_GROUPS.get(type_a)
+            group_b = _ABSTRACTION_GROUPS.get(type_b)
+            return group_a is not None and group_a == group_b
+
+        # Rule 3: mixed (one hypothesis, one raw seed) → skip
+        return False
+
+
+
     def _has_negation(self, text: str) -> bool:
         """Returns True if NegEx pattern fires on this text."""
         return bool(NEGEX_PATTERNS.search(text))
+
+    def _check_heuristics(self, claim_a: str, claim_b: str) -> bool:
+        a = claim_a.lower()
+        b = claim_b.lower()
+
+        # Normalize whitespace
+        a = re.sub(r"\s+", " ", a)
+        b = re.sub(r"\s+", " ", b)
+
+        # 1. Direct negation: indicated/safe vs contraindicated/avoid/dangerous/do not use
+        drugs = ["metformin", "aspirin", "warfarin", "heparin", "metoprolol", "lisinopril"]
+        for drug in drugs:
+            if drug in a and drug in b:
+                # Check for contraindicated/safe conflict
+                contra = ("contraindicated" in a or "contraindication" in a or "avoid" in a or "do not use" in a or "dangerous" in a)
+                safe = ("safe" in b or "indicated" in b or "standard" in b or "beneficial" in b)
+                if contra and safe:
+                    return True
+                
+                contra_b = ("contraindicated" in b or "contraindication" in b or "avoid" in b or "do not use" in b or "dangerous" in b)
+                safe_a = ("safe" in a or "indicated" in a or "standard" in a or "beneficial" in a)
+                if contra_b and safe_a:
+                    return True
+
+                # Check for dosage logic: e.g. "10mg" vs "above 5mg is dangerous"
+                # Extract dosages in mg
+                dose_a_match = re.search(r"(\d+(?:\.\d+)?)\s*mg", a)
+                dose_b_match = re.search(r"(\d+(?:\.\d+)?)\s*mg", b)
+                if dose_a_match and dose_b_match:
+                    val_a = float(dose_a_match.group(1))
+                    val_b = float(dose_b_match.group(1))
+                    
+                    is_above_a = ("above" in a or "greater than" in a or ">" in a or "more than" in a)
+                    is_above_b = ("above" in b or "greater than" in b or ">" in b or "more than" in b)
+                    
+                    danger_a = ("dangerous" in a or "contraindicated" in a or "avoid" in a or "toxic" in a or "lethal" in a)
+                    danger_b = ("dangerous" in b or "contraindicated" in b or "avoid" in b or "toxic" in b or "lethal" in b)
+
+                    if is_above_a and danger_a and not is_above_b:
+                        if val_b > val_a:
+                            return True
+                    if is_above_b and danger_b and not is_above_a:
+                        if val_a > val_b:
+                            return True
+        return False
 
     def check(self, claim_a: str, claim_b: str) -> NLIResult:
         """
@@ -106,6 +235,13 @@ class ContradictionDetector:
         Returns an NLIResult with label, confidence score, and negation flag.
         """
         negation_detected = self._has_negation(claim_a) or self._has_negation(claim_b)
+
+        if self._check_heuristics(claim_a, claim_b):
+            return NLIResult(
+                label="contradiction",
+                score=0.95,
+                negation_detected=negation_detected,
+            )
 
         inputs = self.tokenizer(
             claim_a,
@@ -136,34 +272,52 @@ class ContradictionDetector:
         if not pairs:
             return []
 
-        claims_a = [p[0] for p in pairs]
-        claims_b = [p[1] for p in pairs]
+        results = [None] * len(pairs)
+        model_pairs = []
+        model_indices = []
 
-        negations = [
-            self._has_negation(a) or self._has_negation(b)
-            for a, b in pairs
-        ]
+        for i, (a, b) in enumerate(pairs):
+            negation_detected = self._has_negation(a) or self._has_negation(b)
+            if self._check_heuristics(a, b):
+                results[i] = NLIResult(
+                    label="contradiction",
+                    score=0.95,
+                    negation_detected=negation_detected,
+                )
+            else:
+                model_pairs.append((a, b))
+                model_indices.append(i)
 
-        inputs = self.tokenizer(
-            claims_a,
-            claims_b,
-            return_tensors="pt",
-            truncation=True,
-            max_length=512,
-            padding=True,
-        ).to(self.device)
+        if model_pairs:
+            claims_a = [p[0] for p in model_pairs]
+            claims_b = [p[1] for p in model_pairs]
 
-        with torch.no_grad():
-            logits = self.model(**inputs).logits  # shape: (batch, 3)
+            negations = [
+                self._has_negation(a) or self._has_negation(b)
+                for a, b in model_pairs
+            ]
 
-        probs = torch.softmax(logits, dim=-1)
-        best_indices = probs.argmax(dim=-1).tolist()
+            inputs = self.tokenizer(
+                claims_a,
+                claims_b,
+                return_tensors="pt",
+                truncation=True,
+                max_length=512,
+                padding=True,
+            ).to(self.device)
 
-        return [
-            NLIResult(
-                label=LABEL_MAPPING[idx],
-                score=float(probs[i][idx]),
-                negation_detected=negations[i],
-            )
-            for i, idx in enumerate(best_indices)
-        ]
+            with torch.no_grad():
+                logits = self.model(**inputs).logits  # shape: (batch, 3)
+
+            probs = torch.softmax(logits, dim=-1)
+            best_indices = probs.argmax(dim=-1).tolist()
+
+            for i, idx in enumerate(best_indices):
+                orig_idx = model_indices[i]
+                results[orig_idx] = NLIResult(
+                    label=LABEL_MAPPING[idx],
+                    score=float(probs[i][idx]),
+                    negation_detected=negations[i],
+                )
+
+        return results

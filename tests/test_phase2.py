@@ -52,6 +52,10 @@ class StubContradictionDetector:
             return R("contradiction", 0.92, False)
         return R("neutral", 0.55, False)
 
+    def should_check(self, claim_a: str, claim_b: str) -> bool:
+        """Always check in tests."""
+        return True
+
 
 # ── Shared factory ────────────────────────────────────────────────────────────
 
@@ -171,7 +175,8 @@ def test_saturation_does_not_fire_prematurely():
 
     status = sat.get_status(graph)
     assert not status["saturated"], "Saturation should NOT fire with high entropy"
-    print(f"  ✓ Saturation correctly NOT fired: avg={status['avg_entropy']:.3f}")
+    avg_str = f"{status['avg_entropy']:.3f}" if status['avg_entropy'] is not None else "None"
+    print(f"  ✓ Saturation correctly NOT fired: avg={avg_str}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -313,11 +318,47 @@ def test_end_to_end_traversal():
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# TEST 8: Real ContradictionDetector should_check domain gate logic
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_contradiction_detector_should_check():
+    """Verify that should_check correctly gates clinical claims by abstraction layer."""
+    from apiro.graph.contradiction import ContradictionDetector
+
+    # Both are hypotheses (no seed suffix) -> should check (True)
+    assert ContradictionDetector.should_check(
+        "Metanephrine levels in urine may be elevated",
+        "Elevated catecholamines are due to essential hypertension"
+    ) is True
+
+    # Both are raw seed observations of the SAME group -> should check (True)
+    assert ContradictionDetector.should_check(
+        "Chest pain — symptom",
+        "Sweating — symptom"
+    ) is True
+
+    # Mixed (hypothesis vs raw seed observation) -> should skip (False)
+    assert ContradictionDetector.should_check(
+        "Metanephrine levels in urine may be elevated",
+        "Chest pain — symptom"
+    ) is False
+
+    # Mixed (different raw observation groups) -> should skip (False)
+    assert ContradictionDetector.should_check(
+        "Metanephrine: 10.5 — lab",
+        "Chest pain — symptom"
+    ) is False
+
+    print("  ✓ Real ContradictionDetector.should_check gated correctly")
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Standalone runner
 # ═══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
     tests = [
+
         test_export_json_structure,
         test_export_json_writes_file,
         test_traversal_log_written,
@@ -329,7 +370,9 @@ if __name__ == "__main__":
         test_stub_contradiction_detector_logic,
         test_node_expander_creates_three_children,
         test_end_to_end_traversal,
+        test_contradiction_detector_should_check,
     ]
+
 
     passed, failed = 0, 0
     for test in tests:

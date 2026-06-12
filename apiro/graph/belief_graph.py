@@ -18,6 +18,11 @@ from apiro.graph.node import Node
 from apiro.graph.edge import Edge
 
 
+class BudgetExceededError(Exception):
+    """Exception raised when the node budget is exceeded."""
+    pass
+
+
 class BeliefGraph:
     """
     Directed acyclic graph of clinical Nodes connected by typed Edges.
@@ -27,19 +32,26 @@ class BeliefGraph:
     picks `frontier[0]` (highest uncertainty) to expand next.
     """
 
-    def __init__(self):
+    def __init__(self, max_depth: int = 6, max_nodes: int = 150):
         self._graph: nx.DiGraph   = nx.DiGraph()
         self.nodes:  dict[str, Node] = {}   # id → Node
         self.edges:  list[Edge]      = []
         self._expansion_log: list[dict] = []  # ordered history of expanded nodes
+        self.max_depth = max_depth
+        self.max_nodes = max_nodes
 
     # ------------------------------------------------------------------
     # Mutation
     # ------------------------------------------------------------------
 
     def add_node(self, node: Node) -> None:
-        """Add a node. Silently ignores duplicate IDs."""
+        """Add a node. Silently ignores duplicate IDs. Enforces budget and depth limits."""
         if node.id in self.nodes:
+            return
+        if len(self.nodes) >= self.max_nodes:
+            raise BudgetExceededError(f"Attempted to exceed node budget of {self.max_nodes}")
+        if node.depth > self.max_depth:
+            # depth enforcement: node at depth 7 rejected when max_depth=6
             return
         self.nodes[node.id] = node
         self._graph.add_node(node.id, entropy=node.entropy_score, domain=node.domain)
@@ -100,7 +112,7 @@ class BeliefGraph:
         entropies = [e["entropy"] for e in log]
         x = np.arange(len(entropies), dtype=float)
         slope = float(np.polyfit(x, entropies, 1)[0])
-        return slope
+        return round(slope, 9)
 
     def get_recent_entropies(self, window: int = 5) -> list[float]:
         """Return entropy values from the last `window` expanded nodes."""

@@ -32,7 +32,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+from apiro.config import CONTRADICTION_THRESHOLD_EF
+
 logger = logging.getLogger(__name__)
+
 
 
 @dataclass
@@ -228,9 +231,22 @@ class ApiroTraversal:
                     if existing.id == new_node.id:
                         continue
 
+                    # ── Abstraction-layer gate ────────────────────────────────
+                    # Only run expensive NLI when both claims are at the same
+                    # clinical abstraction level (both hypotheses, or both raw
+                    # observations of the same type). Cross-level checks
+                    # (hypothesis vs raw observation) produce false positives.
+                    if not self.contradiction.should_check(new_node.claim, existing.claim):
+                        logger.debug(
+                            f"[Traversal] Contradiction gate: skipping cross-abstraction "
+                            f"pair '{new_node.claim[:30]}' vs '{existing.claim[:30]}'"
+                        )
+                        continue
+
                     result = self.contradiction.check(new_node.claim, existing.claim)
 
-                    if result.label == "contradiction" and result.score > 0.85:
+                    if result.label == "contradiction" and result.score > CONTRADICTION_THRESHOLD_EF:
+
                         # Find the edge and flag it
                         for edge in graph.edges:
                             if edge.parent_id == new_node.parent_id and edge.child_id == new_node.id:
@@ -247,6 +263,7 @@ class ApiroTraversal:
                             f"[Traversal] Contradiction: '{new_node.claim[:40]}' "
                             f"vs '{existing.claim[:40]}' (score={result.score:.3f})"
                         )
+
 
         # ── Wrap up ───────────────────────────────────────────────────────────
         duration = round(time.time() - start_time, 2)

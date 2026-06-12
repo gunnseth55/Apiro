@@ -55,7 +55,7 @@ class SaturationDetector:
         recent = graph.get_recent_entropies(self.window)
         n = len(recent)
 
-        if n < 2:
+        if n < self.window:
             return {
                 "saturated":   False,
                 "avg_entropy": None,

@@ -276,6 +276,23 @@ class TestBeliefGraph:
         g.mark_resolved("only")
         assert g.get_entropy_trend() == 0.0
 
+    def test_budget_exceeded_error(self):
+        from apiro.graph.belief_graph import BudgetExceededError
+        g = BeliefGraph(max_nodes=10)
+        for i in range(10):
+            g.add_node(make_node(f"n{i}", 0.5))
+        with pytest.raises(BudgetExceededError):
+            g.add_node(make_node("n10", 0.5))
+
+    def test_depth_enforcement(self):
+        g = BeliefGraph(max_depth=6)
+        node_depth_6 = make_node("d6", 0.5, depth=6)
+        node_depth_7 = make_node("d7", 0.5, depth=7)
+        g.add_node(node_depth_6)
+        g.add_node(node_depth_7)
+        assert "d6" in g.nodes
+        assert "d7" not in g.nodes
+
 
 # ============================================================
 # SaturationDetector tests
@@ -332,7 +349,10 @@ class TestSaturationDetector:
 
     def test_for_domain_genetics(self):
         det = SaturationDetector.for_domain("genetics")
-        assert det.theta == 0.20
+        # Calibrated empirically for llama3.1:8b — ClinVar conflicting-classification
+        # claims plateau at 0.66-0.69 nats, so theta=0.70 fires saturation correctly
+        # while still requiring meaningful convergence below the initial entropy of 0.75.
+        assert det.theta == 0.70
 
     def test_for_domain_unknown_uses_default(self):
         from apiro.config import DEFAULT_THETA

@@ -33,8 +33,15 @@ from typing import Optional
 
 from apiro.graph.node import Node
 from apiro.graph.edge import Edge
+from apiro.config import (
+    RAG_DOMAIN_FILTER,
+    N_CHILD_HYPOTHESES,
+    CONTRADICTION_THRESHOLD,
+    RAG_TOP_K,
+)
 
 logger = logging.getLogger(__name__)
+
 
 
 # ── Domain classifier ─────────────────────────────────────────────────────────
@@ -71,10 +78,15 @@ class StubEntropyEngine:
     """
     Deterministic fake entropy engine for testing.
 
-    SWAP POINT — replace with the real engine:
+    SWAP POINT — replace with the real engine adapter:
         from apiro.entropy.engine import EntropyEngine
-        entropy_engine = EntropyEngine()
-        # Interface: entropy_engine.temperature_corrected_entropy(claim: str) -> Optional[float]
+
+        class RealEntropyAdapter:
+            def __init__(self):
+                self._engine = EntropyEngine()
+            def compute(self, claim: str, context_chunks=None) -> float:
+                result = self._engine.epistemic_certainty_entropy(claim, context_chunks)
+                return result if result is not None else 0.5
 
     The stub returns a value that slowly declines with each call to mimic
     realistic saturation behaviour in test runs.
@@ -92,6 +104,11 @@ class StubEntropyEngine:
         val = max(0.05, self._value)
         self._value = max(0.05, self._value - self._step)
         return round(val, 4)
+
+    def epistemic_certainty_entropy(self, claim: str, context_chunks: list[str] | None = None) -> float:
+        """Alias to compute() for compatibility with real EntropyEngine interface."""
+        return self.compute(claim, context_chunks)
+
 
 
 class StubChromaClient:
@@ -123,20 +140,45 @@ class StubChromaClient:
 
 
 # ── LLM prompt template ───────────────────────────────────────────────────────
+# Design rationale:
+#   The prompt must be domain-anchored and evidence-constrained to prevent
+#   topic drift (e.g. STEMI → calyceal arteritis). Three hard rules are
+#   enforced explicitly in the prompt text:
+#     1. Stay within the parent domain or one directly adjacent domain.
+#     2. Every hypothesis must be grounded in the retrieved evidence — do not
+#        introduce organ systems, conditions, or drugs not mentioned above.
+#     3. Output exactly 3 short, specific, single-sentence clinical claims.
+#   These rules are verbose by design: LLMs follow explicit constraints more
+#   reliably than implicit style guidance.
 
 HYPOTHESIS_PROMPT_TEMPLATE = """\
-You are a clinical reasoning engine.
-Parent claim: {claim}
-Medical domain: {domain}
-Retrieved evidence:
+You are Apiro, a precise clinical differential-diagnosis engine.
+
+Your task: given a parent clinical claim and retrieved medical evidence, generate
+exactly 3 child hypotheses that deepen the diagnostic reasoning.
+
+=== PARENT CLAIM ===
+{claim}
+
+=== MEDICAL DOMAIN ===
+{domain}
+
+=== RETRIEVED EVIDENCE (use ONLY what is stated here) ===
 {rag_chunks}
 
-Generate exactly 3 child hypotheses that either:
-- Support or refine the parent claim with more specificity
-- Represent a competing differential diagnosis
-- Identify a complication or comorbidity
+=== STRICT RULES ===
+1. DOMAIN LOCK: Every hypothesis MUST remain within the "{domain}" domain or one
+   directly clinically adjacent domain (e.g. pathophysiology ↔ lab findings).
+   Do NOT introduce unrelated organ systems, rare syndromes, or diseases not
+   mentioned in the evidence above.
+2. EVIDENCE GROUNDED: Every hypothesis must be directly derivable from the
+   evidence above. Do not speculate beyond what the evidence supports.
+3. CLINICAL SPECIFICITY: Each hypothesis must be a specific, testable clinical
+   claim — not a vague statement. Include mechanism, finding, or intervention.
+4. FORMAT: Output exactly 3 hypotheses, one per line, no numbering, no preamble,
+   no explanation. Each hypothesis is a single sentence under 25 words.
 
-Format: one hypothesis per line, no numbering, no preamble.\
+=== OUTPUT (3 lines only) ===\
 """
 
 
@@ -176,23 +218,57 @@ class NodeExpander:
         self._node_counter += 1
         return f"{parent_id}_c{index}"
 
-    def _retrieve_context(self, claim: str, n_results: int = 6) -> list[str]:
-        """Query ChromaDB for the top-N most relevant medical text chunks."""
+    def _retrieve_context(self, claim: str, domain: str = "", n_results: int = RAG_TOP_K) -> list[str]:
+        """
+        Query ChromaDB for the top-N most relevant medical text chunks.
+
+        When RAG_DOMAIN_FILTER=True (config default) the query is scoped to
+        chunks whose medical_domain matches `domain`. This prevents the LLM
+        from generating hypotheses grounded in unrelated PubMed papers.
+        """
+        # Build optional metadata filter
+        where: dict | None = None
+        if RAG_DOMAIN_FILTER and domain:
+            # Normalise domain name to match corpus metadata
+            # (corpus uses 'lab' not 'lab findings'; both map cleanly)
+            db_domain = domain.replace(" findings", "").lower()
+            where = {"medical_domain": db_domain}
+
         try:
-            result = self.chroma_client.query(
-                collection_name=self.collection_name,
-                query_texts=[claim],
-                n_results=n_results,
-            )
+            try:
+                # Embedder._collection-backed adapter: accepts where kwarg
+                result = self.chroma_client.query(
+                    query_texts=[claim],
+                    n_results=n_results,
+                    where=where,
+                )
+            except TypeError:
+                # Stub / legacy client without where support — fall back
+                result = self.chroma_client.query(
+                    collection_name=self.collection_name,
+                    query_texts=[claim],
+                    n_results=n_results,
+                )
             docs = result.get("documents", [[]])
             return docs[0] if docs else []
         except Exception as e:
             logger.warning(f"[NodeExpander] ChromaDB query failed: {e}. Continuing without context.")
             return []
 
+
     def _build_prompt(self, node: Node, chunks: list[str]) -> str:
-        """Fill the prompt template with node data and retrieved chunks."""
-        rag_text = "\n".join(f"- {chunk}" for chunk in chunks) if chunks else "No context retrieved."
+        """
+        Build the hypothesis-generation prompt.
+
+        The prompt explicitly passes the domain and enforces evidence-only
+        grounding to prevent the LLM from drifting off-topic across hops.
+        An empty chunk list is an honest signal — the evidence block will
+        say "No context retrieved" and the model will stay conservative.
+        """
+        if chunks:
+            rag_text = "\n".join(f"  [{i+1}] {chunk.strip()}" for i, chunk in enumerate(chunks))
+        else:
+            rag_text = "  [No context retrieved — be conservative, stay close to parent claim.]"
         return HYPOTHESIS_PROMPT_TEMPLATE.format(
             claim=node.claim,
             domain=node.domain,
@@ -244,8 +320,9 @@ class NodeExpander:
         """
         logger.info(f"[NodeExpander] Expanding: '{node.claim[:60]}'")
 
-        # Step 1: RAG retrieval
-        chunks = self._retrieve_context(node.claim)
+        # Step 1: RAG retrieval — scoped to node.domain when RAG_DOMAIN_FILTER=True
+        chunks = self._retrieve_context(node.claim, domain=node.domain)
+
 
         # Step 2 & 3: Prompt + LLM
         prompt = self._build_prompt(node, chunks)
@@ -256,10 +333,16 @@ class NodeExpander:
         new_nodes = []
 
         for i, hypothesis in enumerate(hypotheses):
-            # Step 5a: Entropy
-            # SWAP POINT: StubEntropyEngine.compute() → EntropyEngine.temperature_corrected_entropy()
-            # The stub's interface mirrors the real engine's .compute(claim, chunks) call.
-            entropy = self.entropy_engine.compute(hypothesis, chunks)
+            # Step 5a: Epistemic certainty entropy.
+            # Measures uncertainty at the clinical decision boundary:
+            # "Given the RAG evidence, is this hypothesis clinically supported?"
+            # First-token Shannon entropy over Yes/No — the core Apiro signal.
+            entropy = self.entropy_engine.epistemic_certainty_entropy(hypothesis, chunks)
+            # Guard: epistemic_certainty_entropy returns None on Ollama timeout.
+            # Fall back to ln(2) = 0.693 (max binary uncertainty) so the node
+            # stays high-priority in the frontier and Node.__post_init__ doesn't crash.
+            if entropy is None:
+                entropy = 0.693
 
             # Step 5b: Domain classification
             domain = classify_domain(hypothesis)
@@ -278,11 +361,12 @@ class NodeExpander:
             # Step 5d: Create the edge
             edge = Edge(parent_id=node.id, child_id=child_id)
 
-            # Step 5e: Lightweight contradiction check (full check runs in traversal.py)
             if self.contradiction_detector:
                 for existing in list(graph.nodes.values()):
+                    if not self.contradiction_detector.should_check(hypothesis, existing.claim):
+                        continue
                     result = self.contradiction_detector.check(hypothesis, existing.claim)
-                    if result.label == "contradiction" and result.score > 0.85:
+                    if result.label == "contradiction" and result.score > CONTRADICTION_THRESHOLD:
                         edge.contradiction_flag = True
                         logger.info(
                             f"[NodeExpander] Contradiction flagged: "
@@ -290,9 +374,18 @@ class NodeExpander:
                         )
                         break
 
+
             # Step 5f: Add to graph
+            # add_node() may silently drop the node if it exceeds max_depth or
+            # max_nodes budget. Only add the edge if the node was actually accepted.
             graph.add_node(child_node)
-            graph.add_edge(edge)
+            if child_id in graph.nodes:
+                graph.add_edge(edge)
+            else:
+                logger.debug(
+                    f"[NodeExpander] Node '{child_id}' dropped by graph "
+                    f"(depth={child_node.depth} or budget exceeded) — skipping edge."
+                )
             new_nodes.append(child_node)
             logger.debug(
                 f"  → Child {i}: '{hypothesis[:60]}' "
