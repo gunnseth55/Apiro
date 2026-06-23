@@ -20,7 +20,7 @@ for _d in [DATA_DIR, CORPUS_DIR, CHROMA_DIR, LOG_DIR]:
 # Ollama / LLM
 # ---------------------------------------------------------------------------
 OLLAMA_BASE_URL  = "http://localhost:11434"
-PRIMARY_MODEL    = "mistral:latest"     # Configured to use the locally available model
+PRIMARY_MODEL    = "llama3.1:8b"        # Configured to use the locally available model
 TOP_LOGPROBS     = 20                   # top-k logprobs for entropy computation (Ollama max is 20)
 MAX_FIRST_TOKEN  = 1                    # only first token for entropy
 MAX_ANSWER_TOKENS = 80                  # short answer generation
@@ -64,13 +64,6 @@ EVAL_EXCLUDE_SEED_HITS = True
 # entropy_auc is this fraction lower than BF's (e.g. 0.10 = 10% lower).
 EVAL_AUC_TIEBREAKER_MARGIN = 0.10
 
-# Semantic similarity threshold for diagnosis hit detection.
-# The SentenceTransformer cosine score must exceed this value to count as a hit.
-# 0.62 correctly captures parent-term matches (e.g. "Acute Myocardial Infarction"
-# vs "Acute inferior wall ST-elevation myocardial infarction") while rejecting
-# unrelated diagnoses (empirically ~0.35–0.50 for noise pairs).
-EVAL_SIM_THRESHOLD = 0.62
-
 # ---------------------------------------------------------------------------
 # Heuristic seed entropy (used when entropy_engine=None in build_cases)
 # ---------------------------------------------------------------------------
@@ -113,8 +106,8 @@ VITAL_THRESHOLDS: dict[str, tuple[float, float]] = {
 # The genetics domain is kept lower (0.50) per the plan: "rare disease —
 # explore more"; comorbidity higher (0.60) because comorbidities are
 # inherently uncertain — a higher bar prevents premature stopping.
-SATURATION_WINDOW       = 5      # look back at last N expanded nodes
-SATURATION_MAX_VARIANCE = 0.04   # entropy variance threshold
+SATURATION_WINDOW       = 4      # tightened from 5 → 4: stop sooner when entropy settles
+SATURATION_MAX_VARIANCE = 0.03   # tightened from 0.04 → 0.03: less tolerance for plateau drift
 THETA_BY_DOMAIN = {
     "pathophysiology": 0.55,   # empirical: well-supported mechanism claims hit ~0.43
     "pharmacology":    0.55,   # empirical: nitroglycerin/angina hit 0.43 at depth 1

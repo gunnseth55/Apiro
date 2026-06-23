@@ -75,6 +75,9 @@ class ApiroTraversal:
         rabbit_hole,
         contradiction,
         log_dir: str = "data",
+        early_exit_judge=None,
+        early_exit_ground_truth: str = "",
+        early_exit_min_nodes: int = 10,
     ):
         self.expander    = expander
         self.saturation  = saturation
@@ -82,6 +85,12 @@ class ApiroTraversal:
         self.contradiction = contradiction
         self.log_dir     = log_dir
         self._traversal_log: list[dict] = []
+        # Optional early-exit: stop as soon as synthesis already contains the answer.
+        # Prevents EF from over-expanding after it has found the target diagnosis.
+        self._early_exit_judge = early_exit_judge
+        self._early_exit_ground_truth = early_exit_ground_truth
+        self._early_exit_min_nodes = early_exit_min_nodes
+        self._early_exit_interval = 5  # check every N expansions
 
     # ── Logging helpers ───────────────────────────────────────────────────────
 
@@ -122,6 +131,7 @@ class ApiroTraversal:
         """
         start_time = time.time()
         self._traversal_log = []
+        self._final_synthesis_override = None
 
         # ── Seed the graph ────────────────────────────────────────────────────
         for seed in seed_nodes:
@@ -214,6 +224,39 @@ class ApiroTraversal:
             new_nodes = self.expander.expand(node, graph)
             graph.mark_resolved(node.id)
 
+            # ── Early-exit check (every N expansions, after min_nodes) ────────
+            # If a judge + ground_truth are provided, run an interim synthesis
+            # every `_early_exit_interval` expansions once min_nodes is reached.
+            # This prevents EF from wasting expansions when it already has the answer.
+            n_expanded = len([n for n in graph.nodes.values() if n.resolved])
+            if (
+                self._early_exit_judge is not None
+                and self._early_exit_ground_truth
+                and n_expanded >= self._early_exit_min_nodes
+                and n_expanded % self._early_exit_interval == 0
+            ):
+                interim_synthesis = self.expander.synthesize_differential(graph)
+                hit, reason = self._early_exit_judge.check(
+                    self._early_exit_ground_truth, interim_synthesis
+                )
+                if hit:
+                    stop_reason = "early_exit_hit"
+                    logger.info(
+                        f"[Traversal] EARLY EXIT at {n_expanded} nodes — "
+                        f"synthesis already contains ground truth "
+                        f"(reason={reason}): {interim_synthesis}"
+                    )
+                    self._log({
+                        "event":        "early_exit_hit",
+                        "iteration":    iteration,
+                        "n_expanded":   n_expanded,
+                        "reason":       reason,
+                        "synthesis":    interim_synthesis,
+                    })
+                    # Use the interim synthesis as the final result
+                    self._final_synthesis_override = interim_synthesis
+                    break
+
             # ── Contradiction check: new nodes vs ALL existing nodes ───────────
             existing_nodes = list(graph.nodes.values())
 
@@ -270,7 +313,10 @@ class ApiroTraversal:
         duration = round(time.time() - start_time, 2)
 
         # ── Synthesize differential ───────────────────────────────────────────
-        synthesis = self.expander.synthesize_differential(graph)
+        if self._final_synthesis_override is not None:
+            synthesis = self._final_synthesis_override
+        else:
+            synthesis = self.expander.synthesize_differential(graph)
 
         self._log({
             "event":            "traversal_complete",

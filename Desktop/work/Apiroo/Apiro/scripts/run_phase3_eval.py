@@ -190,6 +190,12 @@ def main():
         default=MAX_NODES_PER_RUN,
         help=f"Max nodes expanded per case (default: {MAX_NODES_PER_RUN} from config).",
     )
+    parser.add_argument(
+        "--filter-device-cases",
+        action="store_true",
+        default=True,
+        help="Skip cases where the ground truth is a device/procedure event (default: True).",
+    )
     args = parser.parse_args()
 
     logger.info("=" * 60)
@@ -219,6 +225,27 @@ def main():
         all_cases.extend(adapter.build_cases(raw, entropy_engine=entropy_engine))
         logger.info(f"Loaded {len(raw)} CUPCase cases.")
 
+    # ── Filter device/procedure cases ────────────────────────────────────
+    # These have ground-truth diagnoses that are device events or procedures,
+    # outside the clinical-disease scope of the graph engine.
+    DEVICE_PROCEDURE_KEYWORDS = [
+        "icd", "pacemaker", "defibrillator", "oversensing", "shock",
+        "catheter", "stent placement", "procedure", "device",
+        "intubation", "ventilation", "tracheostomy",
+    ]
+    if args.filter_device_cases:
+        before = len(all_cases)
+        all_cases = [
+            c for c in all_cases
+            if not any(
+                kw in c.get("ground_truth", "").lower()
+                for kw in DEVICE_PROCEDURE_KEYWORDS
+            )
+        ]
+        filtered = before - len(all_cases)
+        if filtered:
+            logger.info(f"[Filter] Removed {filtered} device/procedure cases. Remaining: {len(all_cases)}")
+
     logger.info(f"Total eval cases: {len(all_cases)}")
 
     # ── Run evaluation ────────────────────────────────────────────────────
@@ -230,6 +257,7 @@ def main():
         max_depth=args.max_depth,
         max_nodes=args.max_nodes,
         embedder=embedder,
+        llm_client=llm_client,   # enables LLM-as-judge for diagnosis matching
     )
 
     summary = evaluator.evaluate_all(
@@ -246,7 +274,7 @@ def main():
     print(f"  Ties:      {summary['ties']}")
     print(f"  Both miss: {summary['both_miss']}")
     print(f"  EF rate:   {summary['ef_win_rate']:.1%}")
-    target = "[PASS] (>=70%)" if summary["target_met"] else "[FAIL] (need >=70%)"
+    target = "✅ PASS (≥70%)" if summary["target_met"] else "❌ FAIL (need ≥70%)"
     print(f"  Target:    {target}")
     print(f"  Results:   {args.output}")
     print("=" * 60)

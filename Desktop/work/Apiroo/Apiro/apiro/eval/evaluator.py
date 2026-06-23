@@ -39,150 +39,67 @@ from apiro.graph.belief_graph import BeliefGraph
 from apiro.graph.node import Node
 from apiro.graph.traversal import ApiroTraversal, TraversalResult
 from apiro.graph.breadth_first import BreadthFirstTraversal
-from apiro.config import EVAL_EXCLUDE_SEED_HITS, EVAL_AUC_TIEBREAKER_MARGIN, EVAL_SIM_THRESHOLD
+from apiro.eval.llm_judge import MedicalDiagnosisJudge
+from apiro.config import EVAL_EXCLUDE_SEED_HITS, EVAL_AUC_TIEBREAKER_MARGIN
 
 logger = logging.getLogger(__name__)
 
 
 # ── Metric helpers ─────────────────────────────────────────────────────────────
 
-# ---------------------------------------------------------------------------
-# Medical synonym / parent-term map for hit detection.
-# If any key appears in the ground truth, any matching value in the synthesis
-# also counts as a hit (and vice versa). This handles:
-#   - subspecialty variants (NPSLE → SLE, Lupus Nephritis → SLE)
-#   - common shorthands (STEMI → Myocardial Infarction)
-#   - IgG4 disease umbrella terms
-# Add new pairs here as new miss patterns are observed.
-# ---------------------------------------------------------------------------
-_SYNONYM_PAIRS: list[tuple[str, str]] = [
-    # Lupus spectrum
-    ("systemic lupus erythematosus", "lupus"),
-    ("neuropsychiatric systemic lupus", "systemic lupus erythematosus"),
-    ("neuropsychiatric systemic lupus", "lupus"),
-    ("lupus nephritis", "systemic lupus erythematosus"),
-    ("lupus nephritis", "lupus"),
-    ("npsle", "systemic lupus erythematosus"),
-    ("npsle", "lupus"),
-    # Myocardial infarction / ACS spectrum
-    ("st-elevation myocardial infarction", "myocardial infarction"),
-    ("stemi", "myocardial infarction"),
-    ("stemi", "acute coronary syndrome"),
-    ("inferior wall st-elevation", "myocardial infarction"),
-    ("acute inferior", "myocardial infarction"),
-    # Pancreatitis
-    ("autoimmune pancreatitis", "pancreatitis"),
-    ("igG4", "autoimmune pancreatitis"),
-    ("type 1 autoimmune pancreatitis", "chronic pancreatitis"),
-    # Adrenal
-    ("addison", "adrenal insufficiency"),
-    ("primary adrenal insufficiency", "adrenal insufficiency"),
-    # Cardiomyopathy
-    ("takotsubo", "stress cardiomyopathy"),
-    ("takotsubo", "cardiomyopathy"),
-    # CJD / prion
-    ("creutzfeldt", "prion"),
-    ("jakob", "prion"),
-    # Sarcoid
-    ("systemic sarcoidosis", "sarcoidosis"),
-    # General qualifier stripping already handled below
-]
-
-
-def _synonym_hit(gt: str, synthesis: list[str]) -> bool:
-    """Return True if any synonym pair links ground_truth to any synthesis entry."""
-    gt_l = gt.lower()
-    synth_l = [s.lower() for s in synthesis]
-
-    for a, b in _SYNONYM_PAIRS:
-        a_l, b_l = a.lower(), b.lower()
-        # gt contains A and some synthesis entry contains B (or vice versa)
-        if a_l in gt_l:
-            if any(b_l in s for s in synth_l):
-                return True
-        if b_l in gt_l:
-            if any(a_l in s for s in synth_l):
-                return True
-        # Also check reverse: synthesis entry contains A and gt contains B
-        if any(a_l in s for s in synth_l) and b_l in gt_l:
-            return True
-        if any(b_l in s for s in synth_l) and a_l in gt_l:
-            return True
-    return False
-
-
-def _check_synthesis_hit(synthesis: list[str], ground_truth: str, embedder=None) -> bool:
+def _check_synthesis_hit(
+    synthesis: list[str],
+    ground_truth: str,
+    embedder=None,
+    judge: "MedicalDiagnosisJudge | None" = None,
+) -> bool:
     """
-    Three-tier check: exact substring → medical synonym map → semantic similarity.
+    Check if the ground truth is present in the synthesized diagnoses.
 
-    Tier 1 — Cleaned substring match
-        Strip parenthetical qualifiers and common clinical modifiers from the
-        ground truth, then check if the result appears in any synthesis string.
-
-    Tier 2 — Medical synonym / parent-term lookup
-        Use _SYNONYM_PAIRS to catch cases where the synthesis returns a valid
-        parent term (e.g. "Acute Myocardial Infarction" for a STEMI ground truth,
-        or "Systemic Lupus Erythematosus" for an NPSLE ground truth).
-
-    Tier 3 — SentenceTransformer cosine similarity
-        If an embedder is provided, compute cosine similarity between the ground
-        truth and each synthesis entry. A hit is declared when the maximum
-        similarity exceeds EVAL_SIM_THRESHOLD (default 0.62, configurable in
-        config.py). This is lower than the previous hardcoded 0.75, which
-        incorrectly rejected many valid parent-level matches.
+    Uses MedicalDiagnosisJudge (three-tier: substring → LLM → cosine).
+    Falls back to legacy cosine-only path when judge is not available.
     """
     if not synthesis:
         return False
 
+    # ── Preferred path: LLM judge ─────────────────────────────────────────
+    if judge is not None:
+        hit, reason = judge.check(ground_truth, synthesis)
+        logger.info(
+            f"[EvalHit] judge={reason} hit={hit} | GT='{ground_truth}' | "
+            f"synthesis={synthesis}"
+        )
+        return hit
+
+    # ── Legacy fallback: cosine only (no judge available) ─────────────────
     import re
     import numpy as np
 
     gt = ground_truth.lower()
-
-    # ── Tier 1: cleaned substring match ──────────────────────────────────────
-    gt_clean = re.sub(r"\s*\([^)]*\)", "", gt).strip()          # drop (parentheticals)
-    qualifiers = (
-        r"\b(wild-type|acute|chronic|primary|secondary|mild|severe|"
-        r"suspected|probable|likely|sporadic|systemic|type [0-9]+|class [iv]+)\b"
-    )
+    gt_clean = re.sub(r"\s*\([^)]*\)", "", gt).strip()
+    qualifiers = r"\b(wild-type|acute|chronic|primary|secondary|mild|severe|suspected|probable|likely)\b"
     gt_clean = re.sub(qualifiers, "", gt_clean).strip()
-    gt_clean = re.sub(r"\s+", " ", gt_clean)
-    gt_clean = re.sub(r"^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "", gt_clean)
+    gt_clean = re.sub(r"\s+", " ", gt_clean).strip()
 
     for diag in synthesis:
-        diag_lower = diag.lower()
-        if gt_clean and gt_clean in diag_lower:
-            logger.debug(f"[hit-T1] substring match: '{gt_clean}' in '{diag_lower}'")
-            return True
-        # Also check reverse: synthesis term inside ground truth
-        diag_clean = re.sub(r"\s*\([^)]*\)", "", diag_lower).strip()
-        if len(diag_clean) > 8 and diag_clean in gt:   # min length avoids trivial matches
-            logger.debug(f"[hit-T1] reverse substring: '{diag_clean}' in '{gt}'")
+        if gt_clean and gt_clean in diag.lower():
             return True
 
-    # ── Tier 2: medical synonym / parent-term map ─────────────────────────────
-    if _synonym_hit(ground_truth, synthesis):
-        logger.info(f"[hit-T2] synonym match: '{ground_truth}' ~ {synthesis}")
-        return True
-
-    # ── Tier 3: semantic similarity ───────────────────────────────────────────
     if embedder is not None:
         try:
-            gt_emb    = embedder._model.encode([ground_truth], normalize_embeddings=True)[0]
+            gt_emb = embedder._model.encode([ground_truth], normalize_embeddings=True)[0]
             diag_embs = embedder._model.encode(synthesis, normalize_embeddings=True)
             similarities = np.dot(diag_embs, gt_emb)
-            max_sim      = float(np.max(similarities))
-            best_idx     = int(np.argmax(similarities))
-
+            max_sim = float(np.max(similarities))
             logger.info(
-                f"[hit-T3] sem-sim max={max_sim:.3f} (threshold={EVAL_SIM_THRESHOLD}) "
-                f"for '{ground_truth}' vs '{synthesis[best_idx]}'"
+                f"[EvalHit] cosine_only max={max_sim:.3f} | GT='{ground_truth}' | "
+                f"synthesis={synthesis}"
             )
-
-            if max_sim > EVAL_SIM_THRESHOLD:
+            # Lowered from 0.75 → 0.70 to reduce false negatives like NPSLE/SLE
+            if max_sim >= 0.70:
                 return True
         except Exception as e:
-            logger.error(f"[_check_synthesis_hit] Semantic similarity failed: {e}")
+            logger.error(f"[EvalHit] Cosine fallback failed: {e}")
 
     return False
 
@@ -235,6 +152,7 @@ class CaseEvaluator:
         max_depth: int = 5,
         max_nodes: int = 30,
         embedder=None,
+        llm_client=None,
     ):
         self.expander      = expander
         self.saturation    = saturation
@@ -243,6 +161,13 @@ class CaseEvaluator:
         self.max_depth     = max_depth
         self.max_nodes     = max_nodes
         self.embedder      = embedder
+        # Build the LLM judge if an llm_client is supplied
+        if llm_client is not None:
+            self.judge = MedicalDiagnosisJudge(llm_client=llm_client, embedder=embedder)
+            logger.info("[CaseEvaluator] LLM judge enabled.")
+        else:
+            self.judge = None
+            logger.warning("[CaseEvaluator] No llm_client supplied — using cosine-only fallback.")
 
     # ── Single traversal runner ────────────────────────────────────────────
 
@@ -299,7 +224,7 @@ class CaseEvaluator:
         """
         graph = result.graph
         synthesis = result.synthesis
-        hit       = _check_synthesis_hit(synthesis, ground_truth, self.embedder)
+        hit       = _check_synthesis_hit(synthesis, ground_truth, self.embedder, self.judge)
         auc       = _entropy_auc(graph)
         trend     = graph.get_entropy_trend(window=min(5, len(graph.nodes)))
 
@@ -498,6 +423,6 @@ def _print_summary(summary: dict) -> None:
     logger.info(f"  Ties:                {summary['ties']}")
     logger.info(f"  Both miss:           {summary['both_miss']}")
     logger.info(f"  EF win rate:         {summary['ef_win_rate']:.1%}")
-    target = "[PASS]" if summary["target_met"] else "[FAIL] (need >=70%)"
+    target = "✅ PASS" if summary["target_met"] else "❌ FAIL (need ≥70%)"
     logger.info(f"  Phase 3 target:      {target}")
     logger.info("="*60)
