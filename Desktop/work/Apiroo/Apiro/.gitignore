@@ -1,0 +1,19 @@
+# Python virtual env
+.venv/
+__pycache__/
+*.pyc
+
+# IDEs
+.idea/
+.vscode/
+.DS_Store
+
+# Pytest
+.pytest_cache/
+
+# Local data databases/caches (keep folders but ignore contents)
+data/chroma_db/
+data/corpus/
+data/logs/
+data/corpus_stats.json
+data/smoke_results.json

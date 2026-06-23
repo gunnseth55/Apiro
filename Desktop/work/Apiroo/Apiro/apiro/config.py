@@ -1,0 +1,174 @@
+"""
+config.py — Apiro global constants and configuration.
+All tuneable parameters live here. Import this everywhere.
+"""
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+ROOT_DIR   = Path(__file__).parent.parent
+DATA_DIR   = ROOT_DIR / "data"
+CORPUS_DIR = DATA_DIR / "corpus"
+CHROMA_DIR = DATA_DIR / "chroma_db"
+LOG_DIR    = DATA_DIR / "logs"
+
+for _d in [DATA_DIR, CORPUS_DIR, CHROMA_DIR, LOG_DIR]:
+    _d.mkdir(parents=True, exist_ok=True)
+
+# ---------------------------------------------------------------------------
+# Ollama / LLM
+# ---------------------------------------------------------------------------
+OLLAMA_BASE_URL  = "http://localhost:11434"
+PRIMARY_MODEL    = "mistral:latest"     # Configured to use the locally available model
+TOP_LOGPROBS     = 20                   # top-k logprobs for entropy computation (Ollama max is 20)
+MAX_FIRST_TOKEN  = 1                    # only first token for entropy
+MAX_ANSWER_TOKENS = 80                  # short answer generation
+ENTROPY_TEMPERATURES = [0.3, 0.7, 1.2] # temperatures for weighted entropy
+# Temperature weights — highest weight on T=0.3 (purest signal, least noise)
+ENTROPY_TEMP_WEIGHTS = {0.3: 0.6, 0.7: 0.3, 1.2: 0.1}
+
+# ---------------------------------------------------------------------------
+# Embedding
+# ---------------------------------------------------------------------------
+EMBED_MODEL    = "all-mpnet-base-v2"
+EMBED_DIM      = 768
+CHROMA_COLLECTION = "apiro_corpus"
+RAG_TOP_K      = 6    # chunks retrieved per query
+
+# ---------------------------------------------------------------------------
+# Corpus chunking
+# ---------------------------------------------------------------------------
+CHUNK_SIZE_TOKENS   = 300
+CHUNK_OVERLAP_TOKENS = 50
+
+# ---------------------------------------------------------------------------
+# Graph traversal
+# ---------------------------------------------------------------------------
+MAX_TRAVERSAL_DEPTH = 8
+MAX_NODES_PER_RUN   = 30              # hard cap on nodes expanded per traversal run
+FRONTIER_SORT       = "entropy_desc"   # always expand highest-entropy node first
+N_CHILD_HYPOTHESES  = 3                # child nodes generated per expansion
+
+# RAG retrieval
+RAG_DOMAIN_FILTER   = True            # filter ChromaDB by node.domain when True
+
+# ---------------------------------------------------------------------------
+# Path-length / diagnostic-hit evaluation
+# ---------------------------------------------------------------------------
+# When True, diagnostic hits are only counted in *generated* nodes (depth > 0),
+# excluding seed nodes that may already contain the ground-truth diagnosis.
+EVAL_EXCLUDE_SEED_HITS = True
+
+# Secondary winner tie-breaker: if path_length is equal, EF wins if its
+# entropy_auc is this fraction lower than BF's (e.g. 0.10 = 10% lower).
+EVAL_AUC_TIEBREAKER_MARGIN = 0.10
+
+# Semantic similarity threshold for diagnosis hit detection.
+# The SentenceTransformer cosine score must exceed this value to count as a hit.
+# 0.62 correctly captures parent-term matches (e.g. "Acute Myocardial Infarction"
+# vs "Acute inferior wall ST-elevation myocardial infarction") while rejecting
+# unrelated diagnoses (empirically ~0.35–0.50 for noise pairs).
+EVAL_SIM_THRESHOLD = 0.62
+
+# ---------------------------------------------------------------------------
+# Heuristic seed entropy (used when entropy_engine=None in build_cases)
+# ---------------------------------------------------------------------------
+# Replaces the flat ln(2) default. Values calibrated on llama3.1:8b:
+#   - symptom/history: high uncertainty (many DDx possible)
+#   - lab: moderate (narrows to a set of conditions)
+#   - imaging: lower (specific findings constrain heavily)
+#   - vital: moderate-high
+SEED_ENTROPY_BY_FINDING_TYPE: dict[str, float] = {
+    "symptom":   0.80,
+    "history":   0.72,
+    "vital":     0.65,
+    "lab":       0.58,
+    "imaging":   0.32,
+    "diagnosis": 0.20,   # explicit diagnosis mention is near-certain
+}
+SEED_ENTROPY_DEFAULT = 0.693   # ln(2) — max binary uncertainty fallback
+
+# ---------------------------------------------------------------------------
+# Vital sign thresholds (used by clinical_case_adapter.py)
+# ---------------------------------------------------------------------------
+VITAL_THRESHOLDS: dict[str, tuple[float, float]] = {
+    "blood_pressure_systolic":  (90.0, 180.0),
+    "blood_pressure_diastolic": (60.0, 120.0),
+    "heart_rate":               (50.0, 120.0),
+    "oxygen_saturation":        (0.0,   94.0),  # SpO2 below 94 is flagged
+    "temperature":              (36.0,  38.5),
+}
+
+# ---------------------------------------------------------------------------
+# Saturation stopping condition
+# ---------------------------------------------------------------------------
+# Theta values are calibrated empirically for llama3.1:8b using the yes/no
+# verification prompt (epistemic_certainty_entropy). The model's "confident
+# floor" across 4 real traversal runs is ~0.49 nats. Theta is set 0.05 nats
+# above that floor so saturation fires when entropy genuinely plateaus:
+#   H < theta for 5 consecutive nodes → saturated.
+#
+# Phase 3.4 (theta grid-search on MIMIC-III) will refine these values further.
+# The genetics domain is kept lower (0.50) per the plan: "rare disease —
+# explore more"; comorbidity higher (0.60) because comorbidities are
+# inherently uncertain — a higher bar prevents premature stopping.
+SATURATION_WINDOW       = 5      # look back at last N expanded nodes
+SATURATION_MAX_VARIANCE = 0.04   # entropy variance threshold
+THETA_BY_DOMAIN = {
+    "pathophysiology": 0.55,   # empirical: well-supported mechanism claims hit ~0.43
+    "pharmacology":    0.55,   # empirical: nitroglycerin/angina hit 0.43 at depth 1
+    "genetics":        0.70,   # empirical: ClinVar conflicting-classification claims
+                               # plateau at 0.66-0.69 nats — model correctly uncertain
+    "imaging":         0.55,
+    "lab":             0.55,
+    "treatment":       0.55,
+    "comorbidity":     0.70,   # comorbidities inherently uncertain — higher threshold
+}
+DEFAULT_THETA = 0.55
+
+# ---------------------------------------------------------------------------
+# Rabbit hole detection
+# ---------------------------------------------------------------------------
+RABBIT_HOLE_MIN_DEPTH      = 3
+RABBIT_HOLE_REVERSAL_WINDOW = 4
+
+# ---------------------------------------------------------------------------
+# Contradiction detection
+# ---------------------------------------------------------------------------
+CONTRADICTION_MODEL    = "cross-encoder/nli-MiniLM2-L6-H768"
+# EF traversal uses a tighter threshold (0.92) to avoid false-positive edges.
+# BF baseline uses the spec threshold (0.85) — both values are published in the paper.
+CONTRADICTION_THRESHOLD_EF  = 0.92   # entropy-first: tighter to reduce noise
+CONTRADICTION_THRESHOLD_BF  = 0.92   # breadth-first: same to ensure fair comparison
+CONTRADICTION_THRESHOLD     = 0.92   # default alias used by tests / standalone scripts
+
+# ---------------------------------------------------------------------------
+# Domain classifier
+# ---------------------------------------------------------------------------
+DOMAINS = [
+    "pathophysiology",
+    "pharmacology",
+    "genetics",
+    "imaging",
+    "lab findings",
+    "treatment",
+    "comorbidity",
+]
+
+# ---------------------------------------------------------------------------
+# Corpus sources
+# ---------------------------------------------------------------------------
+PUBMED_BATCH_SIZE    = 500
+PUBMED_MAX_ABSTRACTS = 500_000
+OMIM_API_KEY         = ""   # Set via environment variable OMIM_API_KEY
+PUBMED_SEARCH_TERMS  = [
+    "diagnosis AND treatment",
+    "differential diagnosis",
+    "clinical presentation",
+    "pathophysiology",
+    "drug mechanism of action",
+    "genetic disorder",
+    "rare disease",
+    "comorbidity",
+]

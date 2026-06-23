@@ -1,0 +1,364 @@
+{
+  "questions": [
+    {
+      "id": "A1",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A patient has chest pain radiating to the left arm, diaphoresis, and elevated troponin. What is the most likely diagnosis?"
+    },
+    {
+      "id": "A2",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A child has a barking cough, stridor, and low-grade fever after a URI. What is the diagnosis?"
+    },
+    {
+      "id": "A3",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "What is the first-line treatment for uncomplicated hypertension in a non-diabetic patient?"
+    },
+    {
+      "id": "A4",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A patient has severe right lower quadrant pain, fever, leukocytosis, and a positive McBurney's sign. What is the most likely diagnosis?"
+    },
+    {
+      "id": "A5",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "What is the immediate first-line medical treatment for an acute anaphylactic reaction?"
+    },
+    {
+      "id": "A6",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A patient presents with polydipsia, polyuria, weight loss, and a random blood glucose of 350 mg/dL. What is the diagnosis?"
+    },
+    {
+      "id": "A7",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A patient has a painful, vesicular rash in a dermatomal distribution on their unilateral flank. What is the diagnosis?"
+    },
+    {
+      "id": "A8",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A 65-year-old male presents with sudden onset of left-sided facial droop, left arm weakness, and slurred speech starting 1 hour ago. What is the diagnosis?"
+    },
+    {
+      "id": "A9",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A patient presents with fever, stiff neck, headache, and photophobia. CSF analysis shows high neutrophils, low glucose, and high protein. What is the diagnosis?"
+    },
+    {
+      "id": "A10",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "What is the gold standard diagnostic test for pulmonary embolism?"
+    },
+    {
+      "id": "A11",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A patient has classic symptoms of hypothyroidism (fatigue, cold intolerance, weight gain). What is the first-line laboratory screening test?"
+    },
+    {
+      "id": "A12",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A patient presents with a circular, expanding 'bulls-eye' rash (erythema migrans) after hiking in New England. What is the first-line antibiotic treatment?"
+    },
+    {
+      "id": "A13",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "What is the primary treatment for type 1 diabetes mellitus?"
+    },
+    {
+      "id": "A14",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A patient has a high fever, productive cough with rust-colored sputum, and lobar consolidation on chest X-ray. What is the diagnosis?"
+    },
+    {
+      "id": "A15",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A patient has severe nocturnal toe pain, with a red, hot, swollen first metatarsophalangeal joint. Arthrocentesis shows negatively birefringent needle-shaped crystals. What is the diagnosis?"
+    },
+    {
+      "id": "A16",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A child presents with high fever, conjunctivitis, coryza, cough, and tiny white spots on the buccal mucosa. What are these spots called?"
+    },
+    {
+      "id": "A17",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "What is the standard first-line treatment for a patient with a confirmed deep vein thrombosis in the lower extremity?"
+    },
+    {
+      "id": "A18",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A patient has a history of asthma and presents with acute wheezing, shortness of breath, and accessory muscle use. What is the immediate first-line rescue medication?"
+    },
+    {
+      "id": "A19",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "A pregnant woman at 34 weeks gestation has a blood pressure of 165/110 mmHg and proteinuria of 3+. What is the diagnosis?"
+    },
+    {
+      "id": "A20",
+      "group": "A",
+      "category": "Unambiguous",
+      "question": "What is the primary vector for transmission of malaria to humans?"
+    },
+    {
+      "id": "B1",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A 34-year-old woman has fatigue, joint pain, a malar rash, and elevated ANA. Is this lupus, early rheumatoid arthritis, or mixed connective tissue disease?"
+    },
+    {
+      "id": "B2",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A patient has episodes of palpitations, anxiety, weight loss, and heat intolerance but thyroid function tests are borderline. Is this hyperthyroidism, anxiety disorder, or pheochromocytoma?"
+    },
+    {
+      "id": "B3",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "An elderly patient has cognitive decline, shuffling gait, and urinary incontinence. Distinguish between normal pressure hydrocephalus, Parkinson's dementia, and vascular dementia."
+    },
+    {
+      "id": "B4",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A 28-year-old male presents with recurrent abdominal pain, bloody diarrhea, and weight loss. Colonoscopy shows patchy, transmural inflammation with deep ulcerations. Is this Crohn's disease, ulcerative colitis, or infectious colitis?"
+    },
+    {
+      "id": "B5",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A patient presents with chronic widespread pain, fatigue, sleep disturbance, and multiple tender points, but all inflammatory markers are completely normal. What is the most appropriate primary diagnostic label: fibromyalgia, chronic fatigue syndrome, or somatic symptom disorder?"
+    },
+    {
+      "id": "B6",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A 45-year-old woman has persistent fatigue, mild joint stiffness, dry eyes, and dry mouth, with positive SSA antibodies. Is this primary Sjogren's syndrome, secondary Sjogren's complicating lupus, or fibromyalgia with dry mucous membranes?"
+    },
+    {
+      "id": "B7",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A patient presents with asymmetric oligoarthritis, conjunctivitis, and urethritis following a diarrheal illness. Is this reactive arthritis, psoriatic arthritis, or disseminated gonococcal infection?"
+    },
+    {
+      "id": "B8",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A 50-year-old patient has progressive muscle weakness, fatigue, and muscle biopsy shows CD8+ T cells invading non-necrotic muscle fibers. Is this polymyositis, inclusion body myositis, or dermatomyositis without a rash?"
+    },
+    {
+      "id": "B9",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A patient has recurrent oral ulcers, genital ulcers, and uveitis, along with skin pathergy. Is this Behcet's disease, Crohn's disease, or complex aphthosis?"
+    },
+    {
+      "id": "B10",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A 60-year-old smoker has a new cough, weight loss, and a 2 cm peripheral lung nodule. Biopsy shows poorly differentiated cells. Is this adenocarcinoma, large cell carcinoma, or metastatic cancer from an unknown primary?"
+    },
+    {
+      "id": "B11",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A patient has persistent dry cough, progressive dyspnea, and bilateral crackles. High-resolution CT shows peripheral, subpleural reticular opacities with honeycombing. Is this idiopathic pulmonary fibrosis, nonspecific interstitial pneumonia, or chronic hypersensitivity pneumonitis?"
+    },
+    {
+      "id": "B12",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A 40-year-old woman presents with persistent pruritus, fatigue, and elevated alkaline phosphatase. Antimitochondrial antibody (AMA) is positive. Is this primary biliary cholangitis, primary sclerosing cholangitis, or autoimmune hepatitis?"
+    },
+    {
+      "id": "B13",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A patient presents with new-onset chorea, psychiatric symptoms, and cognitive decline. Is this Huntington's disease, Wilson's disease, or Sydenham chorea?"
+    },
+    {
+      "id": "B14",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A 55-year-old male has progressive weakness in his hands, muscle cramping, fasciculations, and hyperreflexia. EMG shows widespread anatomy. Is this amyotrophic lateral sclerosis, cervical spondylotic myelopathy, or multifocal motor neuropathy?"
+    },
+    {
+      "id": "B15",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A 30-year-old woman has episodes of spinning vertigo lasting 3 hours, unilateral hearing loss, and tinnitus. Is this Meniere's disease, vestibular neuritis, or benign paroxysmal positional vertigo?"
+    },
+    {
+      "id": "B16",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A patient presents with fluctuating fever, splenomegaly, and pancytopenia. Bone marrow biopsy shows hemophagocytosis. Is this primary hemophagocytic lymphohistiocytosis, macrophage activation syndrome secondary to adult-onset Still's disease, or lymphoma-associated HLH?"
+    },
+    {
+      "id": "B17",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A 15-year-old girl has high fever, sore throat, generalized lymphadenopathy, and a diffuse maculopapular rash after taking amoxicillin. Is this infectious mononucleosis, acute HIV infection, or a drug hypersensitivity reaction?"
+    },
+    {
+      "id": "B18",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A patient has chronic fatigue, brain fog, orthostatic intolerance, and a heart rate increase of 40 bpm upon standing, with no orthostatic hypotension. Is this postural orthostatic tachycardia syndrome, myalgic encephalomyelitis, or generalized anxiety disorder?"
+    },
+    {
+      "id": "B19",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A 70-year-old male presents with sudden-onset severe back pain, hypotension, and a pulsatile abdominal mass. Is this a ruptured abdominal aortic aneurysm, acute myocardial infarction, or severe acute pancreatitis?"
+    },
+    {
+      "id": "B20",
+      "group": "B",
+      "category": "Genuinely Ambiguous",
+      "question": "A 25-year-old female presents with persistent pelvic pain, dysmenorrhea, and deep dyspareunia, but pelvic ultrasound is completely normal. Is this endometriosis, pelvic inflammatory disease, or irritable bowel syndrome?"
+    },
+    {
+      "id": "C1",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient has all the classic features of appendicitis. CT confirms it. What is the treatment?"
+    },
+    {
+      "id": "C2",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "What is the mechanism of action of metformin?"
+    },
+    {
+      "id": "C3",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient has a positive D-dimer and Wells score of 6. What is the next step?"
+    },
+    {
+      "id": "C4",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A 60-year-old patient with atrial fibrillation has a CHA2DS2-VASc score of 4. What is the indicated class of medication for stroke prevention?"
+    },
+    {
+      "id": "C5",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient with suspected acute coronary syndrome has an ECG showing ST-segment elevation in leads II, III, and aVF. What is the diagnosis?"
+    },
+    {
+      "id": "C6",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient is diagnosed with severe, symptomatic aortic stenosis. What is the only definitive treatment that improves survival?"
+    },
+    {
+      "id": "C7",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient with type 2 diabetes mellitus has a microalbumin-to-creatinine ratio of 150 mg/g. What class of antihypertensive medication should be initiated for renal protection?"
+    },
+    {
+      "id": "C8",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient presents with acute gouty arthritis. Polarized light microscopy of synovial fluid reveals what specific findings?"
+    },
+    {
+      "id": "C9",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient on warfarin has an INR of 9.0 with no active bleeding. According to standard guidelines, what is the immediate recommended action regarding warfarin and vitamin K?"
+    },
+    {
+      "id": "C10",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient with bacterial meningitis is found to have Gram-negative diplococci in the CSF. What is the causative organism?"
+    },
+    {
+      "id": "C11",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient has a high clinical suspicion of deep vein thrombosis. What is the first-line non-invasive imaging test of choice?"
+    },
+    {
+      "id": "C12",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient with severe chronic kidney disease has a serum potassium of 7.2 mEq/L with peaked T waves on ECG. What is the first medication that should be administered immediately to stabilize the cardiac membrane?"
+    },
+    {
+      "id": "C13",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient presents with a microcytic anemia, low serum iron, high total iron-binding capacity (TIBC), and low ferritin. What is the diagnosis?"
+    },
+    {
+      "id": "C14",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "What is the primary laboratory test used to monitor the therapeutic efficacy and dose adjustment of levothyroxine in primary hypothyroidism?"
+    },
+    {
+      "id": "C15",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient is diagnosed with active pulmonary tuberculosis. What is the standard initial four-drug regimen used for treatment?"
+    },
+    {
+      "id": "C16",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient presents with symptoms of hypothyroidism, and lab tests show elevated TSH and low free T4. Antithyroid peroxidase (TPO) antibodies are highly positive. What is the diagnosis?"
+    },
+    {
+      "id": "C17",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A 50-year-old patient has a screening colonoscopy and a 5 mm adenomatous polyp is completely removed from the sigmoid colon. What is the pathology of this polyp called?"
+    },
+    {
+      "id": "C18",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient presents with progressive, bilateral, symmetric, proximal muscle weakness and a heliotrope rash on the upper eyelids. What is the diagnosis?"
+    },
+    {
+      "id": "C19",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient with chronic alcoholism presents with confusion, ophthalmoplegia, and ataxia. What vitamin deficiency is responsible for this presentation?"
+    },
+    {
+      "id": "C20",
+      "group": "C",
+      "category": "Trick Question",
+      "question": "A patient is bitten by a wild raccoon that subsequently ran away. What is the immediate post-exposure prophylaxis protocol that must be initiated?"
+    }
+  ]
+}
