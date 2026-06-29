@@ -105,50 +105,86 @@ def parse_findings_to_seeds(raw: str, entropy_engine=None) -> list:
     """
     Split free-text clinical findings into individual seed nodes.
 
-    Splitting rules (in order):
-      1. Split on newlines.
-      2. Split on ' — ' or ' - ' separators.
-      3. Split on '. ' (sentence boundary).
-      4. Split on ';'.
-    Then classify each fragment by finding type.
+    Two-pass splitting strategy:
+      Pass 1 — strong delimiters: newlines, semicolons, EM-dashes, periods.
+               These always produce a clean break.
+      Pass 2 — comma splitting: any fragment still longer than 60 chars that
+               contains commas is further split on commas (handles comma-
+               separated vignettes like "45yo male, chest pain, troponin 2.1").
+               Short comma-fragments (<15 chars) are merged with their
+               predecessor so "HR 104" and "BP 88/60" don't become
+               isolated micro-seeds with no clinical context.
 
     If entropy_engine is provided, compute real epistemic entropy via Ollama
-    instead of using the heuristic value. This is slower but more accurate.
+    instead of using the heuristic value (slower but more accurate).
     """
     from apiro.graph.node import Node
 
-    # Normalise and split
     text = raw.strip()
-    fragments = re.split(r"\n|; | \u2014 | - |\. ", text)
-    fragments = [f.strip().strip(",") for f in fragments if f.strip() and len(f.strip()) > 8]
 
-    # Deduplicate while preserving order
+    # ── Pass 1: strong delimiters ─────────────────────────────────────────────
+    pass1 = re.split(r"\n|;\s*| \u2014 | - (?=[A-Z])|\. (?=[A-Z0-9])", text)
+    pass1 = [f.strip().strip(",").strip() for f in pass1 if f.strip()]
+
+    # ── Pass 2: comma-split long fragments ────────────────────────────────────
+    fragments: list[str] = []
+    for frag in pass1:
+        if len(frag) > 60 and "," in frag:
+            parts = [p.strip().strip(",") for p in frag.split(",")]
+            # If the first part is demographic info (age/gender), prepend it to the next part
+            if len(parts) > 1 and any(
+                x in parts[0].lower()
+                for x in ["yo", "male", "female", "man", "woman", "years", "old"]
+            ):
+                parts[1] = parts[0] + ", " + parts[1]
+                parts = parts[1:]
+
+            # Merge very short parts (< 15 chars) back into previous
+            merged: list[str] = []
+            for part in parts:
+                if len(part) < 15 and merged:
+                    merged[-1] = merged[-1] + ", " + part
+                elif part:
+                    merged.append(part)
+            fragments.extend(merged)
+        else:
+            fragments.append(frag)
+
+    # ── Filter and deduplicate ────────────────────────────────────────────────
     seen: set[str] = set()
     unique: list[str] = []
     for f in fragments:
-        if f.lower() not in seen:
+        if len(f) >= 10 and f.lower() not in seen:
             unique.append(f)
             seen.add(f.lower())
 
+    if not unique:
+        # Last-resort fallback: treat entire input as one seed
+        unique = [text]
+
+    # ── Build seed nodes ──────────────────────────────────────────────────────
     seeds = []
     for i, fragment in enumerate(unique):
         ftype, domain, heuristic_entropy = classify_finding(fragment)
 
         if entropy_engine is not None:
             try:
-                entropy = entropy_engine.epistemic_certainty_entropy(fragment, context_chunks=None)
+                entropy = entropy_engine.epistemic_certainty_entropy(
+                    fragment, context_chunks=None
+                )
                 if entropy is None:
                     entropy = heuristic_entropy
-                logger.info(f"  Seed [{i}] entropy={entropy:.3f} ({ftype}): {fragment[:60]}")
+                logger.info(
+                    f"  Seed [{i}] entropy={entropy:.3f} ({ftype}): {fragment[:60]}"
+                )
             except Exception:
                 entropy = heuristic_entropy
         else:
             entropy = heuristic_entropy
 
-        node_id = f"seed_{i}"
         seeds.append(Node(
-            id=node_id,
-            claim=f"{fragment} \u2014 {ftype}",
+            id=f"seed_{i}",
+            claim=f"{fragment} - {ftype}",   # ASCII dash, not EM-dash
             entropy_score=entropy,
             domain=domain,
             depth=0,
