@@ -235,33 +235,30 @@ def build_components():
     return trav, expander, entropy_e, doc_count
 
 
-# ── Pretty report ─────────────────────────────────────────────────────────────
-
 def print_report(result, seed_count: int, elapsed: float) -> None:
-    print("\n" + "╔" + "═" * 58 + "╗")
-    print("║" + "  🔍  APIRO DIFFERENTIAL DIAGNOSIS REPORT".center(58) + "║")
-    print("╚" + "═" * 58 + "╝")
+    print("\n+" + "-" * 58 + "+")
+    print("|" + "    APIRO DIFFERENTIAL DIAGNOSIS REPORT".center(58) + "|")
+    print("+" + "-" * 58 + "+")
 
-    print(f"\n  📋  Seed findings parsed:   {seed_count}")
-    print(f"  🔗  Graph nodes expanded:   {result.total_nodes}")
-    print(f"  🐇  Rabbit holes pruned:    {result.rabbit_hole_count}")
-    print(f"  ⚡  Contradictions flagged:  {result.contradiction_count}")
-    print(f"  🛑  Stopped because:        {result.stop_reason}")
-    print(f"  ⏱   Total time:             {elapsed:.1f}s")
+    print(f"\n  Seed findings parsed:   {seed_count}")
+    print(f"  Graph nodes expanded:   {result.total_nodes}")
+    print(f"  Rabbit holes pruned:    {result.rabbit_hole_count}")
+    print(f"  Contradictions flagged: {result.contradiction_count}")
+    print(f"  Stopped because:        {result.stop_reason}")
+    print(f"  Total time:             {elapsed:.1f}s")
 
-    print("\n" + "─" * 60)
+    print("\n" + "-" * 60)
     print("  TOP 3 DIFFERENTIAL DIAGNOSES")
-    print("─" * 60)
+    print("-" * 60)
     for i, dx in enumerate(result.synthesis or ["(no synthesis available)"], 1):
-        medal = ["🥇", "🥈", "🥉"][i - 1]
-        print(f"  {medal}  {i}. {dx}")
+        print(f"  [{i}] {dx}")
 
-    print("\n" + "─" * 60)
+    print("\n" + "-" * 60)
     print("  HOW TO INTERPRET THIS:")
-    print("  • #1 is the most likely diagnosis given available evidence.")
-    print("  • The engine explored uncertainty — high-entropy paths first.")
-    print("  • Rabbit holes were contradictions/tangents pruned from the graph.")
-    print("─" * 60 + "\n")
+    print("  * #1 is the most likely diagnosis given available evidence.")
+    print("  * The engine explored uncertainty -> high-entropy paths first.")
+    print("  * Rabbit holes were contradictions/tangents pruned from the graph.")
+    print("-" * 60 + "\n")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -298,9 +295,9 @@ def main():
     if args.findings:
         raw_findings = args.findings
     else:
-        print("\n" + "═" * 60)
-        print("  🔍  APIRO — AI DIAGNOSTIC DETECTIVE")
-        print("═" * 60)
+        print("\n" + "=" * 60)
+        print("    APIRO -- AI DIAGNOSTIC DETECTIVE")
+        print("=" * 60)
         print("  Enter clinical findings (symptoms, labs, vitals, history).")
         print("  Separate with commas, newlines, or semicolons.")
         print("  Press Enter twice when done.\n")
@@ -316,32 +313,34 @@ def main():
         raw_findings = "\n".join(lines)
 
     if not raw_findings.strip():
-        print("❌  No findings provided. Exiting.")
+        print("[-] No findings provided. Exiting.")
         sys.exit(1)
 
-    print("\n⚙   Initialising Apiro components...")
+    print("\n[*] Initialising Apiro components...")
     traversal, expander, entropy_engine, doc_count = build_components()
-    print(f"✅  Components ready. Corpus: {doc_count:,} documents.\n")
+    print(f"[+] Components ready. Corpus: {doc_count:,} documents.\n")
 
     # ── Parse findings into seed nodes ────────────────────────────────────────
     ee = entropy_engine if args.real_entropy else None
     if args.real_entropy:
-        print("⏳  Computing real seed entropy (this calls Ollama once per finding)...")
+        print("[*] Computing real seed entropy (this calls Ollama once per finding)...")
 
     seeds = parse_findings_to_seeds(raw_findings, entropy_engine=ee)
 
     if not seeds:
-        print("❌  Could not parse any findings from the provided text.")
+        print("[-] Could not parse any findings from the provided text.")
         sys.exit(1)
 
-    print(f"📍  Parsed {len(seeds)} seed findings:")
+    print(f"[*] Parsed {len(seeds)} seed findings:")
     for s in seeds:
-        print(f"    [{s.domain:15s}] H={s.entropy_score:.3f}  {s.claim[:70]}")
+        # replace the unicode EM-dash \u2014 with standard -
+        claim_clean = s.claim.replace("\u2014", "-")
+        print(f"    [{s.domain:15s}] H={s.entropy_score:.3f}  {claim_clean[:70]}")
 
     # ── Run traversal ─────────────────────────────────────────────────────────
     from apiro.graph.belief_graph import BeliefGraph
-    print(f"\n🧠  Apiro is investigating... (max_depth={args.max_depth})")
-    print("    (This takes 1–5 minutes depending on case complexity)\n")
+    print(f"\n[*] Apiro is investigating... (max_depth={args.max_depth})")
+    print("    (This takes 1-5 minutes depending on case complexity)\n")
 
     t0    = time.time()
     graph = BeliefGraph()
@@ -357,7 +356,7 @@ def main():
     if args.output:
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         graph.export_json(path=args.output)
-        print(f"\n📁  Belief graph written to: {args.output}")
+        print(f"\n[+] Belief graph written to: {args.output}")
 
     # ── Print report ──────────────────────────────────────────────────────────
     print_report(result, len(seeds), elapsed)
