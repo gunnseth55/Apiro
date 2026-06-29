@@ -17,6 +17,7 @@ Features:
 import sys
 import logging
 import time
+import json
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
@@ -557,7 +558,7 @@ function renderGraph(graphData) {
 }
 
 function startInvestigation() {
-  const findings = document.getElementById('findings-input').value.strip;
+  const findings = document.getElementById('findings-input').value.trim();
   const maxDepth = parseInt(document.getElementById('depth-input').value);
   const realEnt  = document.getElementById('real-entropy-input').checked;
 
