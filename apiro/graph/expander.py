@@ -58,18 +58,59 @@ DOMAIN_KEYWORDS: dict[str, list[str]] = {
     "comorbidity":     ["comorbid", "concurrent", "coexisting", "secondary", "complication", "alongside"],
 }
 
-def classify_domain(text: str) -> str:
+# Prototype sentences for semantic fallback classification.
+# One representative sentence per domain, embedded at first call.
+_DOMAIN_PROTOTYPES: dict[str, str] = {
+    "genetics":        "Gene mutation and chromosomal inheritance pattern in hereditary disease.",
+    "pharmacology":    "Drug dose, medication administration, contraindication and antibiotic treatment.",
+    "imaging":         "CT scan, MRI, ultrasound and radiographic imaging findings.",
+    "lab":             "Blood serum levels, troponin, creatinine, electrolytes and lab measurements.",
+    "pathophysiology": "Disease mechanism, inflammatory cascade, ischemia and cellular necrosis pathway.",
+    "treatment":       "Surgical intervention, procedure, therapy and catheter stent placement.",
+    "comorbidity":     "Concurrent complication, secondary condition and coexisting disease.",
+}
+
+_domain_prototype_embeddings: dict | None = None   # lazy-loaded
+
+
+def classify_domain(text: str, embedder=None) -> str:
     """
-    Rule-based domain classification. Returns the domain with the most keyword hits.
-    Falls back to 'pathophysiology' as the default medical domain.
+    Hybrid domain classification:
+      Pass 1 — fast keyword matching (covers obvious cases).
+      Pass 2 — if no keyword hits, use sentence-transformer cosine similarity
+               against prototype sentences (handles edge cases like 'electrolyte
+               imbalance' → 'lab' instead of defaulting to 'pathophysiology').
     """
+    global _domain_prototype_embeddings
+
     text_lower = text.lower()
     scores = {
         domain: sum(1 for kw in keywords if kw in text_lower)
         for domain, keywords in DOMAIN_KEYWORDS.items()
     }
     best = max(scores, key=scores.get)
-    return best if scores[best] > 0 else "pathophysiology"
+    if scores[best] > 0:
+        return best
+
+    # ── Semantic fallback ─────────────────────────────────────────────────────
+    if embedder is not None:
+        try:
+            if _domain_prototype_embeddings is None:
+                protos = list(_DOMAIN_PROTOTYPES.values())
+                keys   = list(_DOMAIN_PROTOTYPES.keys())
+                embs   = embedder._model.encode(protos, normalize_embeddings=True)
+                _domain_prototype_embeddings = {k: e for k, e in zip(keys, embs)}
+
+            text_emb = embedder._model.encode([text], normalize_embeddings=True)[0]
+            sims = {
+                domain: float(text_emb @ emb)
+                for domain, emb in _domain_prototype_embeddings.items()
+            }
+            return max(sims, key=sims.get)
+        except Exception:
+            pass  # fall through to default
+
+    return "pathophysiology"
 
 
 # ── Stub components (for testing without Ollama or ChromaDB) ──────────────────
@@ -344,8 +385,7 @@ class NodeExpander:
             if entropy is None:
                 entropy = 0.693
 
-            # Step 5b: Domain classification
-            domain = classify_domain(hypothesis)
+            domain = classify_domain(hypothesis, embedder=getattr(self, '_embedder', None))
 
             # Step 5c: Create the node (uses main's full Node dataclass)
             child_id = self._generate_node_id(node.id, i)
@@ -394,45 +434,81 @@ class NodeExpander:
 
         return new_nodes
 
-    def synthesize_differential(self, graph) -> list[str]:
+    def synthesize_differential(self, graph, top_k: int = 15) -> list[str]:
         """
         Synthesize a final differential diagnosis from the belief graph.
-        
+
+        Only high-signal nodes are passed to the LLM:
+          - Rabbit-hole nodes are excluded (they are known dead-ends).
+          - Contradiction-flagged nodes are excluded (actively disputed claims).
+          - The remaining nodes are sorted by entropy descending and capped at
+            top_k (default 15) so the synthesizer sees the most informationally
+            rich, unresolved claims — not a dump of every node including noise.
+
         Args:
-            graph: The BeliefGraph containing gathered evidence.
-            
+            graph:  The BeliefGraph containing gathered evidence.
+            top_k:  Max number of high-entropy clean nodes to pass to the LLM.
+
         Returns:
             A list of the top 3 most likely specific clinical diagnoses.
         """
         logger.info("[NodeExpander] Synthesizing final differential diagnosis...")
-        
-        # Collect all claims
-        claims = [node.claim for node in graph.nodes.values()]
-        
-        # Remove duplicates while preserving order
-        seen = set()
-        unique_claims = []
-        for claim in claims:
-            if claim not in seen:
-                unique_claims.append(claim)
-                seen.add(claim)
-                
+
+        # Identify contradiction-flagged node IDs so we can exclude them.
+        contradiction_ids: set[str] = set()
+        for edge in graph.edges:
+            if getattr(edge, 'contradiction_flag', False):
+                contradiction_ids.add(edge.child_id)
+                contradiction_ids.add(edge.parent_id)
+
+        # Collect only clean, high-signal nodes.
+        clean_nodes = [
+            n for n in graph.nodes.values()
+            if not n.is_rabbit_hole
+            and n.id not in contradiction_ids
+        ]
+
+        # Sort by entropy descending — highest uncertainty = most diagnostically
+        # interesting — and cap at top_k.
+        clean_nodes.sort(key=lambda n: n.entropy_score or 0.0, reverse=True)
+        top_nodes = clean_nodes[:top_k]
+
+        logger.info(
+            f"[NodeExpander] Synthesis using {len(top_nodes)}/{graph.node_count()} nodes "
+            f"(excluded {graph.node_count() - len(top_nodes)} rabbit-holes/contradictions)."
+        )
+
+        if not top_nodes:
+            logger.warning("[NodeExpander] No clean nodes available for synthesis — using all nodes.")
+            top_nodes = list(graph.nodes.values())[:top_k]
+
+        # Remove duplicate claims while preserving entropy-rank order.
+        seen: set[str] = set()
+        unique_claims: list[str] = []
+        for n in top_nodes:
+            if n.claim not in seen:
+                unique_claims.append(n.claim)
+                seen.add(n.claim)
+
         evidence_text = "\n".join(f"  - {claim}" for claim in unique_claims)
-        
+
         prompt = (
             "You are Apiro, a precise clinical differential-diagnosis engine.\n\n"
-            "Your task: given the following gathered clinical evidence, generate the top 3 most likely specific clinical diagnoses.\n\n"
-            "=== GATHERED EVIDENCE ===\n"
+            "Your task: given the following high-signal clinical evidence (pre-filtered to remove"
+            " known dead-ends and contradictions), generate the top 3 most likely specific"
+            " clinical diagnoses.\n\n"
+            "=== HIGH-SIGNAL GATHERED EVIDENCE ===\n"
             f"{evidence_text}\n\n"
             "=== STRICT RULES ===\n"
             "1. Output exactly 3 diagnoses, one per line.\n"
-            "2. Provide only the specific disease name (e.g., 'Type 1 autoimmune pancreatitis'). Do not include preamble, numbering, explanations, or mechanism.\n"
+            "2. Provide only the specific disease name (e.g., 'Type 1 autoimmune pancreatitis')."
+            " Do not include preamble, numbering, explanations, or mechanism.\n"
             "3. Rank them from most likely to least likely.\n\n"
             "=== OUTPUT (3 lines only) ==="
         )
-        
+
         raw_output = self._call_llm(prompt)
         diagnoses = self._parse_hypotheses(raw_output)
-        
+
         logger.info(f"[NodeExpander] Synthesis complete: {diagnoses}")
         return diagnoses

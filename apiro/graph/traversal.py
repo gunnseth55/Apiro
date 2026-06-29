@@ -162,8 +162,10 @@ class ApiroTraversal:
                 })
                 break
 
-            # ── Get frontier sorted by entropy DESC ───────────────────────────
-            frontier = graph.get_frontier()
+            # ── Get frontier with depth-aware EF scoring ──────────────────────
+            # depth_aware=True: depth-0 nodes sorted by certainty (1-H),
+            # depth>=1 nodes sorted by uncertainty (H) to chase differentials.
+            frontier = graph.get_frontier(depth_aware=True)
 
             if not frontier:
                 stop_reason = "no_frontier"
@@ -176,10 +178,13 @@ class ApiroTraversal:
                 logger.info(f"[Traversal] Max depth {max_depth} reached.")
                 break
 
-            # ── Pick best node (highest entropy) ─────────────────────────────
+            # ── Pick best node ────────────────────────────────────────────────
             node = frontier[0]
 
-            # ── Stop condition 3: Rabbit hole check ───────────────────────────
+            # ── Stop condition 3: Rabbit hole check ──────────────────────────
+            # If the top node is a rabbit hole, flag it and restart the loop.
+            # The next call to get_frontier() will naturally exclude it, so
+            # frontier[1] becomes the new top and passes all safety checks.
             if self.rabbit_hole.check(graph, node):
                 self.rabbit_hole.flag_rabbit_hole(node, graph)
                 self._log({
@@ -190,11 +195,7 @@ class ApiroTraversal:
                     "entropy": node.entropy_score,
                 })
                 logger.warning(f"[Traversal] Rabbit hole: '{node.claim[:60]}' — skipping.")
-
-                node = frontier[1] if len(frontier) > 1 else None
-                if node is None:
-                    stop_reason = "no_frontier"
-                    break
+                continue  # restart loop; get_frontier will exclude flagged node
 
             # ── Expand the node ───────────────────────────────────────────────
             logger.info(
@@ -264,6 +265,22 @@ class ApiroTraversal:
                             f"[Traversal] Contradiction: '{new_node.claim[:40]}' "
                             f"vs '{existing.claim[:40]}' (score={result.score:.3f})"
                         )
+
+                        # ── Contradiction-informed pruning ────────────────────
+                        # The lower-entropy node carries less information and is
+                        # more likely to be a spurious tangent. Flag it as a
+                        # rabbit hole so the frontier immediately de-prioritises
+                        # it, turning contradiction detection from a passive logger
+                        # into an active belief-graph pruner.
+                        new_h      = new_node.entropy_score  or 0.0
+                        existing_h = existing.entropy_score  or 0.0
+                        weaker = new_node if new_h <= existing_h else existing
+                        if not weaker.is_rabbit_hole:
+                            weaker.is_rabbit_hole = True
+                            logger.info(
+                                f"[Traversal] Pruned weaker contradicting node: "
+                                f"'{weaker.claim[:50]}' (entropy={weaker.entropy_score:.3f})"
+                            )
 
 
         # ── Wrap up ───────────────────────────────────────────────────────────

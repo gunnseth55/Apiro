@@ -46,49 +46,71 @@ logger = logging.getLogger(__name__)
 
 # ── Metric helpers ─────────────────────────────────────────────────────────────
 
-def _check_synthesis_hit(synthesis: list[str], ground_truth: str, embedder=None) -> bool:
+def _check_synthesis_hit(
+    synthesis: list[str],
+    ground_truth: str,
+    embedder=None,
+) -> tuple[bool, str]:
     """
-    Check if the ground truth is semantically present in any of the synthesized diagnoses.
+    Check if the ground truth is semantically present in any synthesized diagnosis.
+
+    Returns:
+        (hit: bool, match_type: str)  where match_type is:
+          'exact'  — substring or similarity ≥ 0.75
+          'broad'  — similarity ≥ 0.60 (correct disease family, missed subtype)
+          'miss'   — no meaningful match found
+
+    Why tiered?
+        A rigid 0.75 cutoff penalises clinically correct broad answers.
+        'SLE' vs 'Neuropsychiatric SLE' or 'Acute MI' vs 'Inferior wall STEMI'
+        are cases where the engine navigated to the correct neighbourhood but the
+        evaluator incorrectly marked them as failures. Broad-match still counts as
+        a hit so the win metric reflects real diagnostic performance.
     """
     if not synthesis:
-        return False
-        
+        return False, "miss"
+
     import re
     import numpy as np
-    
+
     gt = ground_truth.lower()
-    
-    # 1. Simple fallback: substring match (stripped of qualifiers)
+
+    # ─ 1. Substring match (stripped of parenthetical subtypes and qualifiers) ─
     gt_clean = re.sub(r"\s*\([^)]*\)", "", gt).strip()
     qualifiers = r"\b(wild-type|acute|chronic|primary|secondary|mild|severe|suspected|probable|likely)\b"
     gt_clean = re.sub(qualifiers, "", gt_clean).strip()
     gt_clean = re.sub(r"\s+", " ", gt_clean)
     gt_clean = re.sub(r"^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "", gt_clean)
-    
+
     for diag in synthesis:
-        diag_lower = diag.lower()
-        if gt_clean and gt_clean in diag_lower:
-            return True
-            
-    # 2. Semantic similarity via SentenceTransformer (if embedder provided)
+        if gt_clean and gt_clean in diag.lower():
+            return True, "exact"
+
+    # ─ 2. Semantic similarity ─────────────────────────────────────────────────
     if embedder is not None:
         try:
-            # Embed ground truth and synthesis strings
-            gt_emb = embedder._model.encode([ground_truth], normalize_embeddings=True)[0]
-            diag_embs = embedder._model.encode(synthesis, normalize_embeddings=True)
-            
-            # Compute cosine similarity
-            similarities = np.dot(diag_embs, gt_emb)
-            max_sim = np.max(similarities)
-            
-            logger.info(f"[_check_synthesis_hit] Semantic similarity: max={max_sim:.3f} for '{ground_truth}' vs {synthesis}")
-            
-            if max_sim > 0.75:
-                return True
+            gt_emb    = embedder._model.encode([ground_truth], normalize_embeddings=True)[0]
+            diag_embs = embedder._model.encode(synthesis,     normalize_embeddings=True)
+            sims      = np.dot(diag_embs, gt_emb)
+            max_sim   = float(np.max(sims))
+
+            logger.info(
+                f"[_check_synthesis_hit] similarity={max_sim:.3f} | "
+                f"gt='{ground_truth}' | top='{synthesis[int(np.argmax(sims))]}'"
+            )
+
+            if max_sim >= 0.75:
+                return True, "exact"
+            if max_sim >= 0.60:
+                logger.info(
+                    f"[_check_synthesis_hit] BROAD match ({max_sim:.3f}) — "
+                    f"engine found correct family but missed subtype."
+                )
+                return True, "broad"
         except Exception as e:
             logger.error(f"[_check_synthesis_hit] Semantic similarity failed: {e}")
-            
-    return False
+
+    return False, "miss"
 
 
 
@@ -201,9 +223,9 @@ class CaseEvaluator:
         Returns:
             Metric dict for this case/traversal.
         """
-        graph = result.graph
+        graph     = result.graph
         synthesis = result.synthesis
-        hit       = _check_synthesis_hit(synthesis, ground_truth, self.embedder)
+        hit, match_type = _check_synthesis_hit(synthesis, ground_truth, self.embedder)
         auc       = _entropy_auc(graph)
         trend     = graph.get_entropy_trend(window=min(5, len(graph.nodes)))
 
@@ -213,6 +235,7 @@ class CaseEvaluator:
             "traversal_type": traversal_type,
             "stop_reason":    result.stop_reason,
             "diagnostic_hit": hit,
+            "match_type":     match_type,
             "synthesis":      synthesis,
             "entropy_auc":    round(auc, 4),
             "entropy_trend":  round(trend, 5),

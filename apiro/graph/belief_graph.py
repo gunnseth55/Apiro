@@ -88,23 +88,29 @@ class BeliefGraph:
     # Queries
     # ------------------------------------------------------------------
 
-    def get_frontier(self) -> list[Node]:
+    def get_frontier(self, depth_aware: bool = False) -> list[Node]:
         """
-        Return all unresolved, non-rabbit-hole nodes sorted by a depth-aware certainty score.
-        At depth 0 (seed nodes), it follows certainty (lowest entropy).
-        At depth >= 1 (derived nodes), it chases uncertainty (highest entropy) to explore differentials.
-        """
-        def score(n: Node) -> float:
-            h = n.entropy_score if n.entropy_score is not None else 0.5
-            if n.depth == 0:
-                return 1.0 - h
-            return h
+        Return all unresolved, non-rabbit-hole nodes sorted by score.
 
-        return sorted(
-            [n for n in self.nodes.values() if not n.resolved and not n.is_rabbit_hole],
-            key=score,
-            reverse=True,
-        )
+        Args:
+            depth_aware: If False (default), sorts strictly by entropy_score descending
+                         — the standard baseline contract expected by unit tests.
+                         If True, uses depth-aware scoring for the entropy-first traversal:
+                           - Depth 0 (anchors): score = 1.0 - entropy (follow certainty first)
+                           - Depth >= 1 (derived): score = entropy (chase uncertainty/differentials)
+        """
+        candidates = [n for n in self.nodes.values() if not n.resolved and not n.is_rabbit_hole]
+
+        if depth_aware:
+            def score(n: Node) -> float:
+                h = n.entropy_score if n.entropy_score is not None else 0.5
+                # Depth 0: anchor on certainty. Depth >=1: explore uncertainty.
+                return (1.0 - h) if n.depth == 0 else h
+        else:
+            def score(n: Node) -> float:
+                return n.entropy_score if n.entropy_score is not None else 0.0
+
+        return sorted(candidates, key=score, reverse=True)
 
     def get_entropy_trend(self, window: int = 5) -> float:
         """
