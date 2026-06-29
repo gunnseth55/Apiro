@@ -38,6 +38,7 @@ from apiro.config import (
     N_CHILD_HYPOTHESES,
     CONTRADICTION_THRESHOLD,
     RAG_TOP_K,
+    RAG_MIN_CHUNKS_FOR_GROUNDING,
 )
 
 logger = logging.getLogger(__name__)
@@ -222,6 +223,36 @@ exactly 3 child hypotheses that deepen the diagnostic reasoning.
 === OUTPUT (3 lines only) ===\
 """
 
+# Parametric fallback prompt — used when corpus retrieval returns too few chunks.
+# The engine switches to pure LLM parametric knowledge so rare-disease nodes
+# still expand meaningfully instead of recycling thin or irrelevant context.
+PARAMETRIC_PROMPT_TEMPLATE = """\
+You are Apiro, a precise clinical differential-diagnosis engine.
+
+Your task: given a parent clinical claim, generate exactly 3 child hypotheses
+that deepen the diagnostic reasoning using established medical knowledge.
+
+NOTE: The medical corpus returned no reliable evidence for this claim.
+Reason from your medical training knowledge directly.
+
+=== PARENT CLAIM ===
+{claim}
+
+=== MEDICAL DOMAIN ===
+{domain}
+
+=== STRICT RULES ===
+1. DOMAIN: Stay within the "{domain}" domain or one clinically adjacent domain.
+2. KNOWLEDGE-BASED: Use your medical training knowledge to generate plausible
+   clinical hypotheses. Include known mechanisms, biomarkers, or findings.
+3. RARE/UNCOMMON diseases are acceptable — this mode is specifically for cases
+   where corpus coverage is sparse.
+4. FORMAT: Output exactly 3 hypotheses, one per line, no numbering, no preamble,
+   no explanation. Each hypothesis is a single sentence under 25 words.
+
+=== OUTPUT (3 lines only) ===\
+"""
+
 
 # ── NodeExpander ──────────────────────────────────────────────────────────────
 
@@ -259,53 +290,68 @@ class NodeExpander:
         self._node_counter += 1
         return f"{parent_id}_c{index}"
 
-    def _retrieve_context(self, claim: str, domain: str = "", n_results: int = RAG_TOP_K) -> list[str]:
+    def _retrieve_context(
+        self,
+        claim: str,
+        domain: str = "",
+        n_results: int = RAG_TOP_K,
+    ) -> tuple[list[str], bool]:
         """
         Query ChromaDB for the top-N most relevant medical text chunks.
 
-        When RAG_DOMAIN_FILTER=True (config default) the query is scoped to
-        chunks whose medical_domain matches `domain`. This prevents the LLM
-        from generating hypotheses grounded in unrelated PubMed papers.
+        Returns:
+            (chunks, is_corpus_grounded)  where is_corpus_grounded is True when
+            at least RAG_MIN_CHUNKS_FOR_GROUNDING chunks were returned, meaning
+            the corpus has enough coverage to trust the evidence-based prompt.
+            When False the caller should switch to the parametric prompt.
         """
-        # Build optional metadata filter
         where: dict | None = None
         if RAG_DOMAIN_FILTER and domain:
-            # Normalise domain name to match corpus metadata
-            # (corpus uses 'lab' not 'lab findings'; both map cleanly)
             db_domain = domain.replace(" findings", "").lower()
             where = {"medical_domain": db_domain}
 
+        chunks: list[str] = []
         try:
             try:
-                # Embedder._collection-backed adapter: accepts where kwarg
                 result = self.chroma_client.query(
                     query_texts=[claim],
                     n_results=n_results,
                     where=where,
                 )
             except TypeError:
-                # Stub / legacy client without where support — fall back
                 result = self.chroma_client.query(
                     collection_name=self.collection_name,
                     query_texts=[claim],
                     n_results=n_results,
                 )
             docs = result.get("documents", [[]])
-            return docs[0] if docs else []
+            chunks = docs[0] if docs else []
         except Exception as e:
             logger.warning(f"[NodeExpander] ChromaDB query failed: {e}. Continuing without context.")
-            return []
+
+        is_grounded = len(chunks) >= RAG_MIN_CHUNKS_FOR_GROUNDING
+        if not is_grounded:
+            logger.info(
+                f"[NodeExpander] Sparse corpus coverage ({len(chunks)} chunks) for "
+                f"'{claim[:50]}' — switching to parametric mode."
+            )
+        return chunks, is_grounded
 
 
-    def _build_prompt(self, node: Node, chunks: list[str]) -> str:
+    def _build_prompt(self, node: Node, chunks: list[str], is_grounded: bool = True) -> str:
         """
         Build the hypothesis-generation prompt.
 
-        The prompt explicitly passes the domain and enforces evidence-only
-        grounding to prevent the LLM from drifting off-topic across hops.
-        An empty chunk list is an honest signal — the evidence block will
-        say "No context retrieved" and the model will stay conservative.
+        When is_grounded=True (corpus returned enough chunks), uses the
+        evidence-constrained HYPOTHESIS_PROMPT_TEMPLATE.
+        When is_grounded=False (sparse corpus), uses PARAMETRIC_PROMPT_TEMPLATE
+        so the LLM can reason from its training knowledge for rare diseases.
         """
+        if not is_grounded:
+            return PARAMETRIC_PROMPT_TEMPLATE.format(
+                claim=node.claim,
+                domain=node.domain,
+            )
         if chunks:
             rag_text = "\n".join(f"  [{i+1}] {chunk.strip()}" for i, chunk in enumerate(chunks))
         else:
@@ -361,12 +407,13 @@ class NodeExpander:
         """
         logger.info(f"[NodeExpander] Expanding: '{node.claim[:60]}'")
 
-        # Step 1: RAG retrieval — scoped to node.domain when RAG_DOMAIN_FILTER=True
-        chunks = self._retrieve_context(node.claim, domain=node.domain)
-
+        # Step 1: RAG retrieval with grounding check
+        chunks, is_grounded = self._retrieve_context(node.claim, domain=node.domain)
 
         # Step 2 & 3: Prompt + LLM
-        prompt = self._build_prompt(node, chunks)
+        # Use evidence-constrained prompt when corpus is reliable;
+        # parametric prompt when corpus coverage is too sparse to trust.
+        prompt = self._build_prompt(node, chunks, is_grounded=is_grounded)
         raw_output = self._call_llm(prompt)
 
         # Step 4: Parse

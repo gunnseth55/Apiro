@@ -35,6 +35,11 @@ EMBED_MODEL    = "all-mpnet-base-v2"
 EMBED_DIM      = 768
 CHROMA_COLLECTION = "apiro_corpus"
 RAG_TOP_K      = 6    # chunks retrieved per query
+# Minimum number of RAG chunks required before we trust corpus grounding.
+# If fewer than this many chunks come back, the expander switches to parametric
+# mode (LLM-only, no corpus constraint) so rare-disease nodes still expand
+# meaningfully instead of recycling the same thin context.
+RAG_MIN_CHUNKS_FOR_GROUNDING = 2
 
 # ---------------------------------------------------------------------------
 # Corpus chunking
@@ -108,6 +113,11 @@ VITAL_THRESHOLDS: dict[str, tuple[float, float]] = {
 # inherently uncertain — a higher bar prevents premature stopping.
 SATURATION_WINDOW       = 5      # look back at last N expanded nodes
 SATURATION_MAX_VARIANCE = 0.04   # entropy variance threshold
+# Guard: do NOT declare saturation when the mean RAG retrieval depth
+# (chunks returned) across the window is below this value. Consistently
+# sparse retrieval means the corpus is dry, not that the engine converged.
+# Set to 0 to disable (default off — relies on min-chunk fallback instead).
+SATURATION_CORPUS_DRY_GUARD = 0  # set >0 to enable (e.g. 2.0)
 THETA_BY_DOMAIN = {
     "pathophysiology": 0.55,   # empirical: well-supported mechanism claims hit ~0.43
     "pharmacology":    0.55,   # empirical: nitroglycerin/angina hit 0.43 at depth 1
