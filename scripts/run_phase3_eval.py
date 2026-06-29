@@ -230,6 +230,7 @@ def main():
         max_depth=args.max_depth,
         max_nodes=args.max_nodes,
         embedder=embedder,
+        llm_client=expander.llm_client,
     )
 
     summary = evaluator.evaluate_all(

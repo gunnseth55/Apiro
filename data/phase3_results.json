@@ -1,10 +1,10 @@
 {
-  "total_cases": 10,
+  "total_cases": 3,
   "entropy_first_wins": 1,
-  "breadth_first_wins": 3,
+  "breadth_first_wins": 1,
   "ties": 0,
-  "both_miss": 6,
-  "ef_win_rate": 0.1,
+  "both_miss": 1,
+  "ef_win_rate": 0.333,
   "target_met": false,
   "per_case": [
     {
@@ -16,17 +16,18 @@
         "traversal_type": "entropy_first",
         "stop_reason": "saturation",
         "diagnostic_hit": true,
+        "match_type": "exact",
         "synthesis": [
           "Acute Pancreatitis",
-          "Ischemic Cardiomyopathy",
-          "Gastroparesis in Type 1 Diabetes Mellitus"
+          "Histoplasmosis",
+          "Chronic Myelomonocytic Leukemia"
         ],
-        "entropy_auc": 5.0484,
-        "entropy_trend": -0.09171,
+        "entropy_auc": 2.709,
+        "entropy_trend": -0.02903,
         "rabbit_holes": 0,
-        "contradictions": 2,
-        "total_nodes": 39,
-        "elapsed_s": 50.1
+        "contradictions": 0,
+        "total_nodes": 27,
+        "elapsed_s": 31.56
       },
       "breadth_first": {
         "case_id": "pbm_20871856",
@@ -34,21 +35,22 @@
         "traversal_type": "breadth_first",
         "stop_reason": "saturation",
         "diagnostic_hit": true,
+        "match_type": "exact",
         "synthesis": [
           "Acute Pancreatitis",
-          "Malignant Hypertension",
-          "Renovascular Hypertension"
+          "Pituitary Diabetes Insipidus",
+          "Secondary Pulmonary Hypertension"
         ],
-        "entropy_auc": 0.921,
-        "entropy_trend": -0.01783,
+        "entropy_auc": 3.6239,
+        "entropy_trend": -0.01994,
         "rabbit_holes": 0,
-        "contradictions": 29,
-        "total_nodes": 36,
-        "elapsed_s": 45.53
+        "contradictions": 32,
+        "total_nodes": 42,
+        "elapsed_s": 64.82
       },
-      "winner": "breadth_first",
-      "ef_elapsed_s": 50.1,
-      "bf_elapsed_s": 45.53
+      "winner": "entropy_first",
+      "ef_elapsed_s": 31.56,
+      "bf_elapsed_s": 64.82
     },
     {
       "case_id": "pbm_29734943",
@@ -59,17 +61,18 @@
         "traversal_type": "entropy_first",
         "stop_reason": "saturation",
         "diagnostic_hit": false,
+        "match_type": "miss",
         "synthesis": [
-          "Viral Meningitis",
-          "Bipolar Disease",
-          "Guillain-Barr\u00e9 Syndrome"
+          "Acute Disseminated Encephalomyelitis",
+          "Status Epilepticus",
+          "Cerebral Edema with Elevated Intracranial Pressure"
         ],
-        "entropy_auc": 11.4252,
-        "entropy_trend": -0.01871,
-        "rabbit_holes": 1,
-        "contradictions": 15,
-        "total_nodes": 71,
-        "elapsed_s": 106.44
+        "entropy_auc": 9.8597,
+        "entropy_trend": -0.00402,
+        "rabbit_holes": 0,
+        "contradictions": 9,
+        "total_nodes": 68,
+        "elapsed_s": 108.12
       },
       "breadth_first": {
         "case_id": "pbm_29734943",
@@ -77,21 +80,22 @@
         "traversal_type": "breadth_first",
         "stop_reason": "saturation",
         "diagnostic_hit": false,
+        "match_type": "miss",
         "synthesis": [
-          "Hypertensive Encephalopathy",
-          "Malignant Hypertension",
-          "Bipolar Depression"
+          "Cerebral Vasospasm",
+          "Bacterial Meningitis",
+          "Acute Intracranial Hypertension"
         ],
-        "entropy_auc": 5.0449,
-        "entropy_trend": -0.00687,
+        "entropy_auc": 4.1657,
+        "entropy_trend": -0.0385,
         "rabbit_holes": 0,
-        "contradictions": 156,
-        "total_nodes": 62,
-        "elapsed_s": 89.03
+        "contradictions": 154,
+        "total_nodes": 56,
+        "elapsed_s": 83.72
       },
       "winner": "both_miss",
-      "ef_elapsed_s": 106.44,
-      "bf_elapsed_s": 89.03
+      "ef_elapsed_s": 108.12,
+      "bf_elapsed_s": 83.72
     },
     {
       "case_id": "pbm_37854887",
@@ -102,340 +106,41 @@
         "traversal_type": "entropy_first",
         "stop_reason": "saturation",
         "diagnostic_hit": false,
+        "match_type": "miss",
         "synthesis": [
-          "Systemic Lupus Erythematosus",
-          "Myasthenia Gravis",
-          "Critical Illness Myopathy"
+          "Antiphospholipid Syndrome",
+          "Lupus Cerebritis",
+          "Cerebral Vasculitis"
         ],
-        "entropy_auc": 2.5713,
-        "entropy_trend": -0.00155,
-        "rabbit_holes": 1,
-        "contradictions": 2,
-        "total_nodes": 26,
-        "elapsed_s": 30.17
+        "entropy_auc": 4.2536,
+        "entropy_trend": -0.0303,
+        "rabbit_holes": 0,
+        "contradictions": 0,
+        "total_nodes": 35,
+        "elapsed_s": 51.17
       },
       "breadth_first": {
         "case_id": "pbm_37854887",
         "ground_truth": "Neuropsychiatric systemic lupus erythematosus (NPSLE)",
         "traversal_type": "breadth_first",
         "stop_reason": "saturation",
-        "diagnostic_hit": false,
-        "synthesis": [
-          "Antiphospholipid syndrome",
-          "Systemic lupus erythematosus with nephritis and neonatal lupus manifestations",
-          "Eosinophilic granulomatosis with polyangiitis"
-        ],
-        "entropy_auc": 2.5275,
-        "entropy_trend": -0.0992,
-        "rabbit_holes": 0,
-        "contradictions": 14,
-        "total_nodes": 26,
-        "elapsed_s": 31.76
-      },
-      "winner": "both_miss",
-      "ef_elapsed_s": 30.17,
-      "bf_elapsed_s": 31.76
-    },
-    {
-      "case_id": "pbm_26672956",
-      "ground_truth": "Systemic sarcoidosis",
-      "entropy_first": {
-        "case_id": "pbm_26672956",
-        "ground_truth": "Systemic sarcoidosis",
-        "traversal_type": "entropy_first",
-        "stop_reason": "saturation",
-        "diagnostic_hit": false,
-        "synthesis": [
-          "Pancreatic carcinoma",
-          "Biliary obstruction secondary to malignancy of the head of the pancreas or bile ducts",
-          "Leptospirosis"
-        ],
-        "entropy_auc": 3.0982,
-        "entropy_trend": -0.04891,
-        "rabbit_holes": 1,
-        "contradictions": 5,
-        "total_nodes": 27,
-        "elapsed_s": 35.14
-      },
-      "breadth_first": {
-        "case_id": "pbm_26672956",
-        "ground_truth": "Systemic sarcoidosis",
-        "traversal_type": "breadth_first",
-        "stop_reason": "frontier_empty",
-        "diagnostic_hit": false,
-        "synthesis": [
-          "Cholangiocarcinoma",
-          "Hodgkin lymphoma",
-          "Acute pancreatitis"
-        ],
-        "entropy_auc": 0.0,
-        "entropy_trend": 0.0,
-        "rabbit_holes": 0,
-        "contradictions": 0,
-        "total_nodes": 6,
-        "elapsed_s": 0.0
-      },
-      "winner": "both_miss",
-      "ef_elapsed_s": 35.14,
-      "bf_elapsed_s": 0.0
-    },
-    {
-      "case_id": "pbm_36514473",
-      "ground_truth": "Takotsubo (stress) cardiomyopathy",
-      "entropy_first": {
-        "case_id": "pbm_36514473",
-        "ground_truth": "Takotsubo (stress) cardiomyopathy",
-        "traversal_type": "entropy_first",
-        "stop_reason": "saturation",
-        "diagnostic_hit": false,
-        "synthesis": [
-          "Biventricular Hypertrophic Cardiomyopathy",
-          "Wernicke's Aphasia",
-          "Schizophrenia"
-        ],
-        "entropy_auc": 5.0324,
-        "entropy_trend": -0.02623,
-        "rabbit_holes": 2,
-        "contradictions": 9,
-        "total_nodes": 38,
-        "elapsed_s": 54.49
-      },
-      "breadth_first": {
-        "case_id": "pbm_36514473",
-        "ground_truth": "Takotsubo (stress) cardiomyopathy",
-        "traversal_type": "breadth_first",
-        "stop_reason": "saturation",
-        "diagnostic_hit": false,
-        "synthesis": [
-          "Acute Respiratory Distress Syndrome (ARDS)",
-          "Hypertrophic Cardiomyopathy",
-          "Schizophrenia Spectrum Disorder"
-        ],
-        "entropy_auc": 4.1253,
-        "entropy_trend": -0.03377,
-        "rabbit_holes": 0,
-        "contradictions": 91,
-        "total_nodes": 47,
-        "elapsed_s": 68.06
-      },
-      "winner": "both_miss",
-      "ef_elapsed_s": 54.49,
-      "bf_elapsed_s": 68.06
-    },
-    {
-      "case_id": "pbm_38756715",
-      "ground_truth": "Acute inferior wall ST-elevation myocardial infarction",
-      "entropy_first": {
-        "case_id": "pbm_38756715",
-        "ground_truth": "Acute inferior wall ST-elevation myocardial infarction",
-        "traversal_type": "entropy_first",
-        "stop_reason": "saturation",
-        "diagnostic_hit": false,
-        "synthesis": [
-          "Acute Myocardial Infarction",
-          "Ventricular Tachycardia",
-          "Hypertensive Encephalopathy"
-        ],
-        "entropy_auc": 3.0544,
-        "entropy_trend": -0.00972,
-        "rabbit_holes": 2,
-        "contradictions": 1,
-        "total_nodes": 35,
-        "elapsed_s": 42.56
-      },
-      "breadth_first": {
-        "case_id": "pbm_38756715",
-        "ground_truth": "Acute inferior wall ST-elevation myocardial infarction",
-        "traversal_type": "breadth_first",
-        "stop_reason": "saturation",
-        "diagnostic_hit": false,
-        "synthesis": [
-          "Acute Myocardial Infarction",
-          "Diabetic Nephropathy",
-          "Hyperaldosteronism-induced Secondary Hypertension"
-        ],
-        "entropy_auc": 5.4944,
-        "entropy_trend": -0.08943,
-        "rabbit_holes": 0,
-        "contradictions": 85,
-        "total_nodes": 71,
-        "elapsed_s": 108.48
-      },
-      "winner": "both_miss",
-      "ef_elapsed_s": 42.56,
-      "bf_elapsed_s": 108.48
-    },
-    {
-      "case_id": "pbm_36505168",
-      "ground_truth": "Inappropriate subcutaneous ICD shocks due to T-wave oversensing",
-      "entropy_first": {
-        "case_id": "pbm_36505168",
-        "ground_truth": "Inappropriate subcutaneous ICD shocks due to T-wave oversensing",
-        "traversal_type": "entropy_first",
-        "stop_reason": "saturation",
-        "diagnostic_hit": false,
-        "synthesis": [
-          "Dilated Cardiomyopathy",
-          "Pulmonary Venous Hypertension",
-          "Polycystic Kidney Disease-Associated Cardiac Valvular Lesions"
-        ],
-        "entropy_auc": 8.1358,
-        "entropy_trend": -0.00219,
-        "rabbit_holes": 5,
-        "contradictions": 23,
-        "total_nodes": 56,
-        "elapsed_s": 85.28
-      },
-      "breadth_first": {
-        "case_id": "pbm_36505168",
-        "ground_truth": "Inappropriate subcutaneous ICD shocks due to T-wave oversensing",
-        "traversal_type": "breadth_first",
-        "stop_reason": "saturation",
-        "diagnostic_hit": false,
-        "synthesis": [
-          "Pulmonary Hypertension",
-          "Left Ventricular Dysfunction",
-          "Atrial Septal Defect"
-        ],
-        "entropy_auc": 1.8607,
-        "entropy_trend": -0.01588,
-        "rabbit_holes": 0,
-        "contradictions": 70,
-        "total_nodes": 32,
-        "elapsed_s": 45.08
-      },
-      "winner": "both_miss",
-      "ef_elapsed_s": 85.28,
-      "bf_elapsed_s": 45.08
-    },
-    {
-      "case_id": "pbm_35989318",
-      "ground_truth": "Systemic lupus erythematosus with renal involvement (lupus nephritis class III-A)",
-      "entropy_first": {
-        "case_id": "pbm_35989318",
-        "ground_truth": "Systemic lupus erythematosus with renal involvement (lupus nephritis class III-A)",
-        "traversal_type": "entropy_first",
-        "stop_reason": "saturation",
-        "diagnostic_hit": false,
-        "synthesis": [
-          "Atypical hemolytic-uremic syndrome",
-          "Paroxysmal nocturnal hemoglobinuria",
-          "Autoimmune hemolytic anemia with complement activation"
-        ],
-        "entropy_auc": 5.702,
-        "entropy_trend": -0.02861,
-        "rabbit_holes": 5,
-        "contradictions": 4,
-        "total_nodes": 49,
-        "elapsed_s": 81.07
-      },
-      "breadth_first": {
-        "case_id": "pbm_35989318",
-        "ground_truth": "Systemic lupus erythematosus with renal involvement (lupus nephritis class III-A)",
-        "traversal_type": "breadth_first",
-        "stop_reason": "saturation",
         "diagnostic_hit": true,
+        "match_type": "broad",
         "synthesis": [
           "Systemic Lupus Erythematosus",
-          "Mixed Connective Tissue Disease",
-          "NMO-spectrum disorder with aquaporin-4 antibodies"
+          "Glioblastoma multiforme",
+          "Rheumatoid Arthritis"
         ],
-        "entropy_auc": 2.0878,
-        "entropy_trend": -0.09331,
+        "entropy_auc": 6.1504,
+        "entropy_trend": -0.0981,
         "rabbit_holes": 0,
-        "contradictions": 42,
-        "total_nodes": 25,
-        "elapsed_s": 29.21
+        "contradictions": 52,
+        "total_nodes": 56,
+        "elapsed_s": 95.64
       },
       "winner": "breadth_first",
-      "ef_elapsed_s": 81.07,
-      "bf_elapsed_s": 29.21
-    },
-    {
-      "case_id": "pbm_34671493",
-      "ground_truth": "Primary adrenal insufficiency (Addison's disease) with adrenal crisis",
-      "entropy_first": {
-        "case_id": "pbm_34671493",
-        "ground_truth": "Primary adrenal insufficiency (Addison's disease) with adrenal crisis",
-        "traversal_type": "entropy_first",
-        "stop_reason": "saturation",
-        "diagnostic_hit": true,
-        "synthesis": [
-          "Polycystic Ovarian Syndrome (PCOS)",
-          "Adrenal Insufficiency",
-          "Myasthenia Gravis"
-        ],
-        "entropy_auc": 10.5788,
-        "entropy_trend": -0.03396,
-        "rabbit_holes": 6,
-        "contradictions": 13,
-        "total_nodes": 66,
-        "elapsed_s": 111.52
-      },
-      "breadth_first": {
-        "case_id": "pbm_34671493",
-        "ground_truth": "Primary adrenal insufficiency (Addison's disease) with adrenal crisis",
-        "traversal_type": "breadth_first",
-        "stop_reason": "saturation",
-        "diagnostic_hit": false,
-        "synthesis": [
-          "Sheehan's Syndrome",
-          "Hyperemesis Gravidarum",
-          "SIADH (Syndrome of Inappropriate Antidiuretic Hormone Secretion)"
-        ],
-        "entropy_auc": 2.2505,
-        "entropy_trend": -0.06702,
-        "rabbit_holes": 0,
-        "contradictions": 45,
-        "total_nodes": 24,
-        "elapsed_s": 27.37
-      },
-      "winner": "entropy_first",
-      "ef_elapsed_s": 111.52,
-      "bf_elapsed_s": 27.37
-    },
-    {
-      "case_id": "pbm_29332510",
-      "ground_truth": "Type 1 autoimmune pancreatitis (IgG4-related pancreatic disease)",
-      "entropy_first": {
-        "case_id": "pbm_29332510",
-        "ground_truth": "Type 1 autoimmune pancreatitis (IgG4-related pancreatic disease)",
-        "traversal_type": "entropy_first",
-        "stop_reason": "saturation",
-        "diagnostic_hit": true,
-        "synthesis": [
-          "Chronic Pancreatitis",
-          "Autoimmune Pancreatitis Type 1",
-          "Gastritis with External Compression of the Duodenum"
-        ],
-        "entropy_auc": 4.107,
-        "entropy_trend": -0.01823,
-        "rabbit_holes": 6,
-        "contradictions": 14,
-        "total_nodes": 43,
-        "elapsed_s": 57.04
-      },
-      "breadth_first": {
-        "case_id": "pbm_29332510",
-        "ground_truth": "Type 1 autoimmune pancreatitis (IgG4-related pancreatic disease)",
-        "traversal_type": "breadth_first",
-        "stop_reason": "saturation",
-        "diagnostic_hit": true,
-        "synthesis": [
-          "Chronic Pancreatitis",
-          "Autoimmune Pancreatitis Type 1",
-          "Gastric Cancer"
-        ],
-        "entropy_auc": 3.4678,
-        "entropy_trend": -0.06119,
-        "rabbit_holes": 0,
-        "contradictions": 31,
-        "total_nodes": 34,
-        "elapsed_s": 41.55
-      },
-      "winner": "breadth_first",
-      "ef_elapsed_s": 57.04,
-      "bf_elapsed_s": 41.55
+      "ef_elapsed_s": 51.17,
+      "bf_elapsed_s": 95.64
     }
   ]
 }

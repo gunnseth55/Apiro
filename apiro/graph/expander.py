@@ -385,7 +385,7 @@ class NodeExpander:
             if entropy is None:
                 entropy = 0.693
 
-            domain = classify_domain(hypothesis, embedder=getattr(self, '_embedder', None))
+            domain = classify_domain(hypothesis, embedder=getattr(self.chroma_client, '_emb', None))
 
             # Step 5c: Create the node (uses main's full Node dataclass)
             child_id = self._generate_node_id(node.id, i)

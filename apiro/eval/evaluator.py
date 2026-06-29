@@ -50,22 +50,16 @@ def _check_synthesis_hit(
     synthesis: list[str],
     ground_truth: str,
     embedder=None,
+    llm_client=None,
 ) -> tuple[bool, str]:
     """
     Check if the ground truth is semantically present in any synthesized diagnosis.
 
     Returns:
-        (hit: bool, match_type: str)  where match_type is:
-          'exact'  — substring or similarity ≥ 0.75
-          'broad'  — similarity ≥ 0.60 (correct disease family, missed subtype)
-          'miss'   — no meaningful match found
-
-    Why tiered?
-        A rigid 0.75 cutoff penalises clinically correct broad answers.
-        'SLE' vs 'Neuropsychiatric SLE' or 'Acute MI' vs 'Inferior wall STEMI'
-        are cases where the engine navigated to the correct neighbourhood but the
-        evaluator incorrectly marked them as failures. Broad-match still counts as
-        a hit so the win metric reflects real diagnostic performance.
+        (hit: bool, match_type: str) where match_type is:
+          'exact'  — synonym, exact match, or close similarity
+          'broad'  — similarity matching
+          'miss'   — no match found
     """
     if not synthesis:
         return False, "miss"
@@ -75,7 +69,7 @@ def _check_synthesis_hit(
 
     gt = ground_truth.lower()
 
-    # ─ 1. Substring match (stripped of parenthetical subtypes and qualifiers) ─
+    # ─ 1. Substring match ─────────────────────────────────────────────────────
     gt_clean = re.sub(r"\s*\([^)]*\)", "", gt).strip()
     qualifiers = r"\b(wild-type|acute|chronic|primary|secondary|mild|severe|suspected|probable|likely)\b"
     gt_clean = re.sub(qualifiers, "", gt_clean).strip()
@@ -86,7 +80,30 @@ def _check_synthesis_hit(
         if gt_clean and gt_clean in diag.lower():
             return True, "exact"
 
-    # ─ 2. Semantic similarity ─────────────────────────────────────────────────
+    # ─ 2. LLM-as-a-Judge (primary fallback for synonym/clinical matching) ───
+    if llm_client is not None:
+        try:
+            preds_text = "\n".join(f"  - {d}" for d in synthesis)
+            prompt = (
+                "You are a medical evaluation assistant.\n"
+                "Determine if the predicted diagnoses contain the ground truth diagnosis.\n\n"
+                f"Ground Truth: {ground_truth}\n"
+                f"Predicted Diagnoses:\n{preds_text}\n\n"
+                "Rule: If any predicted diagnosis is an exact match, a clinical synonym "
+                "(e.g., 'Lupus Cerebritis' is a synonym for 'Neuropsychiatric Systemic Lupus Erythematosus'), "
+                "or a correct broader class, respond with 'YES'. Otherwise respond with 'NO'.\n\n"
+                "Response (YES/NO only):"
+            )
+            response = llm_client.chat(prompt).strip().upper()
+            if "YES" in response:
+                logger.info(f"[LLM-Judge] Match confirmed for '{ground_truth}' vs {synthesis}")
+                return True, "exact"
+            else:
+                logger.info(f"[LLM-Judge] No match for '{ground_truth}' vs {synthesis} (response: {response})")
+        except Exception as e:
+            logger.error(f"[LLM-Judge] Failed: {e}")
+
+    # ─ 3. Semantic similarity fallback ────────────────────────────────────────
     if embedder is not None:
         try:
             gt_emb    = embedder._model.encode([ground_truth], normalize_embeddings=True)[0]
@@ -94,18 +111,9 @@ def _check_synthesis_hit(
             sims      = np.dot(diag_embs, gt_emb)
             max_sim   = float(np.max(sims))
 
-            logger.info(
-                f"[_check_synthesis_hit] similarity={max_sim:.3f} | "
-                f"gt='{ground_truth}' | top='{synthesis[int(np.argmax(sims))]}'"
-            )
-
             if max_sim >= 0.75:
                 return True, "exact"
             if max_sim >= 0.60:
-                logger.info(
-                    f"[_check_synthesis_hit] BROAD match ({max_sim:.3f}) — "
-                    f"engine found correct family but missed subtype."
-                )
                 return True, "broad"
         except Exception as e:
             logger.error(f"[_check_synthesis_hit] Semantic similarity failed: {e}")
@@ -161,6 +169,7 @@ class CaseEvaluator:
         max_depth: int = 5,
         max_nodes: int = 30,
         embedder=None,
+        llm_client=None,
     ):
         self.expander      = expander
         self.saturation    = saturation
@@ -169,6 +178,7 @@ class CaseEvaluator:
         self.max_depth     = max_depth
         self.max_nodes     = max_nodes
         self.embedder      = embedder
+        self.llm_client    = llm_client
 
     # ── Single traversal runner ────────────────────────────────────────────
 
@@ -225,7 +235,12 @@ class CaseEvaluator:
         """
         graph     = result.graph
         synthesis = result.synthesis
-        hit, match_type = _check_synthesis_hit(synthesis, ground_truth, self.embedder)
+        hit, match_type = _check_synthesis_hit(
+            synthesis,
+            ground_truth,
+            embedder=self.embedder,
+            llm_client=self.llm_client,
+        )
         auc       = _entropy_auc(graph)
         trend     = graph.get_entropy_trend(window=min(5, len(graph.nodes)))
 
