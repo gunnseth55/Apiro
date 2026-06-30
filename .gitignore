@@ -17,3 +17,10 @@ data/corpus/
 data/logs/
 data/corpus_stats.json
 data/smoke_results.json
+data/graph_*.json
+data/graph_*.html
+data/traversal_log_*.jsonl
+data/phase3_results.json
+figures/
+*.html
+*.jsonl
