@@ -138,13 +138,12 @@ def findings_to_seed_nodes(
     Returns:
         List of Node objects ready to be added to BeliefGraph as seeds.
     """
-    from apiro.nlp.domain_classifier import DomainClassifier
-    clf = DomainClassifier()
+    from apiro.graph.expander import classify_domain
 
     nodes = []
     for i, finding in enumerate(findings):
         claim  = finding.to_claim()
-        domain = clf.config_key(claim)
+        domain = classify_domain(claim)
 
         # Compute entropy if engine provided, else use default (maximum uncertainty)
         if entropy_engine is not None:
