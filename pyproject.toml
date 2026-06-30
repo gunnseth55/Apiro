@@ -24,6 +24,13 @@ dependencies = [
     "nltk>=3.8.1",
     "certifi>=2024.2.2",
     "pydantic>=2.7.0",
+    "fastapi>=0.111.0",
+    "uvicorn>=0.30.0",
+    "torch>=2.2.0",
+    "transformers>=4.40.0",
+    "matplotlib>=3.8.0",
+    "tqdm>=4.66.0",
+    "pandas>=2.1.0",
 ]
 
 [project.optional-dependencies]
