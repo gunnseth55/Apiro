@@ -27,3 +27,5 @@ figures/
 DEVELOPER_NOTES.md
 PROJECT_STATUS.md
 *.egg-info/
+apiro.egg-info/
+implementation_plan.md
