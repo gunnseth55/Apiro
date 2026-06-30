@@ -45,6 +45,18 @@ except Exception as e:
     traversal, expander, entropy_engine, doc_count = None, None, None, 0
 
 
+DOMAIN_COLORS = {
+    "pathophysiology": "#6366f1",   # indigo
+    "pharmacology":    "#f59e0b",   # amber
+    "genetics":        "#10b981",   # emerald
+    "imaging":         "#3b82f6",   # blue
+    "lab":             "#8b5cf6",   # violet
+    "treatment":       "#06b6d4",   # cyan
+    "comorbidity":     "#f97316",   # orange
+    "unknown":         "#6b7280",   # grey
+}
+
+
 class InvestigationRequest(BaseModel):
     findings: str
     max_depth: int = 5
