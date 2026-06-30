@@ -24,3 +24,5 @@ data/phase3_results.json
 figures/
 *.html
 *.jsonl
+DEVELOPER_NOTES.md
+PROJECT_STATUS.md
