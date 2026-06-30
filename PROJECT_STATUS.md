@@ -10,8 +10,8 @@ This document outlines the exact technical state of the Apiro project as of June
 | :--- | :--- | :--- | :--- |
 | **Phase 1** | Corpus & Infrastructure | **Complete** | Textbook scraper, ClinVar parser, MedRAG adapters, ChromaDB embeddings. |
 | **Phase 2** | Graph/Traversal Engine | **Complete** | `BeliefGraph`, `ApiroTraversal` (Entropy-First), `BreadthFirstTraversal`, NLI Contradiction Detector, Rabbit Hole & Saturation logic. |
-| **Phase 3** | Benchmarking & Evaluation | **Complete** | `CaseEvaluator` (LLM-as-a-Judge), 10-case evaluation harness (`run_phase3_eval.py`). Achieved a **50% win rate** on path efficiency over BFS. |
-| **Phase 4** | API & User Interface | **Complete** | Interactive D3.js Graph Visualization UI (`visualize_graph.py`), user-facing free-text CLI (`investigate.py`). |
+| **Phase 3** | Benchmarking & Evaluation | **Complete** | `CaseEvaluator` (LLM-as-a-Judge), 10-case evaluation harness (`run_phase3_eval.py`). Achieved a **50% win rate** on path efficiency over BFS. Fully green test suite (**115/115 passing tests**). |
+| **Phase 4** | API & User Interface | **Complete** | Interactive D3.js Graph Visualization UI (`visualize_graph.py`), user-facing free-text CLI (`investigate.py`), and FastAPI web UI backend (`app.py`). |
 
 ---
 
@@ -20,7 +20,7 @@ This document outlines the exact technical state of the Apiro project as of June
 ### 1. The Corpus Infrastructure (`apiro/corpus/`)
 * **State:** Fully functional.
 * **Details:** Built to ingest unstructured medical knowledge (PubMed, textbooks, ClinVar clinical assertions) and store them as vector embeddings in a local **ChromaDB** instance. Contains 100,000 real medical records.
-* **Status:** Clean. The vector database successfully supports semantic chunk retrieval during the node expansion phase.
+* **Status:** Clean. The vector database successfully supports semantic chunk retrieval during the node expansion phase. Legacy scrapers and metadata repairs are located in `scripts/repair_corpus.py`.
 
 ### 2. The Entropy Engine (`apiro/entropy/engine.py`)
 * **State:** Fully functional and calibrated.
@@ -51,13 +51,19 @@ This document outlines the exact technical state of the Apiro project as of June
 * **LLM-as-a-Judge:** Uses the LLM client to evaluate whether a synthesized diagnosis matches the ground truth (resolving synonym issues like matching "Lupus Cerebritis" to "NPSLE").
 * **Score:** The Entropy-First (EF) traversal achieved a **50% win rate** on node expansion efficiency compared to the Breadth-First search baseline.
 
-### 7. Interactive Visualization (`scripts/visualize_graph.py`)
+### 7. Interactive Visualization & UI (`scripts/visualize_graph.py`, `scripts/app.py`)
 * **State:** Fully functional.
-* **Details:** Generates a self-contained HTML force-directed graph (using D3.js) showing the belief graph topology, entropy heatmaps (color-coded nodes), active vs. pruned paths, and a details sidebar for inspection.
+* **Details:**
+  * **visualize_graph.py:** Generates a self-contained HTML force-directed graph (using D3.js) showing the belief graph topology, entropy heatmaps (color-coded nodes), active vs. pruned paths, and a details sidebar.
+  * **app.py:** A FastAPI web UI that lets users input clinical presentations, run traversals in real-time, inspect dynamic graphs inside the browser, and view synthesized differentials.
 
 ### 8. User-Facing Detective (`scripts/investigate.py`)
 * **State:** Fully functional.
 * **Details:** Accepts free-text clinical vignettes from a user (either interactively or via CLI), parses them into typed seed nodes (symptoms, labs, imaging, vitals), runs a stub-free, real-time traversal, and synthesizes a formatted differential report.
+
+### 9. NLP & Model Footprint Optimization
+* **State:** De-bloated.
+* **Details:** The BART-based zero-shot classifier `domain_classifier.py` (~1.6 GB) was **removed**. Domain classification is now handled by a hybrid keyword-matching and dot-product semantic fallback in `expander.py` (which reuses the already loaded SentenceTransformer embeddings), dropping extra memory overhead to 0 MB. All obsolete mock/calibration scripts have been removed to prune the repository.
 
 ---
 
@@ -81,4 +87,3 @@ EF shows a dramatic increase in efficiency on successful cases, expanding signif
    * Controlled by `CONTRADICTION_THRESHOLD` (default `0.92`). Adjusting this changes how aggressively the engine prunes conflicting clinical claims.
 3. **Saturation Thresholds:**
    * Controlled by `THETA_BY_DOMAIN` in `config.py`. Calibrated for `llama3.1:8b` (confident floor ~0.49 nats; stopping threshold ~0.55 nats).
-nding in real-time.

@@ -12,7 +12,10 @@ To keep the repository clean, avoid editing legacy scripts or committing tempora
 These are the essential building blocks of the Apiro platform:
 * **`apiro/`**: The core package directory containing all source code (entropy calculation, graph schemas, NLI detection, search traversals).
 * **`tests/`**: The unit test suite. Run this regularly via `pytest tests/`.
-* **`scripts/run_phase3_eval.py`**: The current active benchmark suite entry point.
+* **`scripts/app.py`**: The FastAPI backend serving the web application and visualizer.
+* **`scripts/investigate.py`**: The CLI clinical query investigator.
+* **`scripts/run_phase3_eval.py`**: The Phase 3 benchmark suite entry point.
+* **`scripts/visualize_graph.py`**: The D3.js interactive HTML visualizer exporter.
 * **`requirements.txt` & `pyproject.toml`**: Package dependencies and distribution configurations.
 
 ### 2. Temporary / Debug Outputs (Safe to Delete / Ignore)
@@ -25,9 +28,6 @@ These files are generated dynamically when running experiments or traversals and
 ### 3. Legacy & Diagnostic Utility Scripts (Use with Caution)
 These scripts were written for specific diagnostics or setup phases. They are not part of the live runtime:
 * **`scripts/repair_corpus.py`**: A one-time utility used to fix double-encoding bugs inside the vector database.
-* **`scripts/inspect_metadata.py`**: A diagnostic script used to print metadata fields from the local ChromaDB database.
-* **`scripts/dry_run.py`**: Early prototype testing script for verifying basic LLM connectivity.
-* **`scripts/run_experiment.py` & `scripts/evaluate_real_traversal.py`**: Early benchmarking scripts superseded by the Phase 3 framework.
 
 ---
 
@@ -72,17 +72,29 @@ find . -type d -name ".pytest_cache" -exec rm -r {} +
 
 ## 🚀 How to Run the Project Properly
 
-### A. Run a Single Case Traversal (Visual Output)
-To execute the curiosity engine on a single clinical case and view the path logs:
+### A. Launch the Interactive FastAPI Web UI
+To run the web interface in development mode (available on `http://localhost:8000`):
 ```bash
-python -m apiro.run --case data/synthetic_case_1.json --real-entropy
+uvicorn scripts.app:app --host 0.0.0.0 --port 8000
 ```
-* Use `--real-entropy` to make live API calls. Omitting it runs the traversal in deterministic Mock mode using the stub client.
 
-### B. Run the Active Evaluation Suite
+### B. Run the Clinical Vignette Detective CLI
+To run a real-time, stub-free traversal on a clinical case vignette directly from the terminal:
+```bash
+python scripts/investigate.py "72yo male presenting with sudden substernal chest pain..."
+```
+
+### C. Run the Active Evaluation Suite
 To execute the benchmark comparing the Entropy-First engine against the Breadth-First baseline:
 ```bash
 # Run evaluation on first 10 cases
 python scripts/run_phase3_eval.py --n 10
 ```
 * The results are written to `data/phase3_results.json` and a traversal log is generated at `data/traversal_log_ef_eval.jsonl`.
+
+### D. Export HTML Belief Graph Visualizations
+To generate interactive D3.js force-directed HTML files for a completed traversal:
+```bash
+python scripts/visualize_graph.py --case data/synthetic_case_1.json
+```
+* The exported files will be written to `data/graph_*.html` and can be opened directly in any browser.

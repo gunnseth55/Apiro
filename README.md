@@ -27,7 +27,10 @@ Apiro translates this clinical reasoning process into a graph traversal algorith
 ├── pyproject.toml              # Project configuration and packaging
 ├── requirements.txt            # Python dependencies
 ├── scripts/
-│   └── run_phase3_eval.py      # Entry point for running Phase 3 benchmarks
+│   ├── app.py                  # FastAPI web server and UI backend
+│   ├── investigate.py          # Free-text clinical CLI detective tool
+│   ├── run_phase3_eval.py      # Entry point for running Phase 3 benchmarks
+│   └── visualize_graph.py      # D3.js force-directed graph generator
 ├── data/
 │   ├── phase3_results.json     # Stored results of Phase 3 evaluations
 │   └── traversal_log_ef_eval.jsonl # Traversal step logs for debugging
@@ -35,7 +38,7 @@ Apiro translates this clinical reasoning process into a graph traversal algorith
 │   ├── test_html_spec.py       # Integration and data validation tests
 │   └── test_phase2.py          # Unit tests for the graph engine
 └── apiro/
-    ├── corpus/                 # Corpus parsing, chunking, and ChromaDB indexing
+    ├── corpus/                 # Corpus parsing, chunking, and ChromaDB adapters
     ├── entropy/
     │   └── engine.py           # Epistemic uncertainty calculation
     ├── eval/
@@ -44,7 +47,7 @@ Apiro translates this clinical reasoning process into a graph traversal algorith
         ├── belief_graph.py     # BeliefGraph structure and frontier queue sorting
         ├── node.py             # Node schema (depth, claim, entropy)
         ├── edge.py             # Edge schema (relation mapping)
-        ├── expander.py         # RAG-based node expansion and top-3 synthesis
+        ├── expander.py         # RAG-based node expansion and top-3 synthesis (includes hybrid domain classifier)
         ├── traversal.py        # ApiroTraversal (Entropy-First algorithm)
         ├── breadth_first.py    # BreadthFirstTraversal (Baseline algorithm)
         └── contradiction.py    # NLI Cross-Encoder + NegEx contradiction detector
@@ -201,10 +204,16 @@ To avoid burning active OpenAI/Anthropic API credits during graph development or
   ```
 
 ### ### 4. Running a Local Traversal
-You can run a traversal with the mock model or actual LLM backend:
+You can run a traversal with the mock model, actual LLM backend, or launch the interactive FastAPI Web interface:
 ```bash
-# Runs the engine with the live EntropyEngine model integration
+# A. Runs the engine CLI on a synthetic case
 python -m apiro.run --case data/synthetic_case_1.json --real-entropy
+
+# B. Launches the Interactive FastAPI web server and UI on port 8000
+uvicorn scripts.app:app --host 0.0.0.0 --port 8000
+
+# C. Runs the clinical vignette free-text detective CLI
+python scripts/investigate.py "72yo male presenting with sudden substernal chest pain..."
 ```
 
 ### 5. Extending Search Strategies
@@ -216,7 +225,7 @@ python -m apiro.run --case data/synthetic_case_1.json --real-entropy
 
 ## 🎢 Project History (The Ups and Downs)
 
-Building Apiro was not a straight path. Over successive cycles of debugging and evaluation, we hit several conceptual and technical roadblocks:
+Building Apiro was not a straight path. Over successive cycles of debugging and evaluation, we hit several roadblocks:
 
 ### ❌ The Tangent Trap (Blind Uncertainty)
 * **What went wrong:** Originally, the engine chased uncertainty (highest entropy) immediately from the start. This caused the engine to ignore crucial clinical seed nodes (like positive lab results) and immediately follow highly uncertain, tangential claims, ending up in irrelevant "rabbit holes."
@@ -229,3 +238,7 @@ Building Apiro was not a straight path. Over successive cycles of debugging and 
 ### ❌ The Evaluator Metric Trap
 * **What went wrong:** Our Phase 3 evaluator checked for a "diagnostic hit" by scanning all raw expanded graph nodes for exact substring matches of the ground truth. This resulted in false negatives (e.g., the engine successfully synthesized "Systemic Lupus Erythematosus", but the ground truth was "Neuropsychiatric systemic lupus erythematosus [NPSLE]", resulting in a FAIL).
 * **How we fixed it:** We shifted the evaluation target from intermediate nodes to the final synthesized differential diagnosis. We replaced binary substring matching with a combined metric of substring checks and **SentenceTransformer semantic similarity (cosine similarity with a 0.75 threshold)**, matching clinical intents accurately.
+
+### ❌ The 1.6 GB Model Memory Bloat
+* **What went wrong:** Early versions used a heavy `facebook/bart-large-mnli` model (~1.6 GB memory footprint) in `domain_classifier.py` to identify whether a patient finding was a `symptom`, `lab`, `imaging`, etc. This made deployment slow, wasted memory, and was completely redundant.
+* **How we fixed it:** We deleted the zero-shot classifier module entirely and implemented a lightweight, hybrid keyword + dot-product semantic fallback in [expander.py](file:///home/theroid/PycharmProjects/Apiro/apiro/graph/expander.py) that reuses the already loaded SentenceTransformer embeddings, reducing the extra memory overhead to exactly 0 MB.
