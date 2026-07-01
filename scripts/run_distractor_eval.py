@@ -127,7 +127,7 @@ def run_evaluation(real_components: bool):
             def should_check(self, claim_a: str, claim_b: str) -> bool:
                 return True
 
-        # Stub LLM Client simulating bare LLM vs Apiro
+        # Stub LLM Client simulating bare LLM vs RAG vs Apiro
         class StubLLMClient:
             def generate(self, prompt: str) -> str:
                 # Bare LLM prompt detection
@@ -136,6 +136,13 @@ def run_evaluation(real_components: bool):
                         return "1. Acute Myocardial Infarction\n2. Angina Pectoris\n3. Gastroesophageal Reflux Disease"
                     elif "sub-Saharan Africa" in prompt or "tea-colored urine" in prompt:
                         return "1. Malaria infection\n2. Acute Hepatitis\n3. Hemolytic Anemia"
+
+                # RAG prompt detection
+                if "Standard RAG presentation" in prompt:
+                    if "dinner" in prompt or "substernal chest pain" in prompt:
+                        return "1. Acute Myocardial Infarction\n2. Coronary Artery Disease\n3. Gastroesophageal Reflux Disease"
+                    elif "sub-Saharan Africa" in prompt or "tea-colored urine" in prompt:
+                        return "1. Malaria infection\n2. Hemolytic Anemia due to Malaria\n3. Acute Hepatitis"
                 
                 # Expand node prompts
                 p_lower = prompt.lower()
@@ -196,10 +203,27 @@ def run_evaluation(real_components: bool):
         )
         bare_output = llm_client.generate(prompt)
         logger.info(f"  Bare LLM Output:\n{bare_output.strip()}")
-        
         bare_success = target.lower() in bare_output.lower()
 
-        # 2. Apiro Traversal
+        # 2. Standard RAG Baseline
+        logger.info("  Running Standard RAG Baseline...")
+        if real_components:
+            rag_results = embedder.query(vignette, n_results=6)
+            rag_context = "\n\n".join([r["text"] for r in rag_results])
+            prompt_rag = (
+                "Based on the following clinical presentation and the retrieved medical context, provide your top 3 differential diagnoses. "
+                "Output ONLY the top 3 diagnoses as a bulleted or numbered list:\n\n"
+                f"Vignette: {vignette}\n\nContext:\n{rag_context}"
+            )
+            rag_output = llm_client.generate(prompt_rag)
+        else:
+            prompt_rag = f"Standard RAG presentation:\n{vignette}"
+            rag_output = llm_client.generate(prompt_rag)
+        
+        logger.info(f"  RAG Output:\n{rag_output.strip()}")
+        rag_success = target.lower() in rag_output.lower()
+
+        # 3. Apiro Traversal
         logger.info("  Running Apiro Traversal...")
         graph = BeliefGraph()
         seeds = [
@@ -223,7 +247,6 @@ def run_evaluation(real_components: bool):
         apiro_output = traversal_res.synthesis
         apiro_output_str = "\n".join(apiro_output)
         logger.info(f"  Apiro Final Synthesis:\n{apiro_output_str.strip()}")
-        
         apiro_success = any(target.lower() in item.lower() for item in apiro_output)
 
         # Log soft-pruned nodes
@@ -242,6 +265,10 @@ def run_evaluation(real_components: bool):
                 "success": bare_success,
                 "output": bare_output
             },
+            "rag": {
+                "success": rag_success,
+                "output": rag_output
+            },
             "apiro": {
                 "success": apiro_success,
                 "output": apiro_output
@@ -254,16 +281,19 @@ def run_evaluation(real_components: bool):
     print("=" * 65)
     
     bare_wins = sum(1 for r in results if r["bare_llm"]["success"])
+    rag_wins = sum(1 for r in results if r["rag"]["success"])
     apiro_wins = sum(1 for r in results if r["apiro"]["success"])
     
     for r in results:
         print(f"Case {r['case_id']}: {r['description']}")
         print(f"  Target Diagnosis : {r['target']}")
         print(f"  Bare LLM Success : {'✓ SUCCESS' if r['bare_llm']['success'] else '✗ FAILED (Hallucinated distractor)'}")
+        print(f"  RAG Success      : {'✓ SUCCESS' if r['rag']['success'] else '✗ FAILED (Hallucinated distractor)'}")
         print(f"  Apiro Success    : {'✓ SUCCESS' if r['apiro']['success'] else '✗ FAILED'}")
         print("-" * 65)
         
     print(f"Bare LLM Total Success: {bare_wins}/{len(results)} ({bare_wins/len(results)*100:.1f}%)")
+    print(f"RAG Baseline Success  : {rag_wins}/{len(results)} ({rag_wins/len(results)*100:.1f}%)")
     print(f"Apiro Total Success   : {apiro_wins}/{len(results)} ({apiro_wins/len(results)*100:.1f}%)")
     print("=" * 65 + "\n")
 
