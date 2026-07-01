@@ -158,6 +158,24 @@ class ContradictionDetector:
           3. Otherwise → False (different abstraction levels; NLI unreliable).
              E.g. hypothesis vs raw observation, or lab vs symptom.
         """
+        # ── Clinical Domain Gate to prevent cross-organ false positives ──
+        a = claim_a.lower()
+        b = claim_b.lower()
+        
+        cardiac_kws = {"myocardial", "infarction", "angina", "coronary", "cardiac", "heart", "pericarditis", "tamponade", "ischemia", "stemi", "nstemi", "troponin", "ecg", "electrocardiogram", "perfusion", "substernal"}
+        gi_kws = {"esophageal", "spasm", "gerd", "achalasia", "reflux", "dysphagia", "gastric", "stomach", "barrett", "biliary", "chagas", "motility"}
+        
+        if (any(kw in a for kw in cardiac_kws) and any(kw in b for kw in gi_kws)) or \
+           (any(kw in a for kw in gi_kws) and any(kw in b for kw in cardiac_kws)):
+            return False
+
+        malaria_kws = {"malaria", "plasmodium", "falciparum", "vivax", "ovale", "blood film", "thick and thin"}
+        g6pd_kws = {"g6pd", "glucose-6-phosphate", "heinz", "bite cell", "nitrofurantoin", "hemolytic", "hemolysis"}
+        
+        if (any(kw in a for kw in malaria_kws) and any(kw in b for kw in g6pd_kws)) or \
+           (any(kw in a for kw in g6pd_kws) and any(kw in b for kw in malaria_kws)):
+            return False
+
         type_a = cls._seed_type(claim_a)
         type_b = cls._seed_type(claim_b)
 

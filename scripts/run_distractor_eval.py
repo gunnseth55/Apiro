@@ -194,6 +194,8 @@ def run_evaluation(real_components: bool):
         target = case["target_diagnosis"]
         logger.info(f"\nEvaluating Case: {case_id} — {case['description']}")
         
+        from apiro.eval.evaluator import _check_synthesis_hit
+
         # 1. Bare LLM Zero-Shot
         logger.info("  Running Bare LLM Zero-Shot...")
         prompt = (
@@ -203,7 +205,14 @@ def run_evaluation(real_components: bool):
         )
         bare_output = llm_client.generate(prompt)
         logger.info(f"  Bare LLM Output:\n{bare_output.strip()}")
-        bare_success = target.lower() in bare_output.lower()
+        
+        bare_items = [line.strip() for line in bare_output.split("\n") if line.strip()]
+        bare_success, _ = _check_synthesis_hit(
+            bare_items,
+            target,
+            embedder=embedder if real_components else None,
+            llm_client=llm_client if real_components else None
+        )
 
         # 2. Standard RAG Baseline
         logger.info("  Running Standard RAG Baseline...")
@@ -221,7 +230,14 @@ def run_evaluation(real_components: bool):
             rag_output = llm_client.generate(prompt_rag)
         
         logger.info(f"  RAG Output:\n{rag_output.strip()}")
-        rag_success = target.lower() in rag_output.lower()
+        
+        rag_items = [line.strip() for line in rag_output.split("\n") if line.strip()]
+        rag_success, _ = _check_synthesis_hit(
+            rag_items,
+            target,
+            embedder=embedder if real_components else None,
+            llm_client=llm_client if real_components else None
+        )
 
         # 3. Apiro Traversal
         logger.info("  Running Apiro Traversal...")
@@ -247,7 +263,13 @@ def run_evaluation(real_components: bool):
         apiro_output = traversal_res.synthesis
         apiro_output_str = "\n".join(apiro_output)
         logger.info(f"  Apiro Final Synthesis:\n{apiro_output_str.strip()}")
-        apiro_success = any(target.lower() in item.lower() for item in apiro_output)
+        
+        apiro_success, _ = _check_synthesis_hit(
+            apiro_output,
+            target,
+            embedder=embedder if real_components else None,
+            llm_client=llm_client if real_components else None
+        )
 
         # Log soft-pruned nodes
         for node in graph.nodes.values():
