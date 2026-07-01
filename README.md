@@ -176,9 +176,9 @@ The graph can be exported to JSON via `graph.export_json()`, yielding this forma
 Ensure you run python 3.10+ and install editable package dependencies:
 ```bash
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate  (cmd: venv\Scripts\activate)
 pip install -r requirements.txt
-pip install -e .
+pip install -e . 
 ```
 
 ### 2. Building the Corpus & Vector Database
