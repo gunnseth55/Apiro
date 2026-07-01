@@ -149,7 +149,7 @@ def build_components():
     )
     contradiction = ContradictionDetector()
 
-    return expander, saturation, rabbit_hole, contradiction, entropy_engine, embedder
+    return expander, saturation, rabbit_hole, contradiction, entropy_engine, embedder, llm_client
 
 
 def main():
@@ -204,7 +204,7 @@ def main():
     logger.info("=" * 60)
 
     # ── Load components ───────────────────────────────────────────────────
-    expander, saturation, rabbit_hole, contradiction, entropy_engine, embedder = build_components()
+    expander, saturation, rabbit_hole, contradiction, entropy_engine, embedder, llm_client = build_components()
 
     # ── Load cases ────────────────────────────────────────────────────────
     from apiro.corpus.clinical_case_adapter import ClinicalCaseAdapter

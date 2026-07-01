@@ -24,6 +24,7 @@ apiro/entropy/__init__.py
 apiro/entropy/engine.py
 apiro/eval/__init__.py
 apiro/eval/evaluator.py
+apiro/eval/llm_judge.py
 apiro/graph/__init__.py
 apiro/graph/belief_graph.py
 apiro/graph/breadth_first.py

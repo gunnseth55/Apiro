@@ -130,6 +130,11 @@ def findings_to_seed_nodes(
         if entropy_engine is not None:
             try:
                 entropy = entropy_engine.epistemic_certainty_entropy(claim, context_chunks=[])
+                # epistemic_certainty_entropy can return None without raising (e.g. Ollama
+                # returns no logprobs). Guard against None propagating into Node.entropy_score
+                # which causes '<' not supported between NoneType and int during frontier sort.
+                if entropy is None:
+                    entropy = SEED_ENTROPY_BY_FINDING_TYPE.get(finding.finding_type, default_entropy)
             except Exception:
                 # Fall back to heuristic if Ollama times out / errors
                 entropy = SEED_ENTROPY_BY_FINDING_TYPE.get(finding.finding_type, default_entropy)
