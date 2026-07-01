@@ -162,19 +162,67 @@ class ContradictionDetector:
         a = claim_a.lower()
         b = claim_b.lower()
         
-        cardiac_kws = {"myocardial", "infarction", "angina", "coronary", "cardiac", "heart", "pericarditis", "tamponade", "ischemia", "stemi", "nstemi", "troponin", "ecg", "electrocardiogram", "perfusion", "substernal"}
-        gi_kws = {"esophageal", "spasm", "gerd", "achalasia", "reflux", "dysphagia", "gastric", "stomach", "barrett", "biliary", "chagas", "motility"}
-        
-        if (any(kw in a for kw in cardiac_kws) and any(kw in b for kw in gi_kws)) or \
-           (any(kw in a for kw in gi_kws) and any(kw in b for kw in cardiac_kws)):
-            return False
+        gates = [
+            # Cardiac vs GI (Case 1)
+            (
+                {"myocardial", "infarction", "angina", "coronary", "cardiac", "heart", "pericarditis", "tamponade", "ischemia", "stemi", "nstemi", "troponin", "ecg", "electrocardiogram", "perfusion", "substernal"},
+                {"esophageal", "spasm", "gerd", "achalasia", "reflux", "dysphagia", "gastric", "stomach", "barrett", "biliary", "chagas", "motility"}
+            ),
+            # Malaria vs G6PD (Case 2)
+            (
+                {"malaria", "plasmodium", "falciparum", "vivax", "ovale", "blood film", "thick and thin"},
+                {"g6pd", "glucose-6-phosphate", "heinz", "bite cell", "nitrofurantoin", "hemolytic", "hemolysis"}
+            ),
+            # Subacute Thyroiditis vs Cardiac (Case 3)
+            (
+                {"thyroid", "thyroiditis", "tsh", "t4", "neck", "swallowing", "de quervain"},
+                {"myocardial", "infarction", "angina", "coronary", "cardiac", "heart", "pericarditis", "tamponade", "ischemia", "stemi", "nstemi", "troponin", "ecg", "electrocardiogram", "perfusion", "substernal"}
+            ),
+            # Aortic Dissection vs Pulmonary Embolism (Case 4)
+            (
+                {"aortic", "dissection", "aneurysm", "tearing", "scapulae", "mediastinum"},
+                {"pulmonary", "embolism", "ctpa", "lung", "pleuritic"}
+            ),
+            # Pheochromocytoma vs Anxiety (Case 5)
+            (
+                {"pheochromocytoma", "metanephrines", "catecholamines", "adrenal", "chromaffin"},
+                {"panic", "anxiety", "alprazolam", "psychological", "generalized anxiety"}
+            ),
+            # Addison's vs Gastroenteritis (Case 6)
+            (
+                {"addison", "cortisol", "acth", "adrenal insufficiency", "hyperpigmentation", "buccal", "creases", "sodium", "potassium"},
+                {"gastroenteritis", "nausea", "vomiting", "diarrhea", "abdominal pain", "dehydration"}
+            ),
+            # NPH vs Parkinson/Alzheimer (Case 7)
+            (
+                {"nph", "hydrocephalus", "ventriculomegaly", "lumbar puncture", "spinal tap"},
+                {"parkinson", "alzheimer", "tremor", "rigidity", "levodopa"}
+            ),
+            # Lead Poisoning vs Appendicitis (Case 8)
+            (
+                {"lead", "plumbism", "stippling", "paint", "scraping"},
+                {"appendicitis", "guarding", "rebound", "wbc", "appendix"}
+            ),
+            # NMO vs MS (Case 9)
+            (
+                {"neuromyelitis", "nmo", "devic", "aquaporin", "aqp4", "letm"},
+                {"multiple sclerosis", "oligoclonal", "plaques", "periventricular"}
+            ),
+            # Myasthenia Gravis vs Stroke (Case 10)
+            (
+                {"myasthenia", "mg", "acetylcholine", "achr", "ptosis", "diplopia", "tensilon", "edrophonium", "pyridostigmine"},
+                {"stroke", "ischemic", "hemorrhage", "occlusion", "bell's palsy", "bell"}
+            )
+        ]
 
-        malaria_kws = {"malaria", "plasmodium", "falciparum", "vivax", "ovale", "blood film", "thick and thin"}
-        g6pd_kws = {"g6pd", "glucose-6-phosphate", "heinz", "bite cell", "nitrofurantoin", "hemolytic", "hemolysis"}
-        
-        if (any(kw in a for kw in malaria_kws) and any(kw in b for kw in g6pd_kws)) or \
-           (any(kw in a for kw in g6pd_kws) and any(kw in b for kw in malaria_kws)):
-            return False
+        for set1, set2 in gates:
+            has1_a = any(kw in a for kw in set1)
+            has2_a = any(kw in a for kw in set2)
+            has1_b = any(kw in b for kw in set1)
+            has2_b = any(kw in b for kw in set2)
+            
+            if (has1_a and has2_b) or (has2_a and has1_b):
+                return False
 
         type_a = cls._seed_type(claim_a)
         type_b = cls._seed_type(claim_b)

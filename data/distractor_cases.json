@@ -77,5 +77,328 @@
         "entropy": 0.7
       }
     ]
+  },
+  {
+    "case_id": "distractor_case_3",
+    "description": "Subacute Thyroiditis mimicking Acute Coronary Syndrome",
+    "target_diagnosis": "Subacute Thyroiditis",
+    "vignette": "35yo female presenting with sudden onset of severe anterior neck and chest pain radiating to the jaw, accompanied by palpitations and sweating. The pain is aggravated by swallowing and head movements. Vitals: BP 120/75, HR 105, Temp 37.8C. Electrocardiogram (ECG) shows normal sinus rhythm with sinus tachycardia, no ST-segment or T-wave abnormalities. Cardiac troponin I levels are normal at 0 and 3 hours. Physical examination reveals an extremely tender, enlarged thyroid gland. Lab results: suppressed TSH, elevated free T4, and markedly elevated erythrocyte sedimentation rate (ESR).",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Sudden onset of severe anterior neck and chest pain radiating to jaw",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "s2",
+        "claim": "Electrocardiogram shows normal sinus rhythm with sinus tachycardia",
+        "domain": "imaging",
+        "depth": 0,
+        "entropy": 0.32
+      },
+      {
+        "id": "s3",
+        "claim": "Cardiac troponin I levels are completely normal",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.32
+      },
+      {
+        "id": "s4",
+        "claim": "Suppressed TSH with elevated free T4 and markedly elevated ESR",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.58
+      },
+      {
+        "id": "s5",
+        "claim": "Physical examination reveals an extremely tender, enlarged thyroid gland",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      }
+    ]
+  },
+  {
+    "case_id": "distractor_case_4",
+    "description": "Aortic Dissection mimicking Pulmonary Embolism",
+    "target_diagnosis": "Aortic Dissection",
+    "vignette": "55yo male presenting with sudden onset of excruciating, tearing chest pain radiating to the back between the scapulae, accompanied by moderate dyspnea. He has a long history of uncontrolled hypertension. Vitals: BP 175/95 in right arm, 145/80 in left arm, HR 95, SpO2 95% on room air. CT pulmonary angiogram shows no evidence of pulmonary embolism. Chest X-ray reveals a widened mediastinum.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Sudden onset of excruciating, tearing chest pain radiating to back",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "s2",
+        "claim": "CT pulmonary angiogram shows no evidence of pulmonary embolism",
+        "domain": "imaging",
+        "depth": 0,
+        "entropy": 0.32
+      },
+      {
+        "id": "s3",
+        "claim": "Asymmetric blood pressure between arms (BP 175/95 right, 145/80 left)",
+        "domain": "vital",
+        "depth": 0,
+        "entropy": 0.65
+      },
+      {
+        "id": "s4",
+        "claim": "Chest X-ray reveals a widened mediastinum",
+        "domain": "imaging",
+        "depth": 0,
+        "entropy": 0.32
+      }
+    ]
+  },
+  {
+    "case_id": "distractor_case_5",
+    "description": "Pheochromocytoma mimicking Panic Disorder",
+    "target_diagnosis": "Pheochromocytoma",
+    "vignette": "42yo female presenting with episodic, severe pounding headaches, profuse sweating, palpitations, and intense anxiety. The episodes occur randomly at rest and last for 15-30 minutes. She has had no prior history of anxiety disorders, and the symptoms do not respond to alprazolam. Vitals during an episode: BP 210/115, HR 120. Urine toxicology is negative. 24-hour urinary collection reveals markedly elevated metanephrines and catecholamines. An abdominal CT scan shows a 4 cm vascular mass in the right adrenal gland.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Episodic headaches, sweating, palpitations, and severe anxiety",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "s2",
+        "claim": "Episodes are unresponsive to alprazolam and occur randomly at rest",
+        "domain": "history",
+        "depth": 0,
+        "entropy": 0.72
+      },
+      {
+        "id": "s3",
+        "claim": "Severe paroxysmal hypertension (BP 210/115 during episodes)",
+        "domain": "vital",
+        "depth": 0,
+        "entropy": 0.65
+      },
+      {
+        "id": "s4",
+        "claim": "24-hour urinary metanephrines and catecholamines are markedly elevated",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.58
+      },
+      {
+        "id": "s5",
+        "claim": "Abdominal CT scan shows a vascular adrenal mass",
+        "domain": "imaging",
+        "depth": 0,
+        "entropy": 0.32
+      }
+    ]
+  },
+  {
+    "case_id": "distractor_case_6",
+    "description": "Primary Adrenal Insufficiency (Addison's) mimicking Gastroenteritis",
+    "target_diagnosis": "Addison's Disease",
+    "vignette": "31yo female presenting with progressive fatigue, nausea, vomiting, abdominal pain, and weight loss over the past 2 months. She is hypotensive and appears dehydrated. Vitals: BP 85/50, HR 102, Temp 36.8C. Intravenous saline hydration fails to raise her blood pressure significantly. Physical exam reveals hyperpigmentation of the skin, especially on palmar creases and buccal mucosa. Labs: sodium 128 mEq/L, potassium 5.6 mEq/L, low morning serum cortisol, and highly elevated plasma ACTH.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Fatigue, nausea, vomiting, abdominal pain, and weight loss",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "s2",
+        "claim": "Hypotension refractory to intravenous saline hydration (BP 85/50)",
+        "domain": "vital",
+        "depth": 0,
+        "entropy": 0.65
+      },
+      {
+        "id": "s3",
+        "claim": "Hyperpigmentation of skin on palmar creases and buccal mucosa",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "s4",
+        "claim": "Hyponatremia (sodium 128) and hyperkalemia (potassium 5.6)",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.58
+      },
+      {
+        "id": "s5",
+        "claim": "Low morning serum cortisol and highly elevated plasma ACTH",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.58
+      }
+    ]
+  },
+  {
+    "case_id": "distractor_case_7",
+    "description": "Normal Pressure Hydrocephalus (NPH) mimicking Parkinson's / Alzheimer's",
+    "target_diagnosis": "Normal Pressure Hydrocephalus",
+    "vignette": "74yo male presenting with progressive memory decline, slow magnetic (gate-like) gait, and urinary urgency/incontinence over 9 months. Family suspects Alzheimer's disease. Physical exam shows no resting tremor, no rigidity, and no response to levodopa. Head MRI reveals ventriculomegaly out of proportion to cerebral sulcal atrophy. A high-volume lumbar puncture (spinal tap) with removal of 40 mL of CSF results in temporary, significant improvement in his gait speed and balance.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Progressive cognitive decline, magnetic gait, and urinary incontinence",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "s2",
+        "claim": "No resting tremor or rigidity and poor response to levodopa",
+        "domain": "history",
+        "depth": 0,
+        "entropy": 0.72
+      },
+      {
+        "id": "s3",
+        "claim": "Brain MRI shows ventriculomegaly out of proportion to sulcal atrophy",
+        "domain": "imaging",
+        "depth": 0,
+        "entropy": 0.32
+      },
+      {
+        "id": "s4",
+        "claim": "Significant temporary gait improvement after large-volume lumbar puncture",
+        "domain": "treatment",
+        "depth": 0,
+        "entropy": 0.72
+      }
+    ]
+  },
+  {
+    "case_id": "distractor_case_8",
+    "description": "Lead Poisoning mimicking Acute Appendicitis",
+    "target_diagnosis": "Lead Poisoning",
+    "vignette": "38yo male construction worker presenting with severe, diffuse colicky abdominal pain, constipation, and joint pain. He has been irritable and has difficulty concentrating. Vitals: Temp 37.1C, HR 80, BP 130/80. Abdominal exam reveals diffuse tenderness but no guarding or rebound tenderness. Complete blood count shows hemoglobin 10.5 g/dL, normal white blood cell count. Peripheral blood smear shows microcytic anemia with basophilic stippling. Abdominal CT is normal. Blood lead level is highly elevated at 55 mcg/dL.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Severe diffuse abdominal pain, constipation, joint pain, and irritability",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "s2",
+        "claim": "Abdominal CT is normal with no signs of appendicitis",
+        "domain": "imaging",
+        "depth": 0,
+        "entropy": 0.32
+      },
+      {
+        "id": "s3",
+        "claim": "Normal white blood cell count and no fever",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.58
+      },
+      {
+        "id": "s4",
+        "claim": "Microcytic anemia with basophilic stippling on peripheral blood smear",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.58
+      },
+      {
+        "id": "s5",
+        "claim": "Highly elevated blood lead level (55 mcg/dL)",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.58
+      }
+    ]
+  },
+  {
+    "case_id": "distractor_case_9",
+    "description": "Neuromyelitis Optica (NMO) mimicking Multiple Sclerosis",
+    "target_diagnosis": "Neuromyelitis Optica",
+    "vignette": "29yo female presenting with acute onset of bilateral vision loss and painful eye movements, followed by weakness and numbness in both legs. Spine MRI reveals a continuous, longitudinally extensive transverse myelitis (LETM) lesion extending over 4 vertebral segments. Brain MRI shows no periventricular demyelinating plaques or other abnormalities. CSF analysis shows no oligoclonal bands. Serum antibody testing is positive for anti-aquaporin-4 (AQP4) IgG antibodies.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Acute bilateral vision loss, painful eye movements, and paraparesis",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "s2",
+        "claim": "Spine MRI shows longitudinally extensive transverse myelitis lesion spanning 4 segments",
+        "domain": "imaging",
+        "depth": 0,
+        "entropy": 0.32
+      },
+      {
+        "id": "s3",
+        "claim": "Brain MRI is normal with no periventricular plaques",
+        "domain": "imaging",
+        "depth": 0,
+        "entropy": 0.32
+      },
+      {
+        "id": "s4",
+        "claim": "CSF is negative for oligoclonal bands",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.58
+      },
+      {
+        "id": "s5",
+        "claim": "Positive serum anti-aquaporin-4 (AQP4) IgG antibodies",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.58
+      }
+    ]
+  },
+  {
+    "case_id": "distractor_case_10",
+    "description": "Myasthenia Gravis mimicking Acute Ischemic Stroke",
+    "target_diagnosis": "Myasthenia Gravis",
+    "vignette": "45yo female presenting with sudden onset of diplopia (double vision), ptosis (drooping eyelid) of the left eye, and slurred speech. The symptoms are mild in the morning but worsen significantly toward the evening or after talking for prolonged periods. Vitals are normal. Brain CT and MRI angiogram show no evidence of acute ischemia, hemorrhage, or arterial occlusion. Repetitive nerve stimulation shows a decremental response. Serum test is positive for acetylcholine receptor (AChR) antibodies.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Diplopia, ptosis, and slurred speech fluctuating and worsening in the evening",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "s2",
+        "claim": "Brain CT and MRI are normal with no signs of stroke or ischemia",
+        "domain": "imaging",
+        "depth": 0,
+        "entropy": 0.32
+      },
+      {
+        "id": "s3",
+        "claim": "Repetitive nerve stimulation shows a decremental response",
+        "domain": "treatment",
+        "depth": 0,
+        "entropy": 0.72
+      },
+      {
+        "id": "s4",
+        "claim": "Positive serum acetylcholine receptor (AChR) antibodies",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.58
+      }
+    ]
   }
 ]
