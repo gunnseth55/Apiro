@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-from apiro.config import CONTRADICTION_THRESHOLD_EF
+from apiro.config import CONTRADICTION_THRESHOLD_EF, CONTRADICTION_PENALTY
 
 logger = logging.getLogger(__name__)
 
@@ -266,21 +266,18 @@ class ApiroTraversal:
                             f"vs '{existing.claim[:40]}' (score={result.score:.3f})"
                         )
 
-                        # ── Contradiction-informed pruning ────────────────────
+                        # ── Contradiction-informed soft-pruning ───────────────
                         # The lower-entropy node carries less information and is
-                        # more likely to be a spurious tangent. Flag it as a
-                        # rabbit hole so the frontier immediately de-prioritises
-                        # it, turning contradiction detection from a passive logger
-                        # into an active belief-graph pruner.
+                        # more likely to be a spurious tangent. We apply a score
+                        # penalty to push it down the traversal frontier queue.
                         new_h      = new_node.entropy_score  or 0.0
                         existing_h = existing.entropy_score  or 0.0
                         weaker = new_node if new_h <= existing_h else existing
-                        if not weaker.is_rabbit_hole:
-                            weaker.is_rabbit_hole = True
-                            logger.info(
-                                f"[Traversal] Pruned weaker contradicting node: "
-                                f"'{weaker.claim[:50]}' (entropy={weaker.entropy_score:.3f})"
-                            )
+                        weaker.contradiction_penalty = CONTRADICTION_PENALTY
+                        logger.info(
+                            f"[Traversal] Soft-pruned weaker contradicting node: "
+                            f"'{weaker.claim[:50]}' (entropy={weaker.entropy_score:.3f}, penalty={CONTRADICTION_PENALTY})"
+                        )
 
 
         # ── Wrap up ───────────────────────────────────────────────────────────

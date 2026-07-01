@@ -27,6 +27,7 @@ class Node:
     entropy_score: float
     resolved:      bool          = False
     is_rabbit_hole: bool         = False
+    contradiction_penalty: float = 0.0
     depth:         int           = 0
     parent_id:     str | None    = None
     sources:       list[str]     = field(default_factory=list)

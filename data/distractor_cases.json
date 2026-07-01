@@ -1,0 +1,81 @@
+[
+  {
+    "case_id": "distractor_case_1",
+    "description": "Esophageal Spasm mimicking Acute Myocardial Infarction",
+    "target_diagnosis": "Esophageal Spasm",
+    "vignette": "72yo male presenting with sudden, severe substernal chest pain radiating to the left arm and back, accompanied by mild shortness of breath. The pain began during dinner. Vitals: BP 130/80, HR 85, SpO2 96%. Electrocardiogram (ECG) shows normal sinus rhythm with no ST-segment or T-wave changes. Cardiac troponin I levels are completely normal at 0 and 3 hours. Patient has a history of gastroesophageal reflux disease and intermittent dysphagia.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Severe substernal chest pain radiating to left arm",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "s2",
+        "claim": "Electrocardiogram shows normal sinus rhythm with no ST/T changes",
+        "domain": "imaging",
+        "depth": 0,
+        "entropy": 0.32
+      },
+      {
+        "id": "s3",
+        "claim": "Cardiac troponin I levels are completely normal at 0 and 3 hours",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.32
+      },
+      {
+        "id": "s4",
+        "claim": "History of gastroesophageal reflux disease and intermittent dysphagia",
+        "domain": "comorbidity",
+        "depth": 0,
+        "entropy": 0.7
+      }
+    ]
+  },
+  {
+    "case_id": "distractor_case_2",
+    "description": "G6PD Deficiency hemolytic crisis mimicking Malaria infection",
+    "target_diagnosis": "G6PD Deficiency",
+    "vignette": "28yo male presents with sudden onset of jaundice, fatigue, and dark tea-colored urine. He recently returned from a trip to sub-Saharan Africa. Vitals: Temp 37.8C, HR 105, BP 115/70. Lab work reveals hemoglobin 8.2 g/dL, elevated lactate dehydrogenase, and elevated indirect bilirubin. Peripheral blood smear shows bite cells and Heinz bodies. Thick and thin blood films are negative for Plasmodium species. Patient was recently treated with a course of nitrofurantoin for a urinary tract infection.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Sudden onset of jaundice, fatigue, and dark tea-colored urine",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "s2",
+        "claim": "Thick and thin blood films are negative for Plasmodium species",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.32
+      },
+      {
+        "id": "s3",
+        "claim": "Peripheral blood smear shows bite cells and Heinz bodies",
+        "domain": "lab findings",
+        "depth": 0,
+        "entropy": 0.32
+      },
+      {
+        "id": "s4",
+        "claim": "Recent treatment with nitrofurantoin for a urinary tract infection",
+        "domain": "treatment",
+        "depth": 0,
+        "entropy": 0.55
+      },
+      {
+        "id": "s5",
+        "claim": "Recent travel to sub-Saharan Africa",
+        "domain": "comorbidity",
+        "depth": 0,
+        "entropy": 0.7
+      }
+    ]
+  }
+]

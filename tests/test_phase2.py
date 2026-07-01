@@ -352,13 +352,47 @@ def test_contradiction_detector_should_check():
     print("  ✓ Real ContradictionDetector.should_check gated correctly")
 
 
+def test_contradiction_soft_pruning():
+    """Verify that a contradiction flags a node with contradiction_penalty rather than is_rabbit_hole."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        traversal, *_ = make_components(log_dir=tmpdir)
+
+        graph = BeliefGraph()
+        n1 = Node(id="n1", claim="Administer aspirin 300mg", entropy_score=0.9, domain="pharmacology", depth=1)
+        n2 = Node(id="n2", claim="Aspirin is contraindicated due to bleeding", entropy_score=0.6, domain="pharmacology", depth=1)
+        graph.add_node(n1)
+        graph.add_node(n2)
+
+        from apiro.config import CONTRADICTION_THRESHOLD_EF, CONTRADICTION_PENALTY
+        result = traversal.contradiction.check(n1.claim, n2.claim)
+        assert result.label == "contradiction"
+        assert result.score >= CONTRADICTION_THRESHOLD_EF
+
+        weaker = n2 if n2.entropy_score <= n1.entropy_score else n1
+        weaker.contradiction_penalty = CONTRADICTION_PENALTY
+
+        assert weaker.id == "n2"
+        assert weaker.contradiction_penalty == 0.8
+        assert not weaker.is_rabbit_hole, "Should NOT set is_rabbit_hole for soft pruning"
+
+        # Verify get_frontier sorts correctly
+        frontier = graph.get_frontier(depth_aware=False)
+        assert frontier[0].id == "n1"
+        assert frontier[1].id == "n2"
+
+        frontier_da = graph.get_frontier(depth_aware=True)
+        assert frontier_da[0].id == "n1"
+        assert frontier_da[1].id == "n2"
+
+        print("  ✓ Soft-pruning penalty and frontier scoring logic verified")
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Standalone runner
 # ═══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
     tests = [
-
         test_export_json_structure,
         test_export_json_writes_file,
         test_traversal_log_written,
@@ -371,8 +405,8 @@ if __name__ == "__main__":
         test_node_expander_creates_three_children,
         test_end_to_end_traversal,
         test_contradiction_detector_should_check,
+        test_contradiction_soft_pruning,
     ]
-
 
     passed, failed = 0, 0
     for test in tests:
