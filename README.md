@@ -211,6 +211,8 @@ python -m apiro.run --case data/synthetic_case_1.json --real-entropy
 
 # B. Launches the Interactive FastAPI web server and UI on port 8000
 uvicorn scripts.app:app --host 0.0.0.0 --port 8000
+uvicorn scripts.app:app --host 127.0.0.1 --port 8000
+
 
 # C. Runs the clinical vignette free-text detective CLI
 python scripts/investigate.py "72yo male presenting with sudden substernal chest pain..."
