@@ -267,12 +267,20 @@ class ApiroTraversal:
                         )
 
                         # ── Contradiction-informed soft-pruning ───────────────
-                        # The lower-entropy node carries less information and is
-                        # more likely to be a spurious tangent. We apply a score
-                        # penalty to push it down the traversal frontier queue.
-                        new_h      = new_node.entropy_score  or 0.0
-                        existing_h = existing.entropy_score  or 0.0
-                        weaker = new_node if new_h <= existing_h else existing
+                        # Seed nodes (depth 0) are ground truth and must never be penalized.
+                        # If a hypothesis contradicts ground truth, the hypothesis is penalized.
+                        if new_node.depth == 0 and existing.depth == 0:
+                            # Both are ground truth, do not penalize either
+                            continue
+                        elif new_node.depth == 0:
+                            weaker = existing
+                        elif existing.depth == 0:
+                            weaker = new_node
+                        else:
+                            new_h      = new_node.entropy_score  or 0.0
+                            existing_h = existing.entropy_score  or 0.0
+                            weaker = new_node if new_h <= existing_h else existing
+
                         weaker.contradiction_penalty = CONTRADICTION_PENALTY
                         logger.info(
                             f"[Traversal] Soft-pruned weaker contradicting node: "

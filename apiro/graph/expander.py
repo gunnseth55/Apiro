@@ -519,15 +519,30 @@ class NodeExpander:
         contradiction_ids: set[str] = set()
         for edge in graph.edges:
             if getattr(edge, 'contradiction_flag', False):
-                contradiction_ids.add(edge.child_id)
-                contradiction_ids.add(edge.parent_id)
+                # In BFS, we exclude both parent and child.
+                # In ApiroTraversal, we ONLY exclude the node if it has a contradiction penalty.
+                # So we check if the nodes have contradiction_penalty.
+                # If neither node has a contradiction_penalty set (which means we are in BFS/non-pruning mode),
+                # we exclude both.
+                # If they do have contradiction_penalty, we rely on the contradiction_penalty check instead of contradiction_ids.
+                has_penalty = any(
+                    getattr(graph.nodes[nid], 'contradiction_penalty', 0.0) > 0.0 
+                    for nid in (edge.child_id, edge.parent_id) if nid in graph.nodes
+                )
+                if not has_penalty:
+                    contradiction_ids.add(edge.child_id)
+                    contradiction_ids.add(edge.parent_id)
 
         # Collect only clean, high-signal nodes.
-        clean_nodes = [
-            n for n in graph.nodes.values()
-            if not n.is_rabbit_hole
-            and n.id not in contradiction_ids
-        ]
+        clean_nodes = []
+        for n in graph.nodes.values():
+            if n.is_rabbit_hole:
+                continue
+            if n.id in contradiction_ids:
+                continue
+            if getattr(n, 'contradiction_penalty', 0.0) > 0.0:
+                continue
+            clean_nodes.append(n)
 
         # Sort by entropy descending — highest uncertainty = most diagnostically
         # interesting — and cap at top_k.
