@@ -145,6 +145,7 @@ CONTRADICTION_MODEL    = "cross-encoder/nli-MiniLM2-L6-H768"
 CONTRADICTION_THRESHOLD_EF  = 0.92   # entropy-first: tighter to reduce noise
 CONTRADICTION_THRESHOLD_BF  = 0.92   # breadth-first: same to ensure fair comparison
 CONTRADICTION_THRESHOLD     = 0.92   # default alias used by tests / standalone scripts
+CONTRADICTION_PENALTY       = 0.8    # score penalty subtracted from soft-pruned nodes
 
 # ---------------------------------------------------------------------------
 # Domain classifier

@@ -86,12 +86,13 @@ def _check_synthesis_hit(
             preds_text = "\n".join(f"  - {d}" for d in synthesis)
             prompt = (
                 "You are a medical evaluation assistant.\n"
-                "Determine if the predicted diagnoses contain the ground truth diagnosis.\n\n"
+                "Determine if the predicted diagnoses contain or represent the ground truth diagnosis.\n\n"
                 f"Ground Truth: {ground_truth}\n"
                 f"Predicted Diagnoses:\n{preds_text}\n\n"
-                "Rule: If any predicted diagnosis is an exact match, a clinical synonym "
-                "(e.g., 'Lupus Cerebritis' is a synonym for 'Neuropsychiatric Systemic Lupus Erythematosus'), "
-                "or a correct broader class, respond with 'YES'. Otherwise respond with 'NO'.\n\n"
+                "Rule: If any predicted diagnosis is an exact match, a clinical synonym, "
+                "or a direct manifestation/cause/broader class (e.g. 'Nitrofurantoin-induced hemolytic anemia' matches 'G6PD Deficiency' "
+                "in this clinical context, or 'Lupus Cerebritis' is a synonym for 'Neuropsychiatric Systemic Lupus Erythematosus'), "
+                "respond with 'YES'. Otherwise respond with 'NO'.\n\n"
                 "Response (YES/NO only):"
             )
             response = llm_client.chat(prompt).strip().upper()

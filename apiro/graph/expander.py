@@ -196,7 +196,7 @@ class StubChromaClient:
 HYPOTHESIS_PROMPT_TEMPLATE = """\
 You are Apiro, a precise clinical differential-diagnosis engine.
 
-Your task: given a parent clinical claim and retrieved medical evidence, generate
+Your task: given a parent clinical claim, the patient's clinical case presentation, and retrieved medical evidence, generate
 exactly 3 child hypotheses that deepen the diagnostic reasoning.
 
 === PARENT CLAIM ===
@@ -205,6 +205,9 @@ exactly 3 child hypotheses that deepen the diagnostic reasoning.
 === MEDICAL DOMAIN ===
 {domain}
 
+=== PATIENT CLINICAL PRESENTATION ===
+{case_context}
+
 === RETRIEVED EVIDENCE (use ONLY what is stated here) ===
 {rag_chunks}
 
@@ -212,9 +215,9 @@ exactly 3 child hypotheses that deepen the diagnostic reasoning.
 1. DOMAIN LOCK: Every hypothesis MUST remain within the "{domain}" domain or one
    directly clinically adjacent domain (e.g. pathophysiology ↔ lab findings).
    Do NOT introduce unrelated organ systems, rare syndromes, or diseases not
-   mentioned in the evidence above.
+   mentioned in the evidence or patient presentation above.
 2. EVIDENCE GROUNDED: Every hypothesis must be directly derivable from the
-   evidence above. Do not speculate beyond what the evidence supports.
+   evidence or patient presentation above. Do not speculate beyond what is supported.
 3. CLINICAL SPECIFICITY: Each hypothesis must be a specific, testable clinical
    claim — not a vague statement. Include mechanism, finding, or intervention.
 4. FORMAT: Output exactly 3 hypotheses, one per line, no numbering, no preamble,
@@ -229,17 +232,17 @@ exactly 3 child hypotheses that deepen the diagnostic reasoning.
 PARAMETRIC_PROMPT_TEMPLATE = """\
 You are Apiro, a precise clinical differential-diagnosis engine.
 
-Your task: given a parent clinical claim, generate exactly 3 child hypotheses
+Your task: given a parent clinical claim and the patient's clinical case presentation, generate exactly 3 child hypotheses
 that deepen the diagnostic reasoning using established medical knowledge.
-
-NOTE: The medical corpus returned no reliable evidence for this claim.
-Reason from your medical training knowledge directly.
 
 === PARENT CLAIM ===
 {claim}
 
 === MEDICAL DOMAIN ===
 {domain}
+
+=== PATIENT CLINICAL PRESENTATION ===
+{case_context}
 
 === STRICT RULES ===
 1. DOMAIN: Stay within the "{domain}" domain or one clinically adjacent domain.
@@ -308,7 +311,12 @@ class NodeExpander:
         where: dict | None = None
         if RAG_DOMAIN_FILTER and domain:
             db_domain = domain.replace(" findings", "").lower()
-            where = {"medical_domain": db_domain}
+            if db_domain in ("symptom", "vital"):
+                db_domain = "pathophysiology"
+            
+            allowed_domains = {"genetics", "pharmacology", "imaging", "lab", "treatment", "comorbidity", "pathophysiology"}
+            if db_domain in allowed_domains:
+                where = {"medical_domain": db_domain}
 
         chunks: list[str] = []
         try:
@@ -338,7 +346,7 @@ class NodeExpander:
         return chunks, is_grounded
 
 
-    def _build_prompt(self, node: Node, chunks: list[str], is_grounded: bool = True) -> str:
+    def _build_prompt(self, node: Node, chunks: list[str], graph, is_grounded: bool = True) -> str:
         """
         Build the hypothesis-generation prompt.
 
@@ -347,10 +355,15 @@ class NodeExpander:
         When is_grounded=False (sparse corpus), uses PARAMETRIC_PROMPT_TEMPLATE
         so the LLM can reason from its training knowledge for rare diseases.
         """
+        # Extract patient case context (all seed nodes with depth=0)
+        seeds = [n.claim for n in graph.nodes.values() if n.depth == 0]
+        case_context = "\n".join(f"  - {s}" for s in seeds) if seeds else "  - [No seed context]"
+
         if not is_grounded:
             return PARAMETRIC_PROMPT_TEMPLATE.format(
                 claim=node.claim,
                 domain=node.domain,
+                case_context=case_context,
             )
         if chunks:
             rag_text = "\n".join(f"  [{i+1}] {chunk.strip()}" for i, chunk in enumerate(chunks))
@@ -359,6 +372,7 @@ class NodeExpander:
         return HYPOTHESIS_PROMPT_TEMPLATE.format(
             claim=node.claim,
             domain=node.domain,
+            case_context=case_context,
             rag_chunks=rag_text,
         )
 
@@ -392,6 +406,29 @@ class NodeExpander:
 
         return hypotheses
 
+    def _batch_entropy(self, hypotheses: list[str], chunks: list[str]) -> list[float]:
+        """
+        Score entropy for all hypotheses in one pass where possible.
+
+        Uses the entropy engine's temperature_corrected_entropy on the pre-built
+        verification prompt for each hypothesis. Results are collected serially
+        but share the already-retrieved RAG chunks, avoiding redundant context
+        construction and letting the caller reuse the same chunk list.
+
+        Falls back to ln(2) (max binary uncertainty) on any failure so the node
+        stays high-priority in the frontier.
+        """
+        DEFAULT = 0.693  # ln(2) — max binary uncertainty fallback
+        scores: list[float] = []
+        for hyp in hypotheses:
+            try:
+                prompt = self.entropy_engine._build_verification_prompt(hyp, chunks)
+                val = self.entropy_engine.temperature_corrected_entropy(prompt)
+                scores.append(val if val is not None else DEFAULT)
+            except Exception:
+                scores.append(DEFAULT)
+        return scores
+
     def expand(self, node: Node, graph) -> list[Node]:
         """
         Main expansion method — called by traversal.py for each frontier node.
@@ -413,24 +450,19 @@ class NodeExpander:
         # Step 2 & 3: Prompt + LLM
         # Use evidence-constrained prompt when corpus is reliable;
         # parametric prompt when corpus coverage is too sparse to trust.
-        prompt = self._build_prompt(node, chunks, is_grounded=is_grounded)
+        prompt = self._build_prompt(node, chunks, graph, is_grounded=is_grounded)
         raw_output = self._call_llm(prompt)
 
         # Step 4: Parse
         hypotheses = self._parse_hypotheses(raw_output)
+
+        # Step 5a: Batch entropy — score all 3 hypotheses in one pass
+        entropies = self._batch_entropy(hypotheses, chunks)
+
         new_nodes = []
 
         for i, hypothesis in enumerate(hypotheses):
-            # Step 5a: Epistemic certainty entropy.
-            # Measures uncertainty at the clinical decision boundary:
-            # "Given the RAG evidence, is this hypothesis clinically supported?"
-            # First-token Shannon entropy over Yes/No — the core Apiro signal.
-            entropy = self.entropy_engine.epistemic_certainty_entropy(hypothesis, chunks)
-            # Guard: epistemic_certainty_entropy returns None on Ollama timeout.
-            # Fall back to ln(2) = 0.693 (max binary uncertainty) so the node
-            # stays high-priority in the frontier and Node.__post_init__ doesn't crash.
-            if entropy is None:
-                entropy = 0.693
+            entropy = entropies[i]
 
             domain = classify_domain(hypothesis, embedder=getattr(self.chroma_client, '_emb', None))
 
@@ -481,6 +513,7 @@ class NodeExpander:
 
         return new_nodes
 
+
     def synthesize_differential(self, graph, top_k: int = 15) -> list[str]:
         """
         Synthesize a final differential diagnosis from the belief graph.
@@ -505,15 +538,30 @@ class NodeExpander:
         contradiction_ids: set[str] = set()
         for edge in graph.edges:
             if getattr(edge, 'contradiction_flag', False):
-                contradiction_ids.add(edge.child_id)
-                contradiction_ids.add(edge.parent_id)
+                # In BFS, we exclude both parent and child.
+                # In ApiroTraversal, we ONLY exclude the node if it has a contradiction penalty.
+                # So we check if the nodes have contradiction_penalty.
+                # If neither node has a contradiction_penalty set (which means we are in BFS/non-pruning mode),
+                # we exclude both.
+                # If they do have contradiction_penalty, we rely on the contradiction_penalty check instead of contradiction_ids.
+                has_penalty = any(
+                    getattr(graph.nodes[nid], 'contradiction_penalty', 0.0) > 0.0 
+                    for nid in (edge.child_id, edge.parent_id) if nid in graph.nodes
+                )
+                if not has_penalty:
+                    contradiction_ids.add(edge.child_id)
+                    contradiction_ids.add(edge.parent_id)
 
         # Collect only clean, high-signal nodes.
-        clean_nodes = [
-            n for n in graph.nodes.values()
-            if not n.is_rabbit_hole
-            and n.id not in contradiction_ids
-        ]
+        clean_nodes = []
+        for n in graph.nodes.values():
+            if n.is_rabbit_hole:
+                continue
+            if n.id in contradiction_ids:
+                continue
+            if getattr(n, 'contradiction_penalty', 0.0) > 0.0:
+                continue
+            clean_nodes.append(n)
 
         # Sort by entropy descending — highest uncertainty = most diagnostically
         # interesting — and cap at top_k.

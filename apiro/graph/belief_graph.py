@@ -105,10 +105,12 @@ class BeliefGraph:
             def score(n: Node) -> float:
                 h = n.entropy_score if n.entropy_score is not None else 0.5
                 # Depth 0: anchor on certainty. Depth >=1: explore uncertainty.
-                return (1.0 - h) if n.depth == 0 else h
+                base_score = (1.0 - h) if n.depth == 0 else h
+                return base_score - getattr(n, "contradiction_penalty", 0.0)
         else:
             def score(n: Node) -> float:
-                return n.entropy_score if n.entropy_score is not None else 0.0
+                h = n.entropy_score if n.entropy_score is not None else 0.0
+                return h - getattr(n, "contradiction_penalty", 0.0)
 
         return sorted(candidates, key=score, reverse=True)
 
@@ -202,6 +204,7 @@ class BeliefGraph:
                     "entropy_score": n.entropy_score,
                     "resolved":      n.resolved,
                     "is_rabbit_hole": n.is_rabbit_hole,
+                    "contradiction_penalty": getattr(n, "contradiction_penalty", 0.0),
                     "depth":         n.depth,
                     "parent_id":     n.parent_id,
                     "sources":       n.sources,

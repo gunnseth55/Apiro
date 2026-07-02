@@ -32,7 +32,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-from apiro.config import CONTRADICTION_THRESHOLD_EF
+from apiro.config import CONTRADICTION_THRESHOLD_EF, CONTRADICTION_PENALTY
+from apiro.graph.belief_graph import BudgetExceededError
 
 logger = logging.getLogger(__name__)
 
@@ -212,11 +213,21 @@ class ApiroTraversal:
                 "depth":     node.depth,
             })
 
-            new_nodes = self.expander.expand(node, graph)
+            try:
+                new_nodes = self.expander.expand(node, graph)
+            except BudgetExceededError as e:
+                logger.warning(f"[Traversal] Budget exceeded: {e}. Stopping traversal gracefully.")
+                stop_reason = "budget_exceeded"
+                break
             graph.mark_resolved(node.id)
 
             # ── Contradiction check: new nodes vs ALL existing nodes ───────────
+            # Collect all pairs that pass the domain gate first, then run a
+            # single batched NLI forward pass instead of one GPU call per pair.
             existing_nodes = list(graph.nodes.values())
+
+            batch_pairs:   list[tuple[str, str]]      = []
+            batch_meta:    list[tuple[object, object]] = []  # (new_node, existing)
 
             for new_node in new_nodes:
                 self._log({
@@ -228,16 +239,9 @@ class ApiroTraversal:
                     "depth":     new_node.depth,
                     "parent_id": new_node.parent_id,
                 })
-
                 for existing in existing_nodes:
                     if existing.id == new_node.id:
                         continue
-
-                    # ── Abstraction-layer gate ────────────────────────────────
-                    # Only run expensive NLI when both claims are at the same
-                    # clinical abstraction level (both hypotheses, or both raw
-                    # observations of the same type). Cross-level checks
-                    # (hypothesis vs raw observation) produce false positives.
                     if not self.contradiction.should_check(new_node.claim, existing.claim):
                         logger.debug(
                             f"[Traversal] Contradiction gate: skipping cross-abstraction "
@@ -245,6 +249,7 @@ class ApiroTraversal:
                         )
                         continue
 
+                    # Single pair NLI check (bypasses batched GPU kernel bugs, matches cache)
                     result = self.contradiction.check(new_node.claim, existing.claim)
 
                     if result.label == "contradiction" and result.score > CONTRADICTION_THRESHOLD_EF:
@@ -266,21 +271,26 @@ class ApiroTraversal:
                             f"vs '{existing.claim[:40]}' (score={result.score:.3f})"
                         )
 
-                        # ── Contradiction-informed pruning ────────────────────
-                        # The lower-entropy node carries less information and is
-                        # more likely to be a spurious tangent. Flag it as a
-                        # rabbit hole so the frontier immediately de-prioritises
-                        # it, turning contradiction detection from a passive logger
-                        # into an active belief-graph pruner.
-                        new_h      = new_node.entropy_score  or 0.0
-                        existing_h = existing.entropy_score  or 0.0
-                        weaker = new_node if new_h <= existing_h else existing
-                        if not weaker.is_rabbit_hole:
-                            weaker.is_rabbit_hole = True
-                            logger.info(
-                                f"[Traversal] Pruned weaker contradicting node: "
-                                f"'{weaker.claim[:50]}' (entropy={weaker.entropy_score:.3f})"
-                            )
+                        # ── Contradiction-informed soft-pruning ───────────────
+                        # Seed nodes (depth 0) are ground truth and must never be penalized.
+                        # If a hypothesis contradicts ground truth, the hypothesis is penalized.
+                        if new_node.depth == 0 and existing.depth == 0:
+                            # Both are ground truth, do not penalize either
+                            continue
+                        elif new_node.depth == 0:
+                            weaker = existing
+                        elif existing.depth == 0:
+                            weaker = new_node
+                        else:
+                            new_h      = new_node.entropy_score  or 0.0
+                            existing_h = existing.entropy_score  or 0.0
+                            weaker = new_node if new_h <= existing_h else existing
+
+                        weaker.contradiction_penalty = CONTRADICTION_PENALTY
+                        logger.info(
+                            f"[Traversal] Soft-pruned weaker contradicting node: "
+                            f"'{weaker.claim[:50]}' (entropy={weaker.entropy_score:.3f}, penalty={CONTRADICTION_PENALTY})"
+                        )
 
 
         # ── Wrap up ───────────────────────────────────────────────────────────

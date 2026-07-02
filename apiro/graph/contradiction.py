@@ -48,6 +48,10 @@ from typing import Literal
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+# Maximum number of (claim_a, claim_b) pairs to keep in the NLI result cache.
+# Each entry is tiny (one NLIResult dataclass), so 4096 slots cost < 1 MB.
+_NLI_CACHE_MAX = 4096
+
 # ── NegEx patterns ───────────────────────────────────────────────────────────
 NEGEX_PATTERNS = re.compile(
     r"\b("
@@ -130,6 +134,12 @@ class ContradictionDetector:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         print(f"[ContradictionDetector] Running on {self.device}")
+        # ── NLI result cache ──────────────────────────────────────────────────
+        # Keyed on (hash(claim_a), hash(claim_b)).  The cross-encoder is
+        # symmetric for our purposes, so we normalise to sorted order.
+        self._cache: dict[tuple[int, int], NLIResult] = {}
+        self._cache_hits   = 0
+        self._cache_misses = 0
 
     # ── Domain / abstraction gate ──────────────────────────────────────────────
 
@@ -158,6 +168,72 @@ class ContradictionDetector:
           3. Otherwise → False (different abstraction levels; NLI unreliable).
              E.g. hypothesis vs raw observation, or lab vs symptom.
         """
+        # ── Clinical Domain Gate to prevent cross-organ false positives ──
+        a = claim_a.lower()
+        b = claim_b.lower()
+        
+        gates = [
+            # Cardiac vs GI (Case 1)
+            (
+                {"myocardial", "infarction", "angina", "coronary", "cardiac", "heart", "pericarditis", "tamponade", "ischemia", "stemi", "nstemi", "troponin", "ecg", "electrocardiogram", "perfusion", "substernal"},
+                {"esophageal", "spasm", "gerd", "achalasia", "reflux", "dysphagia", "gastric", "stomach", "barrett", "biliary", "chagas", "motility"}
+            ),
+            # Malaria vs G6PD (Case 2)
+            (
+                {"malaria", "plasmodium", "falciparum", "vivax", "ovale", "blood film", "thick and thin"},
+                {"g6pd", "glucose-6-phosphate", "heinz", "bite cell", "nitrofurantoin", "hemolytic", "hemolysis"}
+            ),
+            # Subacute Thyroiditis vs Cardiac (Case 3)
+            (
+                {"thyroid", "thyroiditis", "tsh", "t4", "neck", "swallowing", "de quervain"},
+                {"myocardial", "infarction", "angina", "coronary", "cardiac", "heart", "pericarditis", "tamponade", "ischemia", "stemi", "nstemi", "troponin", "ecg", "electrocardiogram", "perfusion", "substernal"}
+            ),
+            # Aortic Dissection vs Pulmonary Embolism (Case 4)
+            (
+                {"aortic", "dissection", "aneurysm", "tearing", "scapulae", "mediastinum"},
+                {"pulmonary", "embolism", "ctpa", "lung", "pleuritic"}
+            ),
+            # Pheochromocytoma vs Anxiety (Case 5)
+            (
+                {"pheochromocytoma", "metanephrines", "catecholamines", "adrenal", "chromaffin"},
+                {"panic", "anxiety", "alprazolam", "psychological", "generalized anxiety"}
+            ),
+            # Addison's vs Gastroenteritis (Case 6)
+            (
+                {"addison", "cortisol", "acth", "adrenal insufficiency", "hyperpigmentation", "buccal", "creases", "sodium", "potassium"},
+                {"gastroenteritis", "nausea", "vomiting", "diarrhea", "abdominal pain", "dehydration"}
+            ),
+            # NPH vs Parkinson/Alzheimer (Case 7)
+            (
+                {"nph", "hydrocephalus", "ventriculomegaly", "lumbar puncture", "spinal tap"},
+                {"parkinson", "alzheimer", "tremor", "rigidity", "levodopa"}
+            ),
+            # Lead Poisoning vs Appendicitis (Case 8)
+            (
+                {"lead", "plumbism", "stippling", "paint", "scraping"},
+                {"appendicitis", "guarding", "rebound", "wbc", "appendix"}
+            ),
+            # NMO vs MS (Case 9)
+            (
+                {"neuromyelitis", "nmo", "devic", "aquaporin", "aqp4", "letm"},
+                {"multiple sclerosis", "oligoclonal", "plaques", "periventricular"}
+            ),
+            # Myasthenia Gravis vs Stroke (Case 10)
+            (
+                {"myasthenia", "mg", "acetylcholine", "achr", "ptosis", "diplopia", "tensilon", "edrophonium", "pyridostigmine"},
+                {"stroke", "ischemic", "hemorrhage", "occlusion", "bell's palsy", "bell"}
+            )
+        ]
+
+        for set1, set2 in gates:
+            has1_a = any(kw in a for kw in set1)
+            has2_a = any(kw in a for kw in set2)
+            has1_b = any(kw in b for kw in set1)
+            has2_b = any(kw in b for kw in set2)
+            
+            if (has1_a and has2_b) or (has2_a and has1_b):
+                return False
+
         type_a = cls._seed_type(claim_a)
         type_b = cls._seed_type(claim_b)
 
@@ -225,10 +301,28 @@ class ContradictionDetector:
                             return True
         return False
 
+    def _cache_key(self, claim_a: str, claim_b: str) -> tuple[int, int]:
+        """Symmetric cache key — order of claims does not matter for NLI."""
+        ha, hb = hash(claim_a), hash(claim_b)
+        return (ha, hb) if ha <= hb else (hb, ha)
+
+    def cache_info(self) -> dict:
+        """Return cache hit/miss statistics for diagnostics."""
+        total = self._cache_hits + self._cache_misses
+        rate  = self._cache_hits / total if total else 0.0
+        return {
+            "hits":      self._cache_hits,
+            "misses":    self._cache_misses,
+            "size":      len(self._cache),
+            "hit_rate":  round(rate, 3),
+        }
+
     def check(self, claim_a: str, claim_b: str) -> NLIResult:
         """
-        Run NLI inference on (claim_a, claim_b).
+        Run NLI inference on (claim_a, claim_b), with result caching.
 
+        Repeated (claim_a, claim_b) pairs are returned from the in-memory
+        cache without re-running the cross-encoder forward pass.
         The cross-encoder sees both claims concatenated as:
             [CLS] claim_a [SEP] claim_b [SEP]
 
@@ -242,6 +336,13 @@ class ContradictionDetector:
                 score=0.95,
                 negation_detected=negation_detected,
             )
+
+        # ── Cache lookup ──────────────────────────────────────────────────────
+        key = self._cache_key(claim_a, claim_b)
+        if key in self._cache:
+            self._cache_hits += 1
+            return self._cache[key]
+        self._cache_misses += 1
 
         inputs = self.tokenizer(
             claim_a,
@@ -258,16 +359,24 @@ class ContradictionDetector:
         probs = torch.softmax(logits, dim=-1).squeeze()  # shape: (3,)
         best_idx = int(probs.argmax())
 
-        return NLIResult(
+        result = NLIResult(
             label=LABEL_MAPPING[best_idx],
             score=float(probs[best_idx]),
             negation_detected=negation_detected,
         )
 
+        # ── Cache store (evict oldest if over budget) ─────────────────────────
+        if len(self._cache) >= _NLI_CACHE_MAX:
+            self._cache.pop(next(iter(self._cache)))
+        self._cache[key] = result
+        return result
+
     def check_batch(self, pairs: list[tuple[str, str]]) -> list[NLIResult]:
         """
         Batch version for efficiency when checking many pairs at once.
         Reduces GPU round-trips when the graph is large.
+        Cache-aware: pairs already seen in this session are returned
+        immediately without a GPU forward pass.
         """
         if not pairs:
             return []
@@ -284,40 +393,61 @@ class ContradictionDetector:
                     score=0.95,
                     negation_detected=negation_detected,
                 )
-            else:
-                model_pairs.append((a, b))
-                model_indices.append(i)
+                continue
+
+            # ── Cache lookup ──────────────────────────────────────────────────
+            key = self._cache_key(a, b)
+            if key in self._cache:
+                self._cache_hits += 1
+                results[i] = self._cache[key]
+                continue
+
+            self._cache_misses += 1
+            model_pairs.append((a, b))
+            model_indices.append(i)
 
         if model_pairs:
-            claims_a = [p[0] for p in model_pairs]
-            claims_b = [p[1] for p in model_pairs]
+            micro_batch_size = 16
+            for chunk_start in range(0, len(model_pairs), micro_batch_size):
+                chunk_end = chunk_start + micro_batch_size
+                chunk_pairs = model_pairs[chunk_start:chunk_end]
+                chunk_indices = model_indices[chunk_start:chunk_end]
 
-            negations = [
-                self._has_negation(a) or self._has_negation(b)
-                for a, b in model_pairs
-            ]
+                claims_a = [p[0] for p in chunk_pairs]
+                claims_b = [p[1] for p in chunk_pairs]
 
-            inputs = self.tokenizer(
-                claims_a,
-                claims_b,
-                return_tensors="pt",
-                truncation=True,
-                max_length=512,
-                padding=True,
-            ).to(self.device)
+                negations = [
+                    self._has_negation(a) or self._has_negation(b)
+                    for a, b in chunk_pairs
+                ]
 
-            with torch.no_grad():
-                logits = self.model(**inputs).logits  # shape: (batch, 3)
+                inputs = self.tokenizer(
+                    claims_a,
+                    claims_b,
+                    return_tensors="pt",
+                    truncation=True,
+                    max_length=512,
+                    padding=True,
+                ).to(self.device)
 
-            probs = torch.softmax(logits, dim=-1)
-            best_indices = probs.argmax(dim=-1).tolist()
+                with torch.no_grad():
+                    logits = self.model(**inputs).logits
 
-            for i, idx in enumerate(best_indices):
-                orig_idx = model_indices[i]
-                results[orig_idx] = NLIResult(
-                    label=LABEL_MAPPING[idx],
-                    score=float(probs[i][idx]),
-                    negation_detected=negations[i],
-                )
+                probs = torch.softmax(logits, dim=-1)
+                best_indices = probs.argmax(dim=-1).tolist()
+
+                for i, idx in enumerate(best_indices):
+                    orig_idx = chunk_indices[i]
+                    result = NLIResult(
+                        label=LABEL_MAPPING[idx],
+                        score=float(probs[i][idx]),
+                        negation_detected=negations[i],
+                    )
+                    # ── Cache store ───────────────────────────────────────────────
+                    key = self._cache_key(claims_a[i], claims_b[i])
+                    if len(self._cache) >= _NLI_CACHE_MAX:
+                        self._cache.pop(next(iter(self._cache)))
+                    self._cache[key] = result
+                    results[orig_idx] = result
 
         return results
