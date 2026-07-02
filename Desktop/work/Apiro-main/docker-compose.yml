@@ -1,0 +1,100 @@
+# =============================================================================
+# Apiro — Docker Compose
+# =============================================================================
+# Starts two services:
+#   ollama  — Local LLM server (auto-pulls model on first run)
+#   apiro   — FastAPI belief-graph engine + web UI
+#
+# Usage:
+#   docker compose up --build        # first run (builds image, pulls model)
+#   docker compose up                # subsequent runs (instant, uses cache)
+#   docker compose down              # stop and remove containers
+#   docker compose down -v           # also remove named volumes (reset data)
+#
+# All settings are read from .env (copy .env.example → .env to customise).
+# =============================================================================
+
+services:
+
+  # ── Ollama LLM Server ───────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: apiro_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h        # Keep model loaded in memory
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ── Apiro Application ───────────────────────────────────────────────────────
+  apiro:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        HF_TOKEN: ${HF_TOKEN:-}      # Pass HF token to build stage if available
+    container_name: apiro_app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      # Override Ollama URL to point to the compose service (not localhost)
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - PRIMARY_MODEL=${PRIMARY_MODEL:-mistral:latest}
+      - EMBED_MODEL=${EMBED_MODEL:-all-mpnet-base-v2}
+      - CHROMA_COLLECTION=${CHROMA_COLLECTION:-apiro_corpus}
+      - CHROMA_DIR=/app/data/chroma_db
+      - LOG_DIR=/app/data/logs
+      - DATA_DIR=/app/data
+      - RAG_TOP_K=${RAG_TOP_K:-6}
+      - MAX_TRAVERSAL_DEPTH=${MAX_TRAVERSAL_DEPTH:-8}
+      - MAX_NODES_PER_RUN=${MAX_NODES_PER_RUN:-30}
+      - N_CHILD_HYPOTHESES=${N_CHILD_HYPOTHESES:-3}
+      - APP_PORT=8000
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Persistent ChromaDB vector store — survives container restarts/rebuilds
+      - chroma_data:/app/data/chroma_db
+      # Persistent raw corpus cache
+      - corpus_data:/app/data/corpus
+      # Persistent logs
+      - log_data:/app/data/logs
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+
+# ── Named Volumes ─────────────────────────────────────────────────────────────
+# These persist across `docker compose down` (removed only with `down -v`).
+volumes:
+  ollama_data:
+    driver: local
+    name: apiro_ollama_models      # Ollama model weights (~4 GB for mistral)
+
+  chroma_data:
+    driver: local
+    name: apiro_chroma_db          # ChromaDB vector index (5k–100k docs)
+
+  corpus_data:
+    driver: local
+    name: apiro_corpus_cache       # Raw scraped corpus files
+
+  log_data:
+    driver: local
+    name: apiro_logs               # Traversal logs

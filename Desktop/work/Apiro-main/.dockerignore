@@ -1,0 +1,58 @@
+# =============================================================================
+# .dockerignore — files excluded from Docker build context
+# =============================================================================
+# Keeping the build context lean speeds up `docker build` significantly by
+# not sending large local data directories to the Docker daemon.
+
+# Python virtual environment (not needed — image builds its own)
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+apiro.egg-info/
+dist/
+build/
+
+# Local data (mounted as Docker volumes at runtime instead)
+data/chroma_db/
+data/corpus/
+data/logs/
+data/traversal_log_*.jsonl
+data/graph_*.json
+data/phase3_results.json
+data/corpus_stats.json
+
+# Git
+.git/
+.gitignore
+
+# Environment secrets — never bake into image
+.env
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*.swo
+
+# Test artifacts
+.pytest_cache/
+tests/__pycache__/
+
+# Docker files themselves (don't need to be inside image)
+docker/
+docker-compose.yml
+docker-compose.*.yml
+
+# Docs / misc
+README.md
+*.md
+figures/
+*.html

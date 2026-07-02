@@ -1,0 +1,36 @@
+# Python virtual environment
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment secrets — NEVER commit .env
+.env
+
+# IDEs
+.idea/
+.vscode/
+.DS_Store
+
+# Pytest
+.pytest_cache/
+
+# Local data databases/caches (keep folders but ignore contents)
+data/chroma_db/
+data/corpus/
+data/logs/
+data/corpus_stats.json
+data/smoke_results.json
+data/graph_*.json
+data/graph_*.html
+data/traversal_log_*.jsonl
+data/phase3_results.json
+figures/
+*.html
+*.jsonl
+DEVELOPER_NOTES.md
+PROJECT_STATUS.md
+*.egg-info/
+apiro.egg-info/
+implementation_plan.md
