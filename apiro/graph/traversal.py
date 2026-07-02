@@ -242,52 +242,49 @@ class ApiroTraversal:
                             f"pair '{new_node.claim[:30]}' vs '{existing.claim[:30]}'"
                         )
                         continue
-                    batch_pairs.append((new_node.claim, existing.claim))
-                    batch_meta.append((new_node, existing))
 
-            # Single batched NLI call (cache-aware — hits are free)
-            batch_results = self.contradiction.check_batch(batch_pairs) if batch_pairs else []
+                    # Single pair NLI check (bypasses batched GPU kernel bugs, matches cache)
+                    result = self.contradiction.check(new_node.claim, existing.claim)
 
-            for (new_node, existing), result in zip(batch_meta, batch_results):
-                if result.label == "contradiction" and result.score > CONTRADICTION_THRESHOLD_EF:
+                    if result.label == "contradiction" and result.score > CONTRADICTION_THRESHOLD_EF:
 
-                    # Find the edge and flag it
-                    for edge in graph.edges:
-                        if edge.parent_id == new_node.parent_id and edge.child_id == new_node.id:
-                            edge.contradiction_flag = True
+                        # Find the edge and flag it
+                        for edge in graph.edges:
+                            if edge.parent_id == new_node.parent_id and edge.child_id == new_node.id:
+                                edge.contradiction_flag = True
 
-                    self._log({
-                        "event":              "contradiction_flagged",
-                        "node_a":             new_node.claim[:80],
-                        "node_b":             existing.claim[:80],
-                        "score":              round(result.score, 3),
-                        "negation_detected":  result.negation_detected,
-                    })
-                    logger.info(
-                        f"[Traversal] Contradiction: '{new_node.claim[:40]}' "
-                        f"vs '{existing.claim[:40]}' (score={result.score:.3f})"
-                    )
+                        self._log({
+                            "event":              "contradiction_flagged",
+                            "node_a":             new_node.claim[:80],
+                            "node_b":             existing.claim[:80],
+                            "score":              round(result.score, 3),
+                            "negation_detected":  result.negation_detected,
+                        })
+                        logger.info(
+                            f"[Traversal] Contradiction: '{new_node.claim[:40]}' "
+                            f"vs '{existing.claim[:40]}' (score={result.score:.3f})"
+                        )
 
-                    # ── Contradiction-informed soft-pruning ───────────────
-                    # Seed nodes (depth 0) are ground truth and must never be penalized.
-                    # If a hypothesis contradicts ground truth, the hypothesis is penalized.
-                    if new_node.depth == 0 and existing.depth == 0:
-                        # Both are ground truth, do not penalize either
-                        continue
-                    elif new_node.depth == 0:
-                        weaker = existing
-                    elif existing.depth == 0:
-                        weaker = new_node
-                    else:
-                        new_h      = new_node.entropy_score  or 0.0
-                        existing_h = existing.entropy_score  or 0.0
-                        weaker = new_node if new_h <= existing_h else existing
+                        # ── Contradiction-informed soft-pruning ───────────────
+                        # Seed nodes (depth 0) are ground truth and must never be penalized.
+                        # If a hypothesis contradicts ground truth, the hypothesis is penalized.
+                        if new_node.depth == 0 and existing.depth == 0:
+                            # Both are ground truth, do not penalize either
+                            continue
+                        elif new_node.depth == 0:
+                            weaker = existing
+                        elif existing.depth == 0:
+                            weaker = new_node
+                        else:
+                            new_h      = new_node.entropy_score  or 0.0
+                            existing_h = existing.entropy_score  or 0.0
+                            weaker = new_node if new_h <= existing_h else existing
 
-                    weaker.contradiction_penalty = CONTRADICTION_PENALTY
-                    logger.info(
-                        f"[Traversal] Soft-pruned weaker contradicting node: "
-                        f"'{weaker.claim[:50]}' (entropy={weaker.entropy_score:.3f}, penalty={CONTRADICTION_PENALTY})"
-                    )
+                        weaker.contradiction_penalty = CONTRADICTION_PENALTY
+                        logger.info(
+                            f"[Traversal] Soft-pruned weaker contradicting node: "
+                            f"'{weaker.claim[:50]}' (entropy={weaker.entropy_score:.3f}, penalty={CONTRADICTION_PENALTY})"
+                        )
 
 
         # ── Wrap up ───────────────────────────────────────────────────────────
