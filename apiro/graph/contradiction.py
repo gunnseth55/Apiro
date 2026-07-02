@@ -48,6 +48,10 @@ from typing import Literal
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+# Maximum number of (claim_a, claim_b) pairs to keep in the NLI result cache.
+# Each entry is tiny (one NLIResult dataclass), so 4096 slots cost < 1 MB.
+_NLI_CACHE_MAX = 4096
+
 # ── NegEx patterns ───────────────────────────────────────────────────────────
 NEGEX_PATTERNS = re.compile(
     r"\b("
@@ -130,6 +134,12 @@ class ContradictionDetector:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         print(f"[ContradictionDetector] Running on {self.device}")
+        # ── NLI result cache ──────────────────────────────────────────────────
+        # Keyed on (hash(claim_a), hash(claim_b)).  The cross-encoder is
+        # symmetric for our purposes, so we normalise to sorted order.
+        self._cache: dict[tuple[int, int], NLIResult] = {}
+        self._cache_hits   = 0
+        self._cache_misses = 0
 
     # ── Domain / abstraction gate ──────────────────────────────────────────────
 
@@ -291,10 +301,28 @@ class ContradictionDetector:
                             return True
         return False
 
+    def _cache_key(self, claim_a: str, claim_b: str) -> tuple[int, int]:
+        """Symmetric cache key — order of claims does not matter for NLI."""
+        ha, hb = hash(claim_a), hash(claim_b)
+        return (ha, hb) if ha <= hb else (hb, ha)
+
+    def cache_info(self) -> dict:
+        """Return cache hit/miss statistics for diagnostics."""
+        total = self._cache_hits + self._cache_misses
+        rate  = self._cache_hits / total if total else 0.0
+        return {
+            "hits":      self._cache_hits,
+            "misses":    self._cache_misses,
+            "size":      len(self._cache),
+            "hit_rate":  round(rate, 3),
+        }
+
     def check(self, claim_a: str, claim_b: str) -> NLIResult:
         """
-        Run NLI inference on (claim_a, claim_b).
+        Run NLI inference on (claim_a, claim_b), with result caching.
 
+        Repeated (claim_a, claim_b) pairs are returned from the in-memory
+        cache without re-running the cross-encoder forward pass.
         The cross-encoder sees both claims concatenated as:
             [CLS] claim_a [SEP] claim_b [SEP]
 
@@ -308,6 +336,13 @@ class ContradictionDetector:
                 score=0.95,
                 negation_detected=negation_detected,
             )
+
+        # ── Cache lookup ──────────────────────────────────────────────────────
+        key = self._cache_key(claim_a, claim_b)
+        if key in self._cache:
+            self._cache_hits += 1
+            return self._cache[key]
+        self._cache_misses += 1
 
         inputs = self.tokenizer(
             claim_a,
@@ -324,16 +359,24 @@ class ContradictionDetector:
         probs = torch.softmax(logits, dim=-1).squeeze()  # shape: (3,)
         best_idx = int(probs.argmax())
 
-        return NLIResult(
+        result = NLIResult(
             label=LABEL_MAPPING[best_idx],
             score=float(probs[best_idx]),
             negation_detected=negation_detected,
         )
 
+        # ── Cache store (evict oldest if over budget) ─────────────────────────
+        if len(self._cache) >= _NLI_CACHE_MAX:
+            self._cache.pop(next(iter(self._cache)))
+        self._cache[key] = result
+        return result
+
     def check_batch(self, pairs: list[tuple[str, str]]) -> list[NLIResult]:
         """
         Batch version for efficiency when checking many pairs at once.
         Reduces GPU round-trips when the graph is large.
+        Cache-aware: pairs already seen in this session are returned
+        immediately without a GPU forward pass.
         """
         if not pairs:
             return []
@@ -350,9 +393,18 @@ class ContradictionDetector:
                     score=0.95,
                     negation_detected=negation_detected,
                 )
-            else:
-                model_pairs.append((a, b))
-                model_indices.append(i)
+                continue
+
+            # ── Cache lookup ──────────────────────────────────────────────────
+            key = self._cache_key(a, b)
+            if key in self._cache:
+                self._cache_hits += 1
+                results[i] = self._cache[key]
+                continue
+
+            self._cache_misses += 1
+            model_pairs.append((a, b))
+            model_indices.append(i)
 
         if model_pairs:
             claims_a = [p[0] for p in model_pairs]
@@ -380,10 +432,16 @@ class ContradictionDetector:
 
             for i, idx in enumerate(best_indices):
                 orig_idx = model_indices[i]
-                results[orig_idx] = NLIResult(
+                result = NLIResult(
                     label=LABEL_MAPPING[idx],
                     score=float(probs[i][idx]),
                     negation_detected=negations[i],
                 )
+                # ── Cache store ───────────────────────────────────────────────
+                key = self._cache_key(claims_a[i], claims_b[i])
+                if len(self._cache) >= _NLI_CACHE_MAX:
+                    self._cache.pop(next(iter(self._cache)))
+                self._cache[key] = result
+                results[orig_idx] = result
 
         return results

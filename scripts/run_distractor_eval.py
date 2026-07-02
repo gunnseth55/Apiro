@@ -153,6 +153,8 @@ def run_evaluation(real_components: bool):
                 if match({"stroke", "bell's palsy"}, {"myasthenia", "mg", "acetylcholine", "achr", "normal brain ct"}):
                     return R("contradiction", 0.95, False)
                 return R("neutral", 0.5, False)
+            def check_batch(self, pairs):
+                return [self.check(a, b) for a, b in pairs]
             def should_check(self, claim_a: str, claim_b: str) -> bool:
                 return True
 

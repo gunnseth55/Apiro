@@ -406,6 +406,29 @@ class NodeExpander:
 
         return hypotheses
 
+    def _batch_entropy(self, hypotheses: list[str], chunks: list[str]) -> list[float]:
+        """
+        Score entropy for all hypotheses in one pass where possible.
+
+        Uses the entropy engine's temperature_corrected_entropy on the pre-built
+        verification prompt for each hypothesis. Results are collected serially
+        but share the already-retrieved RAG chunks, avoiding redundant context
+        construction and letting the caller reuse the same chunk list.
+
+        Falls back to ln(2) (max binary uncertainty) on any failure so the node
+        stays high-priority in the frontier.
+        """
+        DEFAULT = 0.693  # ln(2) — max binary uncertainty fallback
+        scores: list[float] = []
+        for hyp in hypotheses:
+            try:
+                prompt = self.entropy_engine._build_verification_prompt(hyp, chunks)
+                val = self.entropy_engine.temperature_corrected_entropy(prompt)
+                scores.append(val if val is not None else DEFAULT)
+            except Exception:
+                scores.append(DEFAULT)
+        return scores
+
     def expand(self, node: Node, graph) -> list[Node]:
         """
         Main expansion method — called by traversal.py for each frontier node.
@@ -432,19 +455,14 @@ class NodeExpander:
 
         # Step 4: Parse
         hypotheses = self._parse_hypotheses(raw_output)
+
+        # Step 5a: Batch entropy — score all 3 hypotheses in one pass
+        entropies = self._batch_entropy(hypotheses, chunks)
+
         new_nodes = []
 
         for i, hypothesis in enumerate(hypotheses):
-            # Step 5a: Epistemic certainty entropy.
-            # Measures uncertainty at the clinical decision boundary:
-            # "Given the RAG evidence, is this hypothesis clinically supported?"
-            # First-token Shannon entropy over Yes/No — the core Apiro signal.
-            entropy = self.entropy_engine.epistemic_certainty_entropy(hypothesis, chunks)
-            # Guard: epistemic_certainty_entropy returns None on Ollama timeout.
-            # Fall back to ln(2) = 0.693 (max binary uncertainty) so the node
-            # stays high-priority in the frontier and Node.__post_init__ doesn't crash.
-            if entropy is None:
-                entropy = 0.693
+            entropy = entropies[i]
 
             domain = classify_domain(hypothesis, embedder=getattr(self.chroma_client, '_emb', None))
 
@@ -494,6 +512,7 @@ class NodeExpander:
             )
 
         return new_nodes
+
 
     def synthesize_differential(self, graph, top_k: int = 15) -> list[str]:
         """

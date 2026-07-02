@@ -52,6 +52,10 @@ class StubContradictionDetector:
             return R("contradiction", 0.92, False)
         return R("neutral", 0.55, False)
 
+    def check_batch(self, pairs: list[tuple[str, str]]) -> list:
+        """Batch version — delegates to check() for each pair."""
+        return [self.check(a, b) for a, b in pairs]
+
     def should_check(self, claim_a: str, claim_b: str) -> bool:
         """Always check in tests."""
         return True
