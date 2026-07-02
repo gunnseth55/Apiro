@@ -407,41 +407,47 @@ class ContradictionDetector:
             model_indices.append(i)
 
         if model_pairs:
-            claims_a = [p[0] for p in model_pairs]
-            claims_b = [p[1] for p in model_pairs]
+            micro_batch_size = 16
+            for chunk_start in range(0, len(model_pairs), micro_batch_size):
+                chunk_end = chunk_start + micro_batch_size
+                chunk_pairs = model_pairs[chunk_start:chunk_end]
+                chunk_indices = model_indices[chunk_start:chunk_end]
 
-            negations = [
-                self._has_negation(a) or self._has_negation(b)
-                for a, b in model_pairs
-            ]
+                claims_a = [p[0] for p in chunk_pairs]
+                claims_b = [p[1] for p in chunk_pairs]
 
-            inputs = self.tokenizer(
-                claims_a,
-                claims_b,
-                return_tensors="pt",
-                truncation=True,
-                max_length=512,
-                padding=True,
-            ).to(self.device)
+                negations = [
+                    self._has_negation(a) or self._has_negation(b)
+                    for a, b in chunk_pairs
+                ]
 
-            with torch.no_grad():
-                logits = self.model(**inputs).logits  # shape: (batch, 3)
+                inputs = self.tokenizer(
+                    claims_a,
+                    claims_b,
+                    return_tensors="pt",
+                    truncation=True,
+                    max_length=512,
+                    padding=True,
+                ).to(self.device)
 
-            probs = torch.softmax(logits, dim=-1)
-            best_indices = probs.argmax(dim=-1).tolist()
+                with torch.no_grad():
+                    logits = self.model(**inputs).logits
 
-            for i, idx in enumerate(best_indices):
-                orig_idx = model_indices[i]
-                result = NLIResult(
-                    label=LABEL_MAPPING[idx],
-                    score=float(probs[i][idx]),
-                    negation_detected=negations[i],
-                )
-                # ── Cache store ───────────────────────────────────────────────
-                key = self._cache_key(claims_a[i], claims_b[i])
-                if len(self._cache) >= _NLI_CACHE_MAX:
-                    self._cache.pop(next(iter(self._cache)))
-                self._cache[key] = result
-                results[orig_idx] = result
+                probs = torch.softmax(logits, dim=-1)
+                best_indices = probs.argmax(dim=-1).tolist()
+
+                for i, idx in enumerate(best_indices):
+                    orig_idx = chunk_indices[i]
+                    result = NLIResult(
+                        label=LABEL_MAPPING[idx],
+                        score=float(probs[i][idx]),
+                        negation_detected=negations[i],
+                    )
+                    # ── Cache store ───────────────────────────────────────────────
+                    key = self._cache_key(claims_a[i], claims_b[i])
+                    if len(self._cache) >= _NLI_CACHE_MAX:
+                        self._cache.pop(next(iter(self._cache)))
+                    self._cache[key] = result
+                    results[orig_idx] = result
 
         return results
