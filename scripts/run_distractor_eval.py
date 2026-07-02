@@ -370,7 +370,7 @@ def run_evaluation(real_components: bool):
         traversal_res = traversal.run(
             seed_nodes=seeds,
             graph=graph,
-            max_depth=4,
+            max_depth=6,
             case_name=case_id
         )
         

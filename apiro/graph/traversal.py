@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import Optional
 
 from apiro.config import CONTRADICTION_THRESHOLD_EF, CONTRADICTION_PENALTY
+from apiro.graph.belief_graph import BudgetExceededError
 
 logger = logging.getLogger(__name__)
 
@@ -212,7 +213,12 @@ class ApiroTraversal:
                 "depth":     node.depth,
             })
 
-            new_nodes = self.expander.expand(node, graph)
+            try:
+                new_nodes = self.expander.expand(node, graph)
+            except BudgetExceededError as e:
+                logger.warning(f"[Traversal] Budget exceeded: {e}. Stopping traversal gracefully.")
+                stop_reason = "budget_exceeded"
+                break
             graph.mark_resolved(node.id)
 
             # ── Contradiction check: new nodes vs ALL existing nodes ───────────
