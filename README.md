@@ -176,9 +176,9 @@ The graph can be exported to JSON via `graph.export_json()`, yielding this forma
 Ensure you run python 3.10+ and install editable package dependencies:
 ```bash
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate  (cmd: venv\Scripts\activate)
 pip install -r requirements.txt
-pip install -e .
+pip install -e . 
 ```
 
 ### 2. Building the Corpus & Vector Database
@@ -211,6 +211,8 @@ python -m apiro.run --case data/synthetic_case_1.json --real-entropy
 
 # B. Launches the Interactive FastAPI web server and UI on port 8000
 uvicorn scripts.app:app --host 0.0.0.0 --port 8000
+uvicorn scripts.app:app --host 127.0.0.1 --port 8000
+
 
 # C. Runs the clinical vignette free-text detective CLI
 python scripts/investigate.py "72yo male presenting with sudden substernal chest pain..."
