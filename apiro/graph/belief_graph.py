@@ -96,7 +96,8 @@ class BeliefGraph:
             depth_aware: If False (default), sorts strictly by entropy_score descending
                          — the standard baseline contract expected by unit tests.
                          If True, uses depth-aware scoring for the entropy-first traversal:
-                           - Depth 0 (anchors): score = 1.0 - entropy (follow certainty first)
+                           - Depth 0 (seeds): score = 2.0 - entropy, guaranteeing all seeds
+                             are expanded before any derived child node (starvation-proof).
                            - Depth >= 1 (derived): score = entropy (chase uncertainty/differentials)
         """
         candidates = [n for n in self.nodes.values() if not n.resolved and not n.is_rabbit_hole]
@@ -104,8 +105,8 @@ class BeliefGraph:
         if depth_aware:
             def score(n: Node) -> float:
                 h = n.entropy_score if n.entropy_score is not None else 0.5
-                # Depth 0: anchor on certainty. Depth >=1: explore uncertainty.
-                base_score = (1.0 - h) if n.depth == 0 else h
+                # Depth 0: always prioritize seed nodes to prevent starvation
+                base_score = (2.0 - h) if n.depth == 0 else h
                 return base_score - getattr(n, "contradiction_penalty", 0.0)
         else:
             def score(n: Node) -> float:
