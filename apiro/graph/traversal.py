@@ -148,7 +148,7 @@ class ApiroTraversal:
             iteration += 1
 
             # ── Stop condition 0: Global Critic Halting ───────────────────────
-            if iteration % 5 == 0 and self.critic.evaluate_halting(graph, vignette=vignette):
+            if iteration >= 10 and iteration % 5 == 0 and self.critic.evaluate_halting(graph, vignette=vignette):
                 stop_reason = "critic_halt"
                 logger.info(f"[Traversal] Global Critic approved halting at iteration {iteration}.")
                 self._log({

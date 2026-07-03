@@ -20,8 +20,10 @@ The engine has been generating hypotheses based on the patient's case presentati
 === CURRENT TOP HYPOTHESES ===
 {top_nodes}
 
-Your task: Evaluate if there is sufficient evidence to confidently halt the search and declare a primary diagnosis, or if critical diagnostic information is still missing.
-Are the current top hypotheses specific and comprehensive enough to explain the patient's presentation without needing further exploration?
+Your task: Evaluate if there is sufficient evidence to confidently halt the search and declare a specific primary etiology (underlying disease), or if critical diagnostic information is still missing.
+Are the current top hypotheses specific and comprehensive enough to identify the exact underlying primary cause of the patient's presentation without needing further exploration?
+
+IMPORTANT: Do NOT halt if the hypotheses only describe secondary clinical syndromes (e.g., congestive heart failure, pulmonary edema, respiratory failure, acute kidney injury) or generic symptoms without pinpointing the specific primary disease causing them.
 
 Answer YES or NO on the first line.
 On the second line, provide a brief 1-sentence reason.
@@ -60,9 +62,10 @@ class CriticEngine:
             except TypeError:
                 response = self.llm.generate(prompt)
                 
-            first_line = response.strip().split('\n')[0].strip().upper()
+            first_line_clean = response.strip().split('\n')[0].strip().upper()
+            first_word = first_line_clean.split()[0].strip(".,!?\"'") if first_line_clean.split() else ""
             
-            if "YES" in first_line:
+            if first_word == "YES":
                 logger.info(f"[GlobalCritic] Halting approved. Reason: {response.strip().split(chr(10))[1:]}")
                 return True
             else:
