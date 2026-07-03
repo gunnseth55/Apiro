@@ -346,7 +346,7 @@ class NodeExpander:
         return chunks, is_grounded
 
 
-    def _build_prompt(self, node: Node, chunks: list[str], graph, is_grounded: bool = True) -> str:
+    def _build_prompt(self, node: Node, chunks: list[str], graph, is_grounded: bool = True, vignette: str = None) -> str:
         """
         Build the hypothesis-generation prompt.
 
@@ -357,7 +357,8 @@ class NodeExpander:
         """
         # Extract patient case context (all seed nodes with depth=0)
         seeds = [n.claim for n in graph.nodes.values() if n.depth == 0]
-        case_context = "\n".join(f"  - {s}" for s in seeds) if seeds else "  - [No seed context]"
+        seed_context = "\n".join(f"  - {s}" for s in seeds) if seeds else "  - [No seed context]"
+        case_context = f"Original Clinical Vignette:\n{vignette}\n\nSeed Findings:\n{seed_context}" if vignette else seed_context
 
         if not is_grounded:
             return PARAMETRIC_PROMPT_TEMPLATE.format(
@@ -429,13 +430,13 @@ class NodeExpander:
                 scores.append(DEFAULT)
         return scores
 
-    def expand(self, node: Node, graph) -> list[Node]:
+    def expand(self, node: Node, graph, vignette: str = None) -> list[Node]:
         """
         Main expansion method — called by traversal.py for each frontier node.
 
         Steps:
           1. Retrieve RAG context
-          2. Build prompt
+          2. Build prompt (with full vignette context when provided)
           3. Call LLM
           4. Parse hypotheses
           5. For each hypothesis: compute entropy, classify domain,
@@ -450,7 +451,7 @@ class NodeExpander:
         # Step 2 & 3: Prompt + LLM
         # Use evidence-constrained prompt when corpus is reliable;
         # parametric prompt when corpus coverage is too sparse to trust.
-        prompt = self._build_prompt(node, chunks, graph, is_grounded=is_grounded)
+        prompt = self._build_prompt(node, chunks, graph, is_grounded=is_grounded, vignette=vignette)
         raw_output = self._call_llm(prompt)
 
         # Step 4: Parse
@@ -514,20 +515,35 @@ class NodeExpander:
         return new_nodes
 
 
-    def synthesize_differential(self, graph, top_k: int = 15) -> list[str]:
+    def synthesize_differential(self, graph, top_k: int = 15, vignette: str = None) -> list[str]:
         """
-        Synthesize a final differential diagnosis from the belief graph.
+        Topology-aware synthesis of a final differential diagnosis.
 
-        Only high-signal nodes are passed to the LLM:
-          - Rabbit-hole nodes are excluded (they are known dead-ends).
-          - Contradiction-flagged nodes are excluded (actively disputed claims).
-          - The remaining nodes are sorted by entropy descending and capped at
-            top_k (default 15) so the synthesizer sees the most informationally
-            rich, unresolved claims — not a dump of every node including noise.
+        WHAT CHANGED AND WHY:
+
+        OLD: Sort clean nodes by entropy descending, pass the top 15 to the LLM
+             as a bullet list. This is identical to a Bare LLM call with a
+             degraded/filtered vignette.
+
+        NEW: Score nodes by CONVERGENCE — how many independent paths in the
+             belief graph lead to this node (weighted in-degree). A node
+             reached by 3 separate reasoning chains is much stronger evidence
+             than a node reached by one chain, regardless of entropy score.
+
+             Convergence scoring:
+               convergence_score(n) = in_degree(n) * entropy_score(n)
+
+             This rewards nodes that are both highly uncertain AND multiply
+             confirmed — the classic Bayesian conjunction signal.
+
+             The final LLM synthesis prompt includes BOTH the convergence-ranked
+             evidence AND the original vignette (if provided), so the synthesizer
+             has more information than a Bare LLM (more = better, not less = worse).
 
         Args:
-            graph:  The BeliefGraph containing gathered evidence.
-            top_k:  Max number of high-entropy clean nodes to pass to the LLM.
+            graph:   The BeliefGraph containing gathered evidence.
+            top_k:   Max number of high-signal nodes to pass to the LLM.
+            vignette: Original clinical vignette to include in synthesis context.
 
         Returns:
             A list of the top 3 most likely specific clinical diagnoses.
@@ -538,22 +554,20 @@ class NodeExpander:
         contradiction_ids: set[str] = set()
         for edge in graph.edges:
             if getattr(edge, 'contradiction_flag', False):
-                # In BFS, we exclude both parent and child.
-                # In ApiroTraversal, we ONLY exclude the node if it has a contradiction penalty.
-                # So we check if the nodes have contradiction_penalty.
-                # If neither node has a contradiction_penalty set (which means we are in BFS/non-pruning mode),
-                # we exclude both.
-                # If they do have contradiction_penalty, we rely on the contradiction_penalty check instead of contradiction_ids.
                 has_penalty = any(
-                    getattr(graph.nodes[nid], 'contradiction_penalty', 0.0) > 0.0 
+                    getattr(graph.nodes[nid], 'contradiction_penalty', 0.0) > 0.0
                     for nid in (edge.child_id, edge.parent_id) if nid in graph.nodes
                 )
                 if not has_penalty:
                     contradiction_ids.add(edge.child_id)
                     contradiction_ids.add(edge.parent_id)
 
-        # Collect only clean, high-signal nodes.
-        clean_nodes = []
+        # ── Step 1: Compute convergence scores ───────────────────────────────
+        # in_degree = number of distinct incoming edges (parent paths)
+        # A node with in_degree=3 was reached from 3 independent reasoning paths.
+        # This is the primary signal that a finding is multiply confirmed.
+        networkx_graph = graph.to_networkx()
+        convergence_scores: dict[str, float] = {}
         for n in graph.nodes.values():
             if n.is_rabbit_hole:
                 continue
@@ -561,44 +575,62 @@ class NodeExpander:
                 continue
             if getattr(n, 'contradiction_penalty', 0.0) > 0.0:
                 continue
-            clean_nodes.append(n)
+            in_deg = networkx_graph.in_degree(n.id) if n.id in networkx_graph else 0
+            # Give seed nodes (depth 0) a minimum in_degree of 1 so they are always included
+            effective_in_deg = max(in_deg, 1) if n.depth == 0 else max(in_deg, 0)
+            entropy = n.entropy_score or 0.5
+            # convergence_score: multiply-confirmed AND uncertain nodes rank highest
+            convergence_scores[n.id] = effective_in_deg * entropy
 
-        # Sort by entropy descending — highest uncertainty = most diagnostically
-        # interesting — and cap at top_k.
-        clean_nodes.sort(key=lambda n: n.entropy_score or 0.0, reverse=True)
-        top_nodes = clean_nodes[:top_k]
+        # ── Step 2: Rank by convergence score ────────────────────────────────
+        ranked_ids = sorted(convergence_scores, key=convergence_scores.get, reverse=True)
+        top_nodes = [graph.nodes[nid] for nid in ranked_ids[:top_k]]
+
+        if not top_nodes:
+            logger.warning("[NodeExpander] No clean nodes for synthesis — using all nodes.")
+            top_nodes = list(graph.nodes.values())[:top_k]
 
         logger.info(
             f"[NodeExpander] Synthesis using {len(top_nodes)}/{graph.node_count()} nodes "
-            f"(excluded {graph.node_count() - len(top_nodes)} rabbit-holes/contradictions)."
+            f"(topology-ranked by convergence score)."
         )
 
-        if not top_nodes:
-            logger.warning("[NodeExpander] No clean nodes available for synthesis — using all nodes.")
-            top_nodes = list(graph.nodes.values())[:top_k]
-
-        # Remove duplicate claims while preserving entropy-rank order.
+        # ── Step 3: Build evidence text with convergence annotation ──────────
         seen: set[str] = set()
-        unique_claims: list[str] = []
-        for n in top_nodes:
+        evidence_lines: list[str] = []
+        for nid in ranked_ids[:top_k]:
+            n = graph.nodes[nid]
             if n.claim not in seen:
-                unique_claims.append(n.claim)
+                in_deg = networkx_graph.in_degree(n.id) if n.id in networkx_graph else 0
+                evidence_lines.append(f"  [paths={max(in_deg,1)}] {n.claim}")
                 seen.add(n.claim)
 
-        evidence_text = "\n".join(f"  - {claim}" for claim in unique_claims)
+        evidence_text = "\n".join(evidence_lines)
+
+        # ── Step 4: Build synthesis prompt with full vignette context ─────────
+        vignette_section = ""
+        if vignette:
+            vignette_section = (
+                f"=== ORIGINAL PATIENT VIGNETTE ===\n"
+                f"{vignette}\n\n"
+            )
 
         prompt = (
             "You are Apiro, a precise clinical differential-diagnosis engine.\n\n"
-            "Your task: given the following high-signal clinical evidence (pre-filtered to remove"
-            " known dead-ends and contradictions), generate the top 3 most likely specific"
-            " clinical diagnoses.\n\n"
-            "=== HIGH-SIGNAL GATHERED EVIDENCE ===\n"
+            "Your task: given the original patient vignette AND the belief graph evidence "
+            "(pre-filtered to remove dead-ends and contradictions, ranked by how many independent "
+            "reasoning paths led to each finding), generate the top 3 most likely specific "
+            "clinical diagnoses.\n\n"
+            f"{vignette_section}"
+            "=== BELIEF GRAPH EVIDENCE (ranked by convergence) ===\n"
+            "Format: [paths=N] means N independent reasoning chains confirmed this finding.\n"
             f"{evidence_text}\n\n"
             "=== STRICT RULES ===\n"
             "1. Output exactly 3 diagnoses, one per line.\n"
             "2. Provide only the specific disease name (e.g., 'Type 1 autoimmune pancreatitis')."
             " Do not include preamble, numbering, explanations, or mechanism.\n"
-            "3. Rank them from most likely to least likely.\n\n"
+            "3. Rank them from most likely to least likely.\n"
+            "4. Strongly weight findings with paths > 1 — these are multiply confirmed.\n\n"
             "=== OUTPUT (3 lines only) ==="
         )
 

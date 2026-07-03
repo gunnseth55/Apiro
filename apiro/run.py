@@ -130,7 +130,10 @@ def build_components():
     chroma_adapter  = _ChromaAdapter(embedder)
     entropy_engine  = EntropyEngine(model=PRIMARY_MODEL, ollama_url=OLLAMA_BASE_URL)
     llm_client      = OllamaLLMClient()
-    contradiction   = ContradictionDetector()
+    contradiction   = ContradictionDetector(
+        model=PRIMARY_MODEL,
+        ollama_url=OLLAMA_BASE_URL,
+    )
 
     expander = NodeExpander(
         entropy_engine=entropy_engine,
