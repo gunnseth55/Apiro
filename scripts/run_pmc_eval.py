@@ -371,7 +371,7 @@ def run_evaluation(real_components: bool):
         seeds = [
             Node(
                 id=s["id"],
-                claim=s["claim"],
+                claim=s["claim"] if " — " in s["claim"] or " ? " in s["claim"] else f"{s['claim']} — {s['domain']}",
                 entropy_score=s["entropy"],
                 domain=s["domain"],
                 depth=s["depth"]
