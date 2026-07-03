@@ -1,6 +1,5 @@
 import json
 import os
-from datasets import load_dataset
 import requests
 import random
 
@@ -39,9 +38,9 @@ def generate_seed_nodes(vignette: str) -> list:
         print(f"Error generating seeds: {e}")
         return []
 
-print("Loading PMC-Patients dataset...")
-# Load only a subset to be fast (e.g., train split, streaming)
-dataset = load_dataset("zhengyun21/PMC-Patients", split="train", streaming=True)
+print("Loading local PMC-Patients-V2 dataset...")
+with open("data/PMC-Patients-V2.json", "r") as f:
+    dataset = json.load(f)
 
 skip_count = 50
 cases = []
