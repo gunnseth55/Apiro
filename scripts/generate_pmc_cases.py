@@ -69,15 +69,26 @@ for row in dataset:
             continue
             
         print(f"Processing case {count+1}...")
-        seeds = generate_seed_nodes(vignette)
+        
+        scrub_prompt = f"Rewrite the following clinical case report to completely remove any explicit mention of the final diagnosis, biopsy results, or surgical resolutions that give away the diagnosis. Leave only the patient history, initial presentation, symptoms, and initial lab/imaging findings intact. Do not add any introductory or concluding remarks. Output ONLY the rewritten text.\n\nCase: {vignette}"
+        try:
+            scrubbed_vignette = requests.post(
+                f"{OLLAMA_BASE_URL}/api/generate",
+                json={"model": PRIMARY_MODEL, "prompt": scrub_prompt, "stream": False},
+                timeout=120
+            ).json().get("response", vignette).strip()
+        except:
+            scrubbed_vignette = vignette
+
+        seeds = generate_seed_nodes(scrubbed_vignette)
         if not seeds:
             continue
             
         cases.append({
             "case_id": f"pmc_case_{count+1}",
-            "description": f"Real world case report from PMC",
+            "description": f"Real world case report from PMC (Scrubbed)",
             "target_diagnosis": diag_res,
-            "vignette": vignette,
+            "vignette": scrubbed_vignette,
             "seed_nodes": seeds
         })
         count += 1
