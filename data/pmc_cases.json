@@ -2,7 +2,7 @@
   {
     "case_id": "pmc_case_1",
     "description": "Real world case report from PMC",
-    "target_diagnosis": "Ovarian cancer stage 4",
+    "target_diagnosis": "Poorly differentiated serous papillary cystadenocarcinoma (Note: This is actually an ovarian cancer metastasis, but the exact primary site was not identified)",
     "vignette": "A 59-year-old Caucasian woman was admitted to our hospital for progressively enlarging but painless mass in the region of the umbilicus. The umbilical mass of approximately 5 cm in diameter and has developed two months after liver transplantation. The nodule was firm with irregular borders, wine-red shade and fixed to the surrounding tissues. The overlying skin was not ulcerated. She never smoked, consumed alcohol or used oral contraceptive pills. The gynecological history was unremarkable. The patient underwent a liver transplantation for end stage liver disease (ESLD) secondary to hepatitis C in mid of 2003. Prior to the transplant, her serum alpha-fetoprotein (alpha-FP) and CEA concentration were measured and both were within normal limits. The transplant procedure and immediate post-transplant period were unremarkable. The post-transplant immunosuppressive regimen consisted of Tacrolimus (6 mg/day) and steroids (prednisone 10 mg/day). Two months after transplantation, during routine follow-up, physical examination revealed multiple subcutaneous satellite nodules in close proximity to the umbilical region and lower abdominal wall. There was bilateral inguinal lymphadenopathy. A plain anterior/posterior chest x-ray was normal. Ultrasound of the abdominal cavity showed a 4 \u00d7 4 cm mass below the umbilicus and additional smaller nodules confined to the lower abdominal wall. Paraaortic lymph nodes were not identified. The echogenicity of the mass consisted of alternative hyper- and hypoechoic with poorly defined edges. However, the general condition of the patient was good and the laboratory test showed: hemoglobin level 9.6 g/dl, total bilirubin 0.6 mg/dl, conjugated bilirubin 0.1 mg/dl, Alkaline Phosphates 273 U/l, GGT 40 U/L, AST 36 U/L, and ALT 56 U/L. There was serological evidence of past hepatitis C virus infection. The biopsy of the umbilical mass showed features characteristic for a poorly differentiated serous papillary cystadenocarcinoma. An extended resection of the umbilical and paraumbilical metastasis was performed. In addition, extensive investigation to detect the primary neoplastic origin was initiated. Tumor marker evaluation consisted of: CEA 0.22 [normal 0\u20133.7 ng/ml], alpha feto protein 1.49 (normal: 0.8\u20139.4 UI/ml), CA125 27.73 (normal: 0\u201330 UI/ml), CA 19.9 was 8.61 (normal: 0\u201336.2 UI/ml), CA 15.3 was 22.48 (normal: 0\u201335 UI/ml). Multiple tumor marker measurements were obtained and each time similar results were reported. A computed tomographic (CT) scan was unable to demonstrate any lesion that could be considered a primary source of the metastasis to the umbilicus. Trans-vaginal ultrasonography showed a normal uterus and ovaries; ultrasonographic examination of thyroid and breast did not show any pathological changes as well. In spite of laborious efforts, the tumor's primary site was not found at that time. However, considering the histological results, the umbilicus metastasis could be attributed almost entirely to the ovarian cancer stage 4, since the main primary site in females are the ovaries. In order to prevent further tumor extension and expansion, tacrolimus was reduced from 6 mg/day to 1.5 mg/day. In addition, chemotherapy with Taxol was initiated (50 mg/m2 I.V) once a week for 16 weeks. To date, after 6 months of follow-up, the patient is doing well, the liver function is normal and tacrolimus serum level is 1 ng/ml. A recent whole body CT-scan showed regression of iliac and inguinal lymph nodes involvement.",
     "seed_nodes": [
       {
@@ -10,22 +10,22 @@
         "claim": "Progressively enlarging but painless mass in the region of the umbilicus",
         "domain": "symptom",
         "depth": 0,
-        "entropy": 0.8
+        "entropy": 0.7
       }
     ]
   },
   {
     "case_id": "pmc_case_2",
     "description": "Real world case report from PMC",
-    "target_diagnosis": "Mycobacterium tuberculosis",
+    "target_diagnosis": "Polymyositis \nM. tuberculosis",
     "vignette": "A 23-year-old polymyositis patient with suggestive clinical symptoms, muscle biopsy, enzyme assay, needle EMG and NCV test was on immunosuppressive drugs such as corticosteroids at 1 mg/kg/day for 3 to 4 weeks, tapered gradually over a period of 10 weeks to 1 mg/kg every alternate days and methotrexate at 7.5 mg weekly with gradual increase to 25 mg weekly for a period of 1 year when he experienced slightly improved muscle power.\nHe had single cutaneous abscess 6 months later on the right side of the neck with no sinus formation and cervical and axillary lymphadenopathy. He was HIV-negative with normal CXR and there was no AFB in three consecutive (spot-early morning-spot) sputum samples (induced in two occasions). However, the aspirated pus from cutaneous abscess and biopsy of the axillary lymph node showed plenty of M. tuberculosis as culture was confirmed by niacin and nitrate reduction tests, rapid bacteriophage assay (FAST Plaque Tuberculosis kit, BIOTEC Laboratories Ltd, UK) and RFLP analysis (figure ) using species-specific probes for devR (Differentially expressed virulent gene) [].\nIn RFLP analysis, the devR gene (Gene bank nucleotide sequence accession no. U22037) encodes a response regulator that is part of a two-component signal transduction system of M. tuberculosis. The authenticity of the amplified product was established by hybridization of immobilized PCR products to an internal oligonucleotide, devR1, mapping within the devR gene. The chromosomal DNA was prepared by chloroform-isoamyl alcohol DNA extraction and 4.5 \u03bcg of DNA from the isolate was restricted with PvuII. Separation of PvuII-restricted DNA by electrophoresis, Southern blot hybridization with a 513-bp PCR probes for devR (devRf, 5' GGTGAGGCGGGTTCGGTCGC 3'; devRr, 5' CGCGGCTTGCGTCCGACGTTC 3') and chemiluminescence detection were done according to the standard method recommended for the DNA fingerprinting of M. tuberculosis []. Histopathologically there were nonspecific necrosis with disintegrating polymorphs, very few granulomatous cells and no epithelioid cells in the biopsy specimen. USG of kidney, liver or spleen revealed no abscess. The strain was susceptible to the 4 first line drugs [isoniazide (H), rifampicin (R), ethambutol (E) and pyrazinamide (Z)] by BACTEC 460TB system. Treatment with 4-drug regimen (H = 300 mg/d, R = 450 mg/d, E = 800 mg/d and Z = 1.5 g/d) for 8 months (2EHRZ/6HR) [] with first 2 months supervised showed clinical improvement.\nHowever, the patient returned 6 months later with multiple cutaneous abscesses, mainly on his back, left thigh and left arm and miliary mottling in CXR. He denied any irregularity in antituberculosis therapy. All immunosuppressive drugs (corticosteroids and methotrexate) were discontinued as he was readmitted. Isolates from 2 of 3 consecutive sputum samples and aspirated pus samples from all 5 completely drained abscesses were reconfirmed as the identical M. tuberculosis strain by phage assay and RFLP analysis (figure ). The isolate was resistant to 4 first-line drugs by BACTEC 460TB system and to 9 drugs, tested into Loewenstein Jensen media (Hi-media, Mumbai, India): H (1 \u03bcg/ml), H (10 \u03bcg/ml), R (20 \u03bcg/ml), R (50 \u03bcg/ml), E (2 \u03bcg/ml), E (10 \u03bcg/ml), Z (50 \u03bcg/ml, at pH 5.5), streptomycin (5 \u03bcg/ml), streptomycin (50 \u03bcg/ml), paraaminosalicylate (2.5 \u03bcg/ml), cycloserine (30 \u03bcg/ml), amikacin (700 \u03bcg/ml) and ciprofloxacin (12.5 \u03bcg/ml). Treatment was continued with H (5 mg/kg/d), R (10 mg/kg/d), Z (30 mg/kg/d), E (15 mg/kg/d), kanamycin (15 mg/kg IM 5 times weekly) and sparfloxacin (500 mg/d) for 18 months with first 2 months under supervision. A slow but complete clinical, microbiological and radiological cure after 1.5 year was followed up for another 16 months.",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "Single cutaneous abscess on the right side of the neck with lymphadenopathy",
+        "claim": "Multiple cutaneous abscesses on the back, left thigh and left arm",
         "domain": "symptom",
         "depth": 0,
-        "entropy": 0.7
+        "entropy": 0.8
       }
     ]
   },
@@ -37,7 +37,7 @@
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "Dull upper abdominal pain of one-week duration",
+        "claim": "dull upper abdominal pain of one-week duration",
         "domain": "symptom",
         "depth": 0,
         "entropy": 0.7
@@ -52,7 +52,7 @@
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "Epigastric pain",
+        "claim": "epigastric pain",
         "domain": "symptom",
         "depth": 0,
         "entropy": 0.7
@@ -62,15 +62,15 @@
   {
     "case_id": "pmc_case_5",
     "description": "Real world case report from PMC",
-    "target_diagnosis": "Non-small cell lung cancer",
+    "target_diagnosis": "Epidermal Growth Factor Receptor Mutated Lung Cancer",
     "vignette": "This 55-y-old woman with a nine pack-year history of smoking underwent two surgical resections within 2 y (right lower and left upper lobectomies) for bronchioloalveolar carcinoma with focal invasion. Two years later, her disease recurred with bilateral pulmonary nodules and further progressed on systemic chemotherapy. Thereafter, the patient began erlotinib, 150 mg daily. A baseline CT scan of the chest demonstrated innumerable bilateral nodules (B, left panel), which were markedly reduced in number and size 4 mo after treatment (B, middle panel). After 14 mo of therapy, the patient's dose of erlotinib was decreased to 100 mg daily owing to fatigue. At 23 mo of treatment with erlotinib, a CT scan demonstrated an enlarging sclerotic lesion in the thoracic spine. The patient underwent CT-guided biopsy of this lesion (B, left panel), and the erlotinib dose was increased to 150 mg daily. After 25 mo of treatment, she progressed within the lung (B, right panel). Erlotinib was discontinued, and a fluoroscopically guided core needle biopsy was performed at a site of progressive disease in the lung (B, right panel). In total, this patient had three tumor specimens available for analysis: the original resected lung tumor, the biopsy of the enlarging spinal lesion, and the biopsy of the progressing lung lesion ().",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "Severe chest pain",
+        "claim": "bilateral pulmonary nodules",
         "domain": "symptom",
         "depth": 0,
-        "entropy": 0.8
+        "entropy": 0.7
       }
     ]
   },
@@ -82,25 +82,25 @@
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "Painless left inguinal tumor",
+        "claim": "a painless left inguinal tumor",
         "domain": "symptom",
         "depth": 0,
-        "entropy": 0.6
+        "entropy": 0.7
       }
     ]
   },
   {
     "case_id": "pmc_case_7",
     "description": "Real world case report from PMC",
-    "target_diagnosis": "Atrial Septal Defect (IAS)",
+    "target_diagnosis": "Dilated aortic root",
     "vignette": "A seventy-year-old male patient with paroxysmal atrial fibrillation and atrial flutter, and concomitant arterial hypertension was referred to our institution for LA circumferential ablation. The preprocedural TEE described an aneurysm of the IAS (See : TEE.mpeg for the TEE), however the left heart catheterization was deemed feasible. ICE performed at the electrophysiology laboratory (catheter Ultra ICE 9900, 9 MHz, EP Technologies, Boston Scientific Corp., San Jose, CA, USA connected to a console ClearView Ultra, Boston Scientific Corp., San Jose, CA, USA) as a routine part of the transseptal puncture showed more detailed picture of the intracardiac anatomy \u2013 dilated aortic root, enlarged right atrium displacing the IAS towards the LA free wall, and small oval fossa with flapping motion of the fossa ovalis membrane. The distance between the IAS and the LA free wall during the atrial diastole was small (Fig. ). During the atrial contraction the LA cavity appeared almost obliterated and the fossa ovalis membrane virtually touched the LA free wall, thus making the transseptal puncture potentially dangerous (Fig. ) (See : ICE1.mpeg for the unusual intracardiac anatomy). The fossa itself was abouting anteriorly to the non-coronary aortic sinus of Valsalva and although the fluoroscopic position of the transseptal needle was apparently correct, ICE showed that it was always sliding to the junction between the IAS and the aorta and that the needle tip was pointing towards the aortic root. Several unsuccessful attempts were made to change its direction towards the oval fossa. That was also deemed a condition predisposing to complicated transseptal puncture (Fig. ) (See : ICE2.mpeg for the sliding of the transseptal needle towards the aorta). During the procedure two echocardiographers, including the one, which had performed the TEE, re-evaluated the videotaped TEE and agreement was achieved that the initial interpretation of the TEE needed correction. Although the patient was symptomatic and the arrhythmia episodes could not be suppressed effectively with antiarrhythmic drugs, after considering all pros and cons we decided not to perform the left atrial procedure and thus to avoid serious and potentially fatal complications. Only a cavotricuspid isthmus ablation was done.",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "Severe chest pain",
+        "claim": "paroxysmal atrial fibrillation and atrial flutter",
         "domain": "symptom",
         "depth": 0,
-        "entropy": 0.5
+        "entropy": 0.7
       }
     ]
   },
@@ -112,22 +112,22 @@
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "Decreased vision in the left eye",
+        "claim": "decreased vision in the left eye and left sided headache of 3 months duration",
         "domain": "symptom",
         "depth": 0,
-        "entropy": 0.6
+        "entropy": 0.8
       }
     ]
   },
   {
     "case_id": "pmc_case_9",
     "description": "Real world case report from PMC",
-    "target_diagnosis": "Herniation of the right colon into the chest with perforation of the appendix.",
+    "target_diagnosis": "Appendicitis",
     "vignette": "A 43 year old female district nurse presented to the accident and emergency department with a 6 hour history of initially generalized abdominal pain which was localizing to the right. This was associated with nausea and loss of appetite, made worse by movement and not relieved with intramuscular morphine injection. There was no history of recent or past trauma to the chest or abdomen. On examination, she was tender in the right upper quadrant and right iliac fossa with rebound and guarding, with a Rovsing positive sign and normal bowel sounds. She was incidentally found to have some marfanoid features including the long span of upper limbs, a high arched palate and the very soft early diastolic murmur of aortic regurgitation. The patient had a positive family history of Marfan's syndrome but had never undergone genetic testing to confirm the diagnosis.\nA likely diagnosis of appendicitis was made on the clinical picture associated with a pyrexia and raised white cell count and C \u2013 reactive protein. Her abdominal X-ray at that time showed absence of gas in the right side of her bowel. Her chest X-ray did not show any obvious abnormality (Figure )\nShe was taken to theatre the same day for appendicectomy through a standard right iliac fossa incision. There was a small amount of free fluid but the right iliac fossa was filled with a normal looking gall bladder and small bowel only with no sign of the caecum, appendix, ascending or proximal transverse colon. The terminal ileum was found to run up under the right lobe of the liver towards the hilum. The right iliac fossa wound was closed and we proceeded to an exploratory laparoscopy.\nAt laparoscopy, the liver was retracted to see under the right liver lobe. The proximal transverse colon was found to be running up towards the liver hilum were it felt to be tethered. This suggested a possible herniation of the right colon into the chest. The procedure was abandoned and a CT thorax and abdomen were performed to define the anatomy involved.\nThis (Figure , ) demonstrated bilateral pleural effusions of moderate size with underlying unexpanded lungs. The liver had what appeared to be a large Reidl's lobe. Behind the right liver lobe, the right kidney was markedly elevated and the ileo-caecal junction appeared to lie between the liver and the kidney. The right side of the colon appeared to lie above the liver. Three dimensional reconstruction of the scans demonstrated absence of the right hemidiaphragm. (Figure , )\nThe symptoms and signs persisted and a laparotomy was performed. At laparotomy, there was some free fluid. There was definitely a large defect in the right hemidiaphragm. The right liver lobe had grown right up into the right intrathoracic space. There was a large hernial sac beneath the right lobe of the liver between the common bile duct, duodenum and liver, displacing the right kidney medially and containing transverse colon, terminal ileum, caecum, appendix and free fluid. The contents of this sac were successfully reduced and a perforated gangrenous appendix with pus was found within the intrathoracic hernial sac. A standard appendicectomy was performed. The right colon was formally mobilized, fully reduced and the caecum was fixed within the right iliac fossa.\nThe patient was admitted to the intensive care unit postoperatively where she made a good recovery. She had instant relief of her abdominal symptoms and post-operative contrast study demonstrated the presence of the right colon within the abdomen (Figure ). She was discharged a week post-operatively.",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "6 hour history of initially generalized abdominal pain",
+        "claim": "Generalized abdominal pain",
         "domain": "symptom",
         "depth": 0,
         "entropy": 0.8
@@ -142,7 +142,7 @@
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "Epigastric pain radiating into her back",
+        "claim": "epigastric pain radiating into her back",
         "domain": "symptom",
         "depth": 0,
         "entropy": 0.8
