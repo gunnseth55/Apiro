@@ -33,7 +33,10 @@ def generate_seed_nodes(vignette: str) -> list:
             timeout=120
         )
         res = response.json().get("response", "[]")
-        return json.loads(res)
+        parsed = json.loads(res)
+        if isinstance(parsed, dict):
+            return [parsed]
+        return parsed
     except Exception as e:
         print(f"Error generating seeds: {e}")
         return []
