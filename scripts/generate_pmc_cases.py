@@ -43,10 +43,14 @@ print("Loading PMC-Patients dataset...")
 # Load only a subset to be fast (e.g., train split, streaming)
 dataset = load_dataset("zhengyun21/PMC-Patients", split="train", streaming=True)
 
+skip_count = 50
 cases = []
 count = 0
 for row in dataset:
     if len(row['patient'].split()) > 200 and len(row['patient'].split()) < 600:
+        if skip_count > 0:
+            skip_count -= 1
+            continue
         # Filter for cases with a reasonable length to ensure some noise but not break the script's timeout
         vignette = row['patient']
         # For target diagnosis, PMC-Patients has 'similar_patients' or 'relevant_articles'. 
