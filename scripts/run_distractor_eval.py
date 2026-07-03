@@ -82,6 +82,18 @@ def run_evaluation(real_components: bool):
                 }
                 resp = req.post(f"{self.url}/api/generate", json=payload, timeout=90)
                 return resp.json().get("response", "")
+            def generate_with_logprobs(self, prompt: str) -> tuple[str, list]:
+                import requests as req
+                payload = {
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": 0.2, "num_predict": 180},
+                    "logprobs": True,
+                }
+                resp = req.post(f"{self.url}/api/generate", json=payload, timeout=90)
+                data = resp.json()
+                return data.get("response", ""), data.get("logprobs", [])
             def chat(self, prompt: str) -> str:
                 return self.generate(prompt)
 

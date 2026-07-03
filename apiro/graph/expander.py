@@ -29,6 +29,7 @@ STUB FALLBACKS:
 
 import re
 import logging
+import math
 from typing import Optional
 
 from apiro.graph.node import Node
@@ -384,6 +385,60 @@ class NodeExpander:
             logger.error(f"[NodeExpander] LLM call failed: {e}")
             return ""
 
+    def _call_llm_with_logprobs(self, prompt: str) -> tuple[str, list]:
+        """Call the LLM client, requesting logprobs if supported."""
+        if hasattr(self.llm_client, "generate_with_logprobs"):
+            try:
+                return self.llm_client.generate_with_logprobs(prompt)
+            except Exception as e:
+                logger.error(f"[NodeExpander] LLM call with logprobs failed: {e}")
+        try:
+            return self.llm_client.chat(prompt), []
+        except Exception as e:
+            logger.error(f"[NodeExpander] LLM call failed: {e}")
+            return "", []
+
+    def _align_logprobs_to_hypotheses(self, logprobs: list, hypotheses: list[str]) -> list[float]:
+        """
+        Align token logprobs to the parsed hypotheses.
+        Returns a list of uncertainty/entropy scores (float) for each hypothesis.
+        """
+        DEFAULT = 0.693  # ln(2)
+        if not logprobs or not hypotheses:
+            return [DEFAULT] * len(hypotheses)
+            
+        lines_logprobs = []
+        current_line = []
+        for item in logprobs:
+            token_text = item.get("token", "")
+            logprob = item.get("logprob", 0.0)
+            current_line.append(logprob)
+            if "\n" in token_text:
+                if current_line:
+                    lines_logprobs.append(current_line)
+                    current_line = []
+        if current_line:
+            lines_logprobs.append(current_line)
+            
+        scores = []
+        for idx, hyp in enumerate(hypotheses):
+            if idx < len(lines_logprobs) and lines_logprobs[idx]:
+                line_lps = lines_logprobs[idx]
+                avg_lp = sum(line_lps) / len(line_lps)
+                p = math.exp(avg_lp)
+                # Map token average probability to binary Shannon entropy
+                p = max(0.5001, min(0.9999, p))
+                entropy = - p * math.log(p) - (1.0 - p) * math.log(1.0 - p)
+                entropy = max(0.05, min(0.693, entropy))
+                scores.append(round(entropy, 4))
+            else:
+                scores.append(DEFAULT)
+                
+        while len(scores) < len(hypotheses):
+            scores.append(DEFAULT)
+            
+        return scores[:len(hypotheses)]
+
     def _parse_hypotheses(self, llm_output: str) -> list[str]:
         """
         Parse the LLM's output into exactly 3 hypothesis strings.
@@ -456,7 +511,10 @@ class NodeExpander:
         # Step 4: Parse
         hypotheses = self._parse_hypotheses(raw_output)
 
-        # Step 5a: Batch entropy — score all 3 hypotheses in one pass
+        # Step 5a: Batch entropy — score all 3 hypotheses in one pass using
+        # the verification signal (first-token Yes/No entropy). This is the
+        # correct epistemic uncertainty measure — token logprobs from generation
+        # measure generation fluency, not clinical decision-boundary certainty.
         entropies = self._batch_entropy(hypotheses, chunks)
 
         new_nodes = []

@@ -248,6 +248,18 @@ def build_components():
             )
             resp.raise_for_status()
             return resp.json().get("response", "")
+        def generate_with_logprobs(self, prompt):
+            import requests as req
+            resp = req.post(
+                f"{self.url}/api/generate",
+                json={"model": self.model, "prompt": prompt,
+                      "stream": False, "options": {"temperature": 0.2, "num_predict": 180},
+                      "logprobs": True},
+                timeout=90,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("response", ""), data.get("logprobs", [])
         def chat(self, prompt): return self.generate(prompt)
 
     chroma     = _ChromaAdapter(embedder)
