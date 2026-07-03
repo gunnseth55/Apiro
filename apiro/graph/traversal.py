@@ -34,6 +34,7 @@ from typing import Optional
 
 from apiro.config import CONTRADICTION_THRESHOLD_EF, CONTRADICTION_PENALTY
 from apiro.graph.belief_graph import BudgetExceededError
+from apiro.graph.critic import CriticEngine
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,7 @@ class ApiroTraversal:
         self.contradiction = contradiction
         self.log_dir     = log_dir
         self._traversal_log: list[dict] = []
+        self.critic = CriticEngine(llm_client=expander.llm_client)
 
     # ── Logging helpers ───────────────────────────────────────────────────────
 
@@ -144,6 +146,16 @@ class ApiroTraversal:
         # ── Main loop ─────────────────────────────────────────────────────────
         while True:
             iteration += 1
+
+            # ── Stop condition 0: Global Critic Halting ───────────────────────
+            if iteration % 5 == 0 and self.critic.evaluate_halting(graph, vignette=vignette):
+                stop_reason = "critic_halt"
+                logger.info(f"[Traversal] Global Critic approved halting at iteration {iteration}.")
+                self._log({
+                    "event":       "critic_halt_fired",
+                    "iteration":   iteration,
+                })
+                break
 
             # ── Stop condition 1: Saturation ─────────────────────────────────
             if self.saturation.is_saturated(graph):

@@ -526,6 +526,22 @@ class NodeExpander:
 
             domain = classify_domain(hypothesis, embedder=getattr(self.chroma_client, '_emb', None))
 
+            # Step 5b: Semantic DAG Merging
+            match = graph.find_semantic_match(hypothesis)
+            if match:
+                logger.info(
+                    f"[NodeExpander] Semantic match: merging '{hypothesis[:40]}' "
+                    f"into existing node {match.id}"
+                )
+                edge = Edge(parent_id=node.id, child_id=match.id)
+                try:
+                    graph.add_edge(edge)
+                except ValueError as e:
+                    logger.debug(f"[NodeExpander] Could not add merged edge: {e}")
+                # We skip contradiction checks and adding the node, 
+                # but we don't append to new_nodes because it's already in the graph.
+                continue
+
             # Step 5c: Create the node (uses main's full Node dataclass)
             child_id = self._generate_node_id(node.id, i)
             child_node = Node(
