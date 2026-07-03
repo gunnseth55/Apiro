@@ -347,7 +347,7 @@ class NodeExpander:
         return chunks, is_grounded
 
 
-    def _build_prompt(self, node: Node, chunks: list[str], graph, is_grounded: bool = True) -> str:
+    def _build_prompt(self, node: Node, chunks: list[str], graph, is_grounded: bool = True, vignette: str = None) -> str:
         """
         Build the hypothesis-generation prompt.
 
@@ -358,7 +358,9 @@ class NodeExpander:
         """
         # Extract patient case context (all seed nodes with depth=0)
         seeds = [n.claim for n in graph.nodes.values() if n.depth == 0]
-        case_context = "\n".join(f"  - {s}" for s in seeds) if seeds else "  - [No seed context]"
+        seed_context = "\n".join(f"  - {s}" for s in seeds) if seeds else "  - [No seed context]"
+        
+        case_context = f"Original Clinical Vignette:\n{vignette}\n\nSeed Findings:\n{seed_context}" if vignette else seed_context
 
         if not is_grounded:
             return PARAMETRIC_PROMPT_TEMPLATE.format(
@@ -484,7 +486,7 @@ class NodeExpander:
                 scores.append(DEFAULT)
         return scores
 
-    def expand(self, node: Node, graph) -> list[Node]:
+    def expand(self, node: Node, graph, vignette: str = None) -> list[Node]:
         """
         Main expansion method — called by traversal.py for each frontier node.
 
@@ -505,7 +507,7 @@ class NodeExpander:
         # Step 2 & 3: Prompt + LLM
         # Use evidence-constrained prompt when corpus is reliable;
         # parametric prompt when corpus coverage is too sparse to trust.
-        prompt = self._build_prompt(node, chunks, graph, is_grounded=is_grounded)
+        prompt = self._build_prompt(node, chunks, graph, is_grounded=is_grounded, vignette=vignette)
         raw_output = self._call_llm(prompt)
 
         # Step 4: Parse
