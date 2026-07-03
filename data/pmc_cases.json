@@ -1,0 +1,152 @@
+[
+  {
+    "case_id": "pmc_case_1",
+    "description": "Real world case report from PMC",
+    "target_diagnosis": "Atrial Septal Defect",
+    "vignette": "A 34-year old woman was referred for consideration of percutaneous ASD closure. The ASD had been diagnosed when the patient was 12 years old and TTE had suggested that the right ventricle was dilating. At cardiac catheterisation there were mildly elevated right ventricular systolic pressures and a pulmonary to systemic flow ratio of over two. The secundum ASD was estimated to be 15 mm wide using TTE with aneurysmal formation of the interatrial septum. The patient was admitted for percutaneous ASD closure and underwent uncomplicated placement of a 17 mm Amplatzer septal occluder. Transesophageal echocardiography (TEE) during the procedure revealed the presence of a second ASD near the inferior vena cava and a small post-procedure shunt. The septal occluder did not completely cover both defects. Equivalent chest x-ray radiation dose (assuming a single posteroanterior projection chest x-ray is eight centi-Gray/cm2) was 400. Repeat TTE continued to demonstrate left to right shunting and the patient was readmitted for a further device closure six months later. At cardiac catheterisation, the second defect was identified low in the secundum septum between the fossa ovalis and the mouth of the coronary sinus. The defect was successfully closed with a 9 mm Amplatzer septal occluder with no evidence of obstructed flow in either the coronary sinus or the inferior vena cava. Equivalent chest x-ray radiation dose for the second procedure was 187. The patient remained well with no evidence of residual shunt six months following the procedure.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Shortness of breath at age 12",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_2",
+    "description": "Real world case report from PMC",
+    "target_diagnosis": "Secundum ASD",
+    "vignette": "A 31-year old woman was found to have a secundum ASD during investigations for breathlessness. The defect was estimated to be 10 mm wide on TTE with evidence of right atrial and right ventricular dilatation. Left atrial size was normal. She was referred was further investigation and treatment. Cardiac catheterisation demonstrated a pulmonary to systemic flow shunt of four to one. Peri-procedure TEE revealed that there were two defects; one measuring 24 mm located inferiorly between the inferior vena cava and coronary sinus os with the second defect situated superiorly and measuring 30 mm. The inferior defect was closed using a 24 mm Amplatzer septal occluder. Equivalent chest x-ray radiation dose was 403. The patient was discharged the following day and readmitted three months later for closure of the superior defect. This was performed using a 30 mm Amplatzer septal occluder. The procedure was technical difficult as after deployment of the left sided disc, the device initially lay obliquely in the defect. The final position was satisfactory with no evidence of intra-cardiac shunting (figure ). There was no interference between the two devices and mitral valve function remained normal. Equivalent chest x-ray radiation dose for the second procedure was 727. The patient remained well and at six month follow-up there was no evidence of residual shunt.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Breathlessness",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.7
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_3",
+    "description": "Real world case report from PMC",
+    "target_diagnosis": "Dedifferentiated liposarcoma",
+    "vignette": "A 65-year-old male presented with a three-week history of progressively worsening abdominal distension. He denied any abdominal pain but stated that he noticed an increased frequency of bowel movements. His past medical history was unremarkable. On examination, he was afebrile and had a hugely distended abdomen with an immobile, nontender mass occupying all four quadrants of the abdomen. Computed tomographic (CT) scan revealed a large, heterogeneous lobulated mass occupying most of the abdomen (Figure ). The peripheral component appeared lipomatous and the margins of this component were difficult to estimate accurately. There was also a heterogeneous nonlipomatous component that contained areas of lesser density, as well as a central stellate region of calcifications. The preoperative differential diagnosis included a retroperitoneal sarcoma (especially dedifferentiated liposarcoma), desmoid tumor, undifferentiated carcinoma, carcinoid or sclerosing mesenteritis; lymphoma was also considered.\nWhile neoadjuvant chemotherapy and radiation comprise a frequent approach for retroperitoneal sarcomas at our institution, the extent of the tumor made this approach unfeasible. Resection was therefore planned unless an intraoperative biopsy revealed lymphoma. Resection was accomplished through a T-type incision (Figure ), and entailed removal of the right kidney, terminal ileum, ascending colon, sigmoid colon and the left spermatic cord structures, all of which were intimately attached to the mass. Encasement of the external iliac artery and vein was also encountered near the end of the procedure. This was not fully appreciated preoperatively, as that component of the tumor was so much less conspicuous on CT than the rest of the tumor, given its fatty consistency (Figure ). The mass was split in half to facilitate dissection from the iliac vessels. An anastomosis was constructed from descending colon to rectum. A transverse colon mucous fistula and an ileostomy were brought out, as the ileum was dusky at the end of the procedure.\nThe tumor was submitted for histological examination in two parts measuring, 30.0 \u00d7 10.0 \u00d7 6.5 cm and 32.0 \u00d7 20.0 \u00d7 10.0 cm, weighing 19.8 kg in total (Figure ). On gross examination the mass was variegated, with fleshy and solid cystic degeneration containing areas of osseous consistency. Microscopic examination revealed a juxtaposition of well differentiated liposarcoma and a spindle cell sarcoma with heterologous chondrosarcomatous elements consistent with a dedifferentiated liposarcoma (Figure ).\nThe patient was discharged from hospital on the seventh postoperative day. He was followed in the surgical oncology outpatient clinic monthly. Four months after resection the patient had a follow-up CT scan, which demonstrated an intra-abdominal recurrence consisting almost completely of a calcified, nonlipomatous tumor (Figure ). The patient died one month later.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Three-week history of progressively worsening abdominal distension",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_4",
+    "description": "Real world case report from PMC",
+    "target_diagnosis": "Adenoid Cystic Carcinoma (ACC)",
+    "vignette": "A 60 year old woman presented with a small swelling beneath the right ear lobe of 4 months duration. The swelling measured 2 \u00d7 1 cm placed in the superficial part of the parotid and was not fixed. There was no facial nerve palsy or palpable cervical nodes. A fine needle aspiration cytology (FNAC) was carried out which showed the lesion to be ACC []. The clinical staging was T1, N0, M0. The patient underwent a total conservative parotidectomy after metastatic work up. Histopathology revealed ACC with cribriform pattern and perineural invasion (Figure ). 60 Gy adjuvant external beam radiotherapy was administered post-operatively to the parotid area and the neck. Patient was placed on regular follow-up. Three years after primary surgery, patient presented with heaviness and pain in the right hypochondrium of 15 days duration. Patient was anicteric and abdominal examination revealed firm nodular and non tender enlargement of the liver. There was no ascites. Surgical site and neck were clinically normal. Chest roentgenogram was normal. Ultrasonography (US) of the abdomen revealed multiple metastatic lesions scattered in both lobes (Figure ). Liver function tests were normal and an US guided FNAC revealed metastatic ACC (Figure ). Since the lesions were multiple and scattered over both lobes of liver, surgical option was not considered and the patient was offered palliative chemotherapy which she declined. She developed pedal edema and abdominal distention 20 months after detection of liver metastasis. On clinical examination, patient was anicteric but liver had increased in size and abdomen showed evidence of a little free fluid. Chest CT scan was normal. Bone scan did not suggest any metastatic focus. Patient died a month later still without evidence of local recurrence or pulmonary metastasis.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "A small swelling beneath the right ear lobe of 4 months duration.",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_5",
+    "description": "Real world case report from PMC",
+    "target_diagnosis": "Autoimmune progesterone dermatitis.",
+    "vignette": "A 33y/o woman with a history of endometriosis presented with complaints of chronic urticaria. The patient noted that the urticaria began at the age of 12, and did not seem to have any obvious trigger. Each individual lesion would last from 12\u201324 hours, and the entire episode would last 5\u201310 days. Lesions would usually start on the chest and then spread over the entire body. She had seen multiple physicians, including allergists and dermatologists, and had been treated with a variety of medications including certirizine, desloratadine, hydroxyzine, montelukast, ranitidine, and diphenhydramine without relief. Prednisone at high doses would provide temporary relief, and she had required multiple courses of prednisone over the past 20 years. In addition, she complained of occasional angioedema, usually at the same time as the hives but occasionally occurring when hives were not present. The patient also had acne that had been very difficult to control since her teenage years, and she noted that the acne would also respond to prednisone.\nMultiple lab tests over the years had been unremarkable. These included SSA/SSB, anti-Smith, ACE level, C3/C4, hepatitis B, ANA, anti double-stranded DNA, immunoglobulins, SPEP, C1 esterase inhibitor level and function, chemistry panel, liver tests, TSH, T4, thyroid antibodies, rheumatoid factor, ESR, and CBC. Skin biopsy of a lesion had been read as \"chronic urticaria\".\nUpon further questioning, it was learned that due to the patient's endometriosis, she had very irregular menstrual cycles in terms of length and timing. It was determined that the hives and/or angioedema would begin approximately 4 days prior to the onset of menses, and would last about 2 days into menses. The symptoms would not occur with every episode of menses. The patient's acne would often occur on her face during the urticarial episodes. Of note, the patient had 2 children, and during each pregnancy her hives, acne, and angioedema had been markedly improved. Because of her endometriosis, she had been started on Depo-Provera (medroxyprogesterone acetate) in her twenties. After 1 injection, she developed severe hives that lasted over 2 months and required multiple courses of prednisone. Due to the urticaria, Depo-Provera was discontinued after one injection. As the patient complained of acne, Ortho Tri-Cyclen (norgestimate/ethinyl estradiol) was initiated by her dermatologist. This treatment modality did not have any effect on the urticaria, angioedema, or acne.\nThe patient was evaluated in our clinic. Physical examination was essentially normal, and no hives were noted. Allergy skin testing was performed with progesterone 50 mg/mL in normal saline. Prick test was normal, but a full strength intradermal test revealed a 7 mm wheal with erythema. The histamine control showed a 9 mm wheal with erythema, and saline control was negative for wheal and erythema. Two healthy controls also underwent intradermal testing to exclude irritant reaction, and were found to be negative\nBased on the above results, the patient was diagnosed with autoimmune progesterone dermatitis. The patient was started on a GnRH agonist (nafarelin acetate nasal spray, 200 mcg twice a day). Within one month, she noted dramatic improvement in her urticaria and angioedema. Acne was still occasionally present, but much improved. She did complain of mild hot flashes, but felt these were tolerable.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Chronic urticaria that began at age 12 with no obvious trigger",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_6",
+    "description": "Real world case report from PMC",
+    "target_diagnosis": "Small B cell lymphocytic lymphoma",
+    "vignette": "A 41-year-old man presented with complaints of snoring, excessive daytime sleepiness, and pavor nocturnes for more than 10 years. Systemic diseases were denied. Physical examination revealed bilateral symmetric and enlarged palatine tonsils without abnormal surface change. There were no palpable cervical lymph nodes or B symptoms (fever, body weight loss and cold sweats). White and red blood cell counts, biochemistry and chest radiographs were within normal limits. The results of an overnight polysomnography (PSG) showed mean SaO2, 91%, minimal SaO2, 62%, and a desaturation index (\u2265 4%) of 61.8/h. The arousal index was 64.8/h and the respiratory disturbance index (RDI) was 66.0/h. Believing that the patient was suffering from severe OSA and hyperplastic palatine tonsils, he received UPPP.\nThe postoperative course was uneventful and sleep apnea improved. PSG performed 4 months after surgery demonstrated that the RDI had reduced to 23.9/h. Pathology indicated small B cell lymphocytic lymphoma (Figure ,) with bone marrow involvement. During the whole course, the patient was free from B symptoms and no further abnormal lymphadenopathy was detected even after head and neck computed tomography (CT) and thallium scan (figure ). Chemotherapy was started after evaluation at the oncology clinic. The patient is doing well and is on regular follow-up in the ENT and oncology clinics.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Snoring for more than 10 years",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_7",
+    "description": "Real world case report from PMC",
+    "target_diagnosis": "Small-cell carcinoma",
+    "vignette": "A 57-year-old man presented with sudden gastrointestinal tract bleeding and episode of fainting. Duodenoscopy (Figure ) and hypotonic duodenography (Figure ) revealed a 3 \u00d7 3 cm protruding tumor with two ulcerations located opposite the ampulla of Vater in the second part of the duodenum. Laboratory data showed no abnormalities in blood chemistry, tumor markers (CEA, CA19-9, NSE, proGRP) and endocrine markers (somatostatin, gastrin, glucagons, serotonin, VIP) except a moderate anemia (9.5 g/dl hemoglobin). No abnormal findings were observed in the chest X-ray and computed tomography (CT).\nA laparotomy was performed. As there was no serosal invasion or regional lymphadenopathy wide local excision of the tumor was performed. On gross examination, the tumor showed two ulcerations and two different morphological components (Figure and ). One component (component A) was round in shape with a round ulceration on the top, and the other component (component B), which enclosed the round component, was crescent in shape with a spindle-shaped ulceration on the top. The two components showed different histopathological and immunohistochemical features (Table ). The round component contained fibrous tissue, small nuclei, and clear nucleoli. Histopathologically, the crescent component had more anaplastic features typical of small-cell carcinoma, such as sheets of tightly packed anaplastic cells with round nuclei and scanty cytoplasm (Figure , ). Neuroendocrine differentiation was investigated using immunohistochemical and ultrastructural techniques. Both components showed neuroendocrine features, with immunochemistry identifying synaptophysin and AE1/AE3 (Figure and ), and electron microscopy identifying dense core granules (Figure ). Immunochemistry also showed that the crescent component expressed less cytokeratin, vimentin and CD56, and more MIB-1 than the round component.\nThe patient was discharged three weeks after operation with uneventful postoperative period. Four cycles of monthly adjuvant chemotherapy with 5-fluoro uracil (5-FU) (325 mg/m2) and leucovorin (20 mg/m2) were administered. The patient showed no sign of recurrence and is disease-free 48 months after surgery.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Sudden gastrointestinal tract bleeding",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.6
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_8",
+    "description": "Real world case report from PMC",
+    "target_diagnosis": "Cardiac Myxoma",
+    "vignette": "A 62-year-old woman with known metabolic syndrome was referred to our clinic to exclude coronary artery disease invasively. She has been experiencing chest pain for four months which has not increased in frequency or duration since it started. She denied pain at rest, nocturnal pain, difficulty breathing, or palpitations. An echocardiographic stress examination revealed significant ischemia with anteroseptal hypokinesia. Cardiac chambers were morphologically normal. The \"baseline\" echocardiography and stress echo was unsuspicious of a left atrial myxoma (Fig. ).\nCoronary angiography revealed coronary artery disease with a stenosis of the proximal left anterior descending coronary artery (LAD) near the left main stem. A stent was implanted in the proximal LAD with no residual stenosis. The ventricle was morphologically normal.\nA coronary angiography performed 13 months after stent implantation showed no re-stenosis and a normal left ventricle. No echocardiogram was performed at this time 32 months after the control coronary angiography, the patient was readmitted because of increasing dyspnoea and palpitations. A transthoracic echocardiography disclosed a big (70 \u00d7 30 mm) mass in the left atrium attached to the interatrial septum. The tumor prolapsed into the left ventricle obstructing the mitral valve orifice (Fig ). The mean pressure gradient across the mitral valve was 8 mm Hg.\nA subsequent coronary angiography and LV and RV catheterization detected a mean diastolic pressure gradient of 12 mm Hg between the pulmonary capillary wedge and the left ventricular enddiastolic pressure, and no re-stenosis of the LAD stent. The angiography was notable for a large area with small atypical, tortuous vessels in the region of the interatrial septum. These vessels were shown to originate from branches of the right coronary artery (RCA) and the circumflex coronary artery (RCX). (Fig. )\nSurgery was promptly performed and the tumor was successfully excised. Histology confirmed the diagnosis of a cardiac myxoma.\nA retrospective analysis of the initial coronary angiographies (baseline, 13 and 45 months) disclosed the atypical vessels in a small area of interatrial septum (Fig. , , ).",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Severe chest pain for four months",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_9",
+    "description": "Real world case report from PMC",
+    "target_diagnosis": "H\u00fcrthle cell carcinoma",
+    "vignette": "A 79-year-old male was referred in March 2003 with a lump on the left side of his neck. The patient had noted a sudden increase in the size of the lump over the preceding two months. He did not report any neck pressure symptoms, weight loss or anorexia. His past history included right partial thyroidectomy for a solitary nodule (colloid goitre) in 1978 and repair of abdominal aortic aneurysm in 1994. He had suffered myocardial infarction in 1995 and had an episode of acute coronary insufficiency in January 2003. His recent coronary angiograms showed an occluded left anterior descending artery and echocardiogram revealed good left ventricular function. He was a non-smoker and consumed alcohol in moderation. He had been taking warfarin, diltiazem MR, lisinopril, uniphyllin, glyceryl trinitrate tablets and buccal suscard.\nOn examination he had left sided goitre extending superiorly into the posterior triangle and inferiorly into the retrosternal space, with variable consistency. The trachea was deviated to the right and there was cervical lymphadenopathy on the left side. Systemic examination was unremarkable and fine needle aspiration of thyroid gland showed presence of H\u00fcrthle cells. Computerised tomographic (CT) scan with contrast enhancement (figure &) of the neck and thorax revealed large left sided thyroid goitre with significant mediastinal extension. It showed mixed attenuation with foci of calcification peripherally. There was a 3 cm complex mass on the left side of the neck, posterior to the carotid sheath structures and deep to the sternomastoid, indicative of lymph node metastases. Thyroid profile and routine blood investigations were unremarkable.\nBased on the above findings radical surgery was planned. On exploration of the neck we confirmed left goitre with intrathoracic extension and enlarged lymph nodes under the sternocleidomastoid close to the jugulodigastric muscle and surrounding the carotid sheath. There was no remnant thyroid tissue seen on the right side following the previous thyroid surgery. Left hemithyroidectomy with modified neck dissection (lymphadenectomy, preserving all vessels and nerves) was performed. Macroscopic examination of the thyroid lobe showed a well defined solid pale brown mass approximately 8 cm in maximum dimension, surrounded by a narrow rim of preserved thyroid tissue. The lymph node specimen comprised of several nodules of partly necrotic tissue. Microscopic examination showed the thyroid lobe containing a H\u00fcrthle cell neoplasm, which was mostly encapsulated, with foci of capsular and vascular invasion. The two lymph nodes revealed metastatic H\u00fcrthle cell carcinoma. [pT3, N1a, Mx], (Figure &).\nThe patient had adjuvant therapy with oral radioiodine 131 (3060 MBq Sodium Iodine). He was put on a daily dose of 100 mcg of thyroxine. This was to be followed by a second dose of 5911 MBq of radioactive iodine six months from the time of the first dose.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "79-year-old male with lump on left side of neck",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.6
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_10",
+    "description": "Real world case report from PMC",
+    "target_diagnosis": "Pyonephrosis",
+    "vignette": "A 22-year-old homosexual male presented to hospital with progressive dyspnea, productive cough, generalized malaise and fever. He had a known history of intravenous cocaine abuse and recent serology in prior 3 months was negative for human immunodeficiency virus (HIV). Results of a physical examination showed signs of tachypnea, tachycardia, accessory muscle use and left lung base crackles. Tympanic temperature was 34.7\u00b0C. The remainder of the examination was unremarkable except for urethral meatus stenosis.\nInitial laboratory investigations are presented in Table . Arterial blood gases showed pH of 6.95, PaCO2 10 mmHg, PaO2 109 mmHg, HCO3 2 mmol/L, and lactate 0.6 mmol/L consistent with high anion gap metabolic acidosis with respiratory compensation. Serum creatinine and blood urea nitrogen were 587 \u03bcmol/L and 46.7 mmol/L, respectively. Toxicology and drug screen was negative. The metabolic acidosis was partially accounted for by acute renal failure with retained unmeasured anions and ketonemia. Urinalysis showed pyuria. Electrocardiogram (ECG) showed normal sinus rhythm.\nChest radiograph revealed right middle lobe and lingular patchy opacification. An abdomino-pelvic CT scan demonstrated moderate to severe bilateral hydronephrosis, bladder wall thickening with multiple diverticuli, and retroperitoneal streaking consistent with acute infection. A provisional diagnosis of severe sepsis was made with multiple potential foci of infection. The patient was given empiric ceftriaxone, metronidazole and vancomycin. Sputum specimen cultured heavy methicillin-sensitive Staphylococcus aureus, blood cultures were positive for S. aureus, Escherichia coli, and Group B Streptococcus. Urine cultured greater than 108 CFU/L of multiple gram positive and negative organisms.\nThe patient was admitted to the intensive care unit (ICU). The metabolic acidosis persisted (pH 7.00) a despite 100 mEq of 8.4% sodium bicarbonate bolus and infusion of three liters of normal bicarbonate solution (150 mEq of 8.4% sodium bicarbonate in 1000 mL D5W). The patient had a suprapubic bladder catheter inserted by angiography. However, due to concern the patient remained oliguric following 4 L crystalloid resuscitation, hemodialysis was organized. Hemodialysis parameters included: F160 membrane (surface area 1.5 m2 and KUf 50 mL/hr/mmHg), dialysate sodium 136 mmol/L, potassium 3 mmol/L, calcium 1.25 mmol/L, bicarbonate 40 mmol/L, and QD 500 mL/min, QB 250\u2013300 mL/min via a 25 cm left femoral double-lumen Uldall catheter. The patient had 71.5 L of blood processed over four hours with no fluid removal. Although the patient was alert and appropriate (Glasgow Coma Scale 15) with tachycardia and stable normal range blood pressure before the initiation of dialysis, he was demonstrating an increased work of breathing and oxygen requirements suggestive of worsening sepsis syndrome. Approximately 2.5 hrs after start of dialysis the patient became rapidly unresponsive prompting intubation for airway protection. At completion of HD and over the subsequent 4 hours the patient's neurologic status deteriorated with evidence of loss of all brainstem reflexes. Head CT-scan is shown in Figure .\nRepeat laboratory investigations immediately following hemodialysis revealed a pH 7.36, HCO3 19 mmol/L, sodium 132 mmol/L, potassium 1.8 mmol/L, and urea 13.7 mmol/L (urea-reduction-ratio was 71%) (Table ).\nThe patient rapidly progressed to refractory shock and multi-organ dysfunction Diagnosis of brain death was declared independently by an intensivist and a neurologist. At autopsy, the brain showed evidence of diffuse cerebral edema. Cardiac assessment showed left ventricular enlargement consistent with systemic hypertension likely as a result of chronic kidney disease. Both lungs showed patchy acute bronchopneumonia with edema and congestion. Both kidneys appeared grossly pyonephrotic with dilated, thickened ureters and suggested the presence of acute on chronic pyelonephritis. The meatal aperture was scarred and stenosed.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Progressive dyspnea",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      }
+    ]
+  }
+]
