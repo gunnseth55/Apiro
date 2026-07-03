@@ -55,7 +55,11 @@ class CriticEngine:
         )
         
         try:
-            response = self.llm.generate(prompt, max_tokens=100, temperature=0.1)
+            try:
+                response = self.llm.generate(prompt, max_tokens=100, temperature=0.1)
+            except TypeError:
+                response = self.llm.generate(prompt)
+                
             first_line = response.strip().split('\n')[0].strip().upper()
             
             if "YES" in first_line:
