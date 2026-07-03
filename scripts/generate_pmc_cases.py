@@ -12,7 +12,7 @@ def generate_seed_nodes(vignette: str) -> list:
     Output EXACTLY a JSON array of objects. Each object must have 'id', 'claim', 'domain', 'depth' (always 0), and 'entropy' (a float between 0.1 and 0.9 representing initial uncertainty).
     Example:
     [
-      {{"id": "s1", "claim": "Severe chest pain", "domain": "symptom", "depth": 0, "entropy": 0.8}}
+      {{"id": "s1", "claim": "<extract a specific symptom from the vignette here>", "domain": "symptom", "depth": 0, "entropy": 0.8}}
     ]
 
     Case Report:
