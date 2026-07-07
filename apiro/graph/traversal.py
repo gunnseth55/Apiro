@@ -121,6 +121,7 @@ class ApiroTraversal:
         graph,
         max_depth: int = 8,
         case_name: str = "run",
+        vignette: str = None,
     ) -> TraversalResult:
         """
         Run the entropy-first traversal loop.
@@ -227,7 +228,7 @@ class ApiroTraversal:
             })
 
             try:
-                new_nodes = self.expander.expand(node, graph)
+                new_nodes = self.expander.expand(node, graph, vignette=vignette)
             except BudgetExceededError as e:
                 logger.warning(f"[Traversal] Budget exceeded: {e}. Stopping traversal gracefully.")
                 stop_reason = "budget_exceeded"
@@ -310,7 +311,7 @@ class ApiroTraversal:
         duration = round(time.time() - start_time, 2)
 
         # ── Synthesize differential ───────────────────────────────────────────
-        synthesis = self.expander.synthesize_differential(graph)
+        synthesis = self.expander.synthesize_differential(graph, vignette=vignette)
 
         self._log({
             "event":            "traversal_complete",
