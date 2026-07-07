@@ -228,7 +228,7 @@ class ApiroTraversal:
             })
 
             try:
-                new_nodes = self.expander.expand(node, graph, vignette=vignette)
+                new_nodes = self.expander.expand(node, graph)
             except BudgetExceededError as e:
                 logger.warning(f"[Traversal] Budget exceeded: {e}. Stopping traversal gracefully.")
                 stop_reason = "budget_exceeded"
@@ -311,7 +311,7 @@ class ApiroTraversal:
         duration = round(time.time() - start_time, 2)
 
         # ── Synthesize differential ───────────────────────────────────────────
-        synthesis = self.expander.synthesize_differential(graph, vignette=vignette)
+        synthesis = self.expander.synthesize_differential(graph)
 
         self._log({
             "event":            "traversal_complete",
@@ -453,7 +453,7 @@ class HypothesisTestingTraversal:
                 graph.add_node(hyp_node)
                 self._log({"event": "enrichment_seed", "hypothesis": hyp, "node_id": f"hyp_{i}"})
                 try:
-                    new_nodes = self.expander.expand(hyp_node, graph, vignette=vignette)
+                    new_nodes = self.expander.expand(hyp_node, graph)
                     graph.mark_resolved(hyp_node.id)
                     if self.contradiction:
                         existing = list(graph.nodes.values())
