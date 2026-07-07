@@ -99,16 +99,20 @@ class _ChromaAdapter:
 
 # ── Component builder ─────────────────────────────────────────────────────────
 
-def build_components():
-    """Instantiate all real Apiro components. Exits if prerequisites are missing."""
+def build_components(mode: str = "classic"):
+    """Instantiate all real Apiro components. Exits if prerequisites are missing.
 
+    Args:
+        mode: 'classic' (original generative expansion) or
+              'hypothesis' (new hypothesis-testing inference engine).
+    """
     from apiro.graph.expander      import NodeExpander
     from apiro.graph.saturation    import SaturationDetector
     from apiro.graph.rabbit_hole   import RabbitHoleDetector
     from apiro.graph.contradiction import ContradictionDetector
     from apiro.entropy.engine      import EntropyEngine
     from apiro.corpus.embedder     import Embedder
-    from apiro.graph.traversal     import ApiroTraversal
+    from apiro.graph.traversal     import ApiroTraversal, HypothesisTestingTraversal
 
     # ── Ollama check ──────────────────────────────────────────────────────────
     try:
@@ -154,6 +158,25 @@ def build_components():
         contradiction=contradiction,
     )
 
+    if mode == "hypothesis":
+        from apiro.hypothesis.oracle          import HypothesisOracle
+        from apiro.hypothesis.evidence_matcher import EvidenceMatcher
+        from apiro.hypothesis.bayesian_scorer  import BayesianScorer
+
+        oracle  = HypothesisOracle(model=PRIMARY_MODEL, ollama_url=OLLAMA_BASE_URL)
+        matcher = EvidenceMatcher(chroma_client=chroma_adapter)
+        scorer  = BayesianScorer()
+        ht_traversal = HypothesisTestingTraversal(
+            oracle=oracle,
+            matcher=matcher,
+            scorer=scorer,
+            expander=expander,
+            saturation=saturation,
+            rabbit_hole=rabbit_hole,
+            contradiction=contradiction,
+        )
+        return ht_traversal, expander, embedder
+
     return traversal, expander, embedder
 
 
@@ -198,25 +221,40 @@ def main():
     parser.add_argument("--max-depth",  type=int, default=MAX_TRAVERSAL_DEPTH, help="Max traversal depth")
     parser.add_argument("--log-dir",    default="data",                  help="Directory for traversal logs")
     parser.add_argument("--output-dir", default="data",                  help="Directory for graph JSON output")
+    parser.add_argument(
+        "--mode",
+        choices=["classic", "hypothesis"],
+        default="hypothesis",
+        help="Traversal mode: 'classic' (generative BFS) or 'hypothesis' (new inference engine)"
+    )
     args = parser.parse_args()
 
     case_data  = load_case(args.case)
     case_id    = case_data.get("case_id", "unknown")
     logger.info(f"Case: {case_id} — {case_data.get('description', '')}")
 
+    vignette = case_data.get("vignette", "")
     seed_nodes = build_seed_nodes(case_data)
-    logger.info(f"Seed nodes: {len(seed_nodes)}")
+    logger.info(f"Seed nodes: {len(seed_nodes)} | Mode: {args.mode}")
 
-    traversal, _, _ = build_components()
+    traversal, _, _ = build_components(mode=args.mode)
     traversal.log_dir = args.log_dir
 
     graph  = BeliefGraph()
-    result = traversal.run(
-        seed_nodes=seed_nodes,
-        graph=graph,
-        max_depth=args.max_depth,
-        case_name=case_id,
-    )
+    if args.mode == "hypothesis":
+        result = traversal.run(
+            vignette=vignette,
+            case_name=case_id,
+            graph=graph,
+        )
+    else:
+        result = traversal.run(
+            seed_nodes=seed_nodes,
+            graph=graph,
+            max_depth=args.max_depth,
+            case_name=case_id,
+            vignette=vignette,
+        )
 
     os.makedirs(args.output_dir, exist_ok=True)
     output_path = os.path.join(args.output_dir, f"graph_{case_id}.json")
