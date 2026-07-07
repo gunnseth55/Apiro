@@ -1,27 +1,20 @@
 """
 graph/traversal.py
 ------------------
-Main orchestration loop for Apiro Phase 2.
+Contains two traversal strategies:
 
-ApiroTraversal ties together all Phase 2 components:
-  - NodeExpander:          expands frontier nodes into child hypotheses
-  - SaturationDetector:    stops when entropy has settled
-  - RabbitHoleDetector:    skips branches where entropy reverses
-  - ContradictionDetector: flags logical conflicts between nodes
+1. ApiroTraversal (CLASSIC) — Phase 2 generative expansion:
+   Entropy-first BFS that blindly expands frontier nodes via LLM.
+   Kept for backwards compatibility and comparison.
 
-THE LOOP (entropy-first BFS):
-  1. Check saturation → stop if saturated
-  2. Get frontier (unresolved nodes sorted by entropy DESC)
-  3. Stop if frontier is empty or max_depth exceeded
-  4. Check if top node is a rabbit hole → skip to frontier[1] if so
-  5. Expand the top node via NodeExpander (RAG + LLM → 3 children)
-  6. Run full contradiction check: each new child vs ALL existing nodes
-  7. Mark node as resolved, log, repeat
+2. HypothesisTestingTraversal (NEW) — hypothesis-testing inference:
+   Phase 1: Extract structured PatientContext.
+   Phase 2: Generate N candidate diagnoses via HypothesisOracle (1 LLM call).
+   Phase 3: Score each hypothesis deterministically via EvidenceMatcher (0 LLM calls).
+   Phase 4: Apply demographic constraints via BayesianScorer (0 LLM calls).
+   Phase 5 (optional): Targeted graph enrichment for top-3 hypotheses only.
 
-STOP CONDITIONS (in priority order):
-  1. Saturation: entropy has settled (low, stable, non-rising)
-  2. Max depth: hard limit to prevent infinite loops
-  3. Empty frontier: all nodes resolved or skipped
+Select via the `--mode classic|hypothesis` flag in run.py.
 """
 
 import json
@@ -55,6 +48,26 @@ class TraversalResult:
     duration_seconds:    float
     synthesis:           list[str]        # Final differential diagnosis
     saturation_status:   Optional[object] = None  # SaturationStatus if stop was saturation
+
+
+@dataclass
+class HypothesisTestingResult:
+    """
+    Summary returned by HypothesisTestingTraversal.run().
+
+    Carries the ranked hypotheses, evidence scores, and timing stats.
+    """
+    synthesis:           list[str]              # Top 3 diagnoses
+    ranked_hypotheses:   list                   # list[RankedHypothesis]
+    duration_seconds:    float
+    patient_context:     object                 # PatientContext
+    stop_reason:         str = "scored"
+    # Classic graph stats (populated if graph enrichment ran)
+    total_nodes:         int = 0
+    total_edges:         int = 0
+    rabbit_hole_count:   int = 0
+    contradiction_count: int = 0
+    graph:               Optional[object] = None
 
 
 class ApiroTraversal:
@@ -331,3 +344,166 @@ class ApiroTraversal:
         )
 
         return result
+
+
+# ── HypothesisTestingTraversal ────────────────────────────────────────────────
+
+class HypothesisTestingTraversal:
+    """
+    New hypothesis-testing inference engine.
+
+    Pipeline (1-3 LLM calls total vs 100+ in classic mode):
+
+    Phase 1 — PatientContext extraction (1 LLM call).
+    Phase 2 — Hypothesis Generation via HypothesisOracle (1 LLM call).
+    Phase 3 — Deterministic Scoring via EvidenceMatcher + BayesianScorer (0 LLM calls).
+    Phase 4 — Optional targeted graph enrichment for top-3 hypotheses (0-6 LLM calls).
+    """
+
+    def __init__(
+        self,
+        oracle,
+        matcher,
+        scorer,
+        expander=None,
+        saturation=None,
+        rabbit_hole=None,
+        contradiction=None,
+        n_hypotheses: int = 8,
+        enrich_top_k: int = 3,
+        log_dir: str = "data",
+    ):
+        self.oracle = oracle
+        self.matcher = matcher
+        self.scorer = scorer
+        self.expander = expander
+        self.saturation = saturation
+        self.rabbit_hole = rabbit_hole
+        self.contradiction = contradiction
+        self.n_hypotheses = n_hypotheses
+        self.enrich_top_k = enrich_top_k
+        self.log_dir = log_dir
+        self._traversal_log: list[dict] = []
+
+    def run(
+        self,
+        vignette: str,
+        case_name: str = "run",
+        seed_nodes: list = None,
+        graph=None,
+        max_depth: int = 2,
+    ) -> "HypothesisTestingResult":
+        from apiro.patient.context import extract_patient_context
+
+        start_time = time.time()
+        self._traversal_log = []
+
+        # Phase 1: PatientContext
+        logger.info("[HypothesisTestingTraversal] Phase 1: Extracting PatientContext...")
+        context = extract_patient_context(vignette)
+        self._log({"event": "patient_context_extracted", "summary": context.summary()})
+        logger.info(f"[HypothesisTestingTraversal] PatientContext: {context.summary()}")
+
+        # Phase 2: Generate candidates
+        logger.info(f"[HypothesisTestingTraversal] Phase 2: Generating {self.n_hypotheses} candidates...")
+        hypotheses = self.oracle.generate(context, n=self.n_hypotheses)
+        self._log({"event": "hypotheses_generated", "hypotheses": hypotheses})
+        logger.info(f"[HypothesisTestingTraversal] Candidates: {hypotheses}")
+
+        if not hypotheses:
+            logger.warning("[HypothesisTestingTraversal] Oracle returned no hypotheses.")
+            return HypothesisTestingResult(
+                synthesis=[],
+                ranked_hypotheses=[],
+                duration_seconds=round(time.time() - start_time, 2),
+                patient_context=context,
+                stop_reason="oracle_failure",
+            )
+
+        # Phase 3: Score deterministically
+        logger.info(f"[HypothesisTestingTraversal] Phase 3: Scoring {len(hypotheses)} hypotheses...")
+        evidence_scores = self.matcher.score_all(hypotheses, context)
+        ranked = self.scorer.rank(evidence_scores, context)
+        self._log({
+            "event": "hypotheses_scored",
+            "ranked": [{"rank": r.rank, "hypothesis": r.hypothesis,
+                        "raw_score": r.raw_score, "final_score": r.final_score,
+                        "matched": len(r.matched_findings), "rules": r.rule_notes}
+                       for r in ranked],
+        })
+        for r in ranked[:5]:
+            logger.info(f"  {r}")
+
+        synthesis = [r.hypothesis for r in ranked[:3] if r.final_score > 0.0]
+
+        # Phase 4 (optional): Targeted graph enrichment
+        total_nodes = 0
+        total_edges = 0
+        rabbit_holes = 0
+        contradictions = 0
+        enriched_graph = None
+
+        if self.expander and graph is not None and synthesis:
+            logger.info(f"[HypothesisTestingTraversal] Phase 4: Enriching top {min(self.enrich_top_k, len(synthesis))} hypotheses...")
+            from apiro.graph.node import Node
+            for i, hyp in enumerate(synthesis[:self.enrich_top_k]):
+                hyp_node = Node(id=f"hyp_{i}", claim=hyp, entropy_score=0.693,
+                                domain="pathophysiology", depth=0)
+                graph.add_node(hyp_node)
+                self._log({"event": "enrichment_seed", "hypothesis": hyp, "node_id": f"hyp_{i}"})
+                try:
+                    new_nodes = self.expander.expand(hyp_node, graph, vignette=vignette)
+                    graph.mark_resolved(hyp_node.id)
+                    if self.contradiction:
+                        existing = list(graph.nodes.values())
+                        for nn in new_nodes:
+                            for ex in existing:
+                                if ex.id == nn.id:
+                                    continue
+                                if not self.contradiction.should_check(nn.claim, ex.claim):
+                                    continue
+                                res = self.contradiction.check(nn.claim, ex.claim)
+                                if res.label == "contradiction" and res.score > CONTRADICTION_THRESHOLD_EF:
+                                    contradictions += 1
+                                    nn.contradiction_penalty = CONTRADICTION_PENALTY
+                except BudgetExceededError:
+                    logger.warning("[HypothesisTestingTraversal] Graph budget exceeded.")
+                    break
+                except Exception as e:
+                    logger.warning(f"[HypothesisTestingTraversal] Enrichment error: {e}")
+            enriched_graph = graph
+            total_nodes = graph.node_count()
+            total_edges = len(graph.edges)
+            if self.rabbit_hole:
+                rabbit_holes = len(self.rabbit_hole.events)
+
+        duration = round(time.time() - start_time, 2)
+        self._log({"event": "traversal_complete", "stop_reason": "scored",
+                   "synthesis": synthesis, "duration_seconds": duration})
+        self._write_log(case_name)
+        logger.info(f"[HypothesisTestingTraversal] Done. synthesis={synthesis}, time={duration}s")
+
+        return HypothesisTestingResult(
+            synthesis=synthesis,
+            ranked_hypotheses=ranked,
+            duration_seconds=duration,
+            patient_context=context,
+            stop_reason="scored",
+            total_nodes=total_nodes,
+            total_edges=total_edges,
+            rabbit_hole_count=rabbit_holes,
+            contradiction_count=contradictions,
+            graph=enriched_graph,
+        )
+
+    def _log(self, event: dict) -> None:
+        self._traversal_log.append(event)
+
+    def _write_log(self, case_name: str) -> str:
+        os.makedirs(self.log_dir, exist_ok=True)
+        log_path = os.path.join(self.log_dir, f"ht_traversal_log_{case_name}.jsonl")
+        with open(log_path, "w") as f:
+            for event in self._traversal_log:
+                f.write(json.dumps(event) + "\n")
+        logger.info(f"[HypothesisTestingTraversal] Log written to {log_path}")
+        return log_path
