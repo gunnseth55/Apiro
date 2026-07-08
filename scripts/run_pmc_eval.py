@@ -10,6 +10,9 @@ import argparse
 import json
 import logging
 import os
+
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
 import sys
 from pathlib import Path
 
@@ -80,7 +83,7 @@ def run_evaluation(real_components: bool):
                     "stream": False,
                     "options": {"temperature": 0.2, "num_predict": 180},
                 }
-                resp = req.post(f"{self.url}/api/generate", json=payload, timeout=90)
+                resp = req.post(f"{self.url}/api/generate", json=payload, timeout=300)
                 return resp.json().get("response", "")
             def generate_with_logprobs(self, prompt: str) -> tuple[str, list]:
                 import requests as req
@@ -91,7 +94,7 @@ def run_evaluation(real_components: bool):
                     "options": {"temperature": 0.2, "num_predict": 180},
                     "logprobs": True,
                 }
-                resp = req.post(f"{self.url}/api/generate", json=payload, timeout=90)
+                resp = req.post(f"{self.url}/api/generate", json=payload, timeout=300)
                 data = resp.json()
                 return data.get("response", ""), data.get("logprobs", [])
             def chat(self, prompt: str) -> str:
@@ -452,6 +455,14 @@ def run_evaluation(real_components: bool):
             "apiro":    {"success": apiro_success, "output": apiro_output},
             "apiro_ht": {"success": ht_success,   "output": ht_output},
         })
+        
+        # Flush CUDA memory aggressively at the end of each case to prevent fragmentation
+        if real_components:
+            import gc
+            import torch
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
     # Summary Table
     print("\n" + "=" * 65)
