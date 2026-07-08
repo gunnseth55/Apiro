@@ -52,6 +52,8 @@ def generate_seed_nodes(vignette: str) -> list:
         res = response.json().get("response", "[]")
         parsed = json.loads(res)
         if isinstance(parsed, dict):
+            if "seed_nodes" in parsed:
+                return parsed["seed_nodes"]
             return [parsed]
         return parsed
     except Exception as e:
