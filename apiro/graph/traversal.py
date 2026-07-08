@@ -370,7 +370,7 @@ class HypothesisTestingTraversal:
         saturation=None,
         rabbit_hole=None,
         contradiction=None,
-        n_hypotheses: int = 8,
+        n_hypotheses: int = 12,
         enrich_top_k: int = 3,
         log_dir: str = "data",
     ):

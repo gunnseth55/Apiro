@@ -113,6 +113,23 @@ for row in dataset:
         except:
             continue
 
+        # Stage 2b: Deterministic histological label filter.
+        # Diagnoses with pathology-only subtype qualifiers cannot be deduced
+        # from clinical presentation alone — skip to keep the dataset honest.
+        _HISTOLOGY_TERMS = re.compile(
+            r"\b(poorly differentiated|well differentiated|moderately differentiated|"
+            r"undifferentiated|serous|mucinous|adenocarcinoma|cystadenocarcinoma|"
+            r"adenoma|carcinoid|stromal tumor|leiomyosarcoma|liposarcoma|fibrosarcoma|"
+            r"rhabdomyosarcoma|angiosarcoma|chondrosarcoma|osteosarcoma|"
+            r"mesothelioma|blastoma|histiocytoma|schwannoma|neurofibrosarcoma|"
+            r"bronchioloalveolar|papillary carcinoma|follicular carcinoma|"
+            r"medullary carcinoma|anaplastic|pleomorphic)\b",
+            re.IGNORECASE,
+        )
+        if _HISTOLOGY_TERMS.search(diag_res):
+            print(f"  Skipping (histology-only label: '{diag_res}')")
+            continue
+
         print(f"Processing case {count+1}: {diag_res}")
 
         # Stage 3: Clean Scrubbing
