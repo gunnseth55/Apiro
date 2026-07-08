@@ -368,6 +368,11 @@ def run_evaluation(real_components: bool):
         # 3. Apiro Classic Traversal
         logger.info("  Running Apiro Classic Traversal...")
         graph = BeliefGraph()
+        raw_seeds = case.get("seed_nodes", [])
+        if raw_seeds and isinstance(raw_seeds[0], dict) and "seed_nodes" in raw_seeds[0]:
+            # Handle accidental double-nesting from LLM output
+            raw_seeds = raw_seeds[0]["seed_nodes"]
+
         seeds = [
             Node(
                 id=s["id"],
@@ -376,7 +381,7 @@ def run_evaluation(real_components: bool):
                 domain=s["domain"],
                 depth=s["depth"]
             )
-            for s in case["seed_nodes"]
+            for s in raw_seeds
         ]
         
         traversal_res = traversal.run(
