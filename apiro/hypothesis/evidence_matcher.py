@@ -116,8 +116,9 @@ class EvidenceMatcher:
     def _load_encoder(self) -> None:
         """Load sentence-transformers model. Silently degrades to word-overlap."""
         try:
+            import torch
             from sentence_transformers import SentenceTransformer
-            self._encoder = SentenceTransformer(EMBED_MODEL)
+            self._encoder = SentenceTransformer(EMBED_MODEL, model_kwargs={"torch_dtype": torch.float16})
             self._use_semantic = True
             logger.info(f"[EvidenceMatcher] Semantic matching enabled ({EMBED_MODEL})")
         except Exception as e:

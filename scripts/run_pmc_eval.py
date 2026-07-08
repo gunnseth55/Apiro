@@ -10,9 +10,6 @@ import argparse
 import json
 import logging
 import os
-
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-
 import sys
 from pathlib import Path
 

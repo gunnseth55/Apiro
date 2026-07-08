@@ -129,7 +129,10 @@ class ContradictionDetector:
     def __init__(self, model_name: str = "cross-encoder/nli-MiniLM2-L6-H768"):
         print(f"[ContradictionDetector] Loading model: {model_name}")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            model_name,
+            torch_dtype=torch.float16
+        )
         self.model.eval()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
