@@ -16,6 +16,7 @@ FIX vs feature/signal-rewrite:
 """
 
 import json
+import re
 import requests
 
 OLLAMA_BASE_URL = "http://localhost:11434"
