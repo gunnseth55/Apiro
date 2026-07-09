@@ -1,0 +1,292 @@
+[
+  {
+    "case_id": "pmc_case_1",
+    "description": "Real world case report from PMC (Scrubbed)",
+    "target_diagnosis": "Multidrug-resistant tuberculosis",
+    "vignette": "**Diagnostic Challenge**\n\nA 23-year-old patient is admitted to the hospital with a 6-month history of a single cutaneous abscess on the right side of the neck, along with cervical and axillary lymphadenopathy. The patient has no HIV risk factors and has normal chest X-ray (CXR) findings. However, the aspirated pus from the cutaneous abscess shows abundant Mycobacterium tuberculosis organisms by microscopy.\n\n**Initial Presentation:**\n\n* Single cutaneous abscess on the right side of the neck\n* Cervical and axillary lymphadenopathy\n\n**Physical Exam:**\n\n* Normal CXR\n* No abnormalities on examination of other systems\n\n**First-line Labs/Imaging:**\n\n* Sputum samples (three consecutive, induced on two occasions) are negative for AFB\n* Pus from cutaneous abscess is positive for M. tuberculosis by microscopy and culture confirmation is pending\n* RFLP analysis using species-specific probes for devR gene shows the presence of a unique M. tuberculosis strain",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Single cutaneous abscess on the right side of the neck",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.5
+      },
+      {
+        "id": "l1",
+        "claim": "the aspirated pus from the cutaneous abscess shows abundant Mycobacterium tuberculosis organisms by microscopy.",
+        "domain": "lab_result",
+        "depth": 0,
+        "entropy": 0.6
+      },
+      {
+        "id": "h1",
+        "claim": "abundant Mycobacterium tuberculosis organisms by microscopy",
+        "domain": "history",
+        "depth": 0,
+        "entropy": 0.8
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_2",
+    "description": "Real world case report from PMC (Scrubbed)",
+    "target_diagnosis": "Complicated transseptal puncture due to anomalous intracardiac anatomy",
+    "vignette": "A 70-year-old male patient presents with paroxysmal atrial fibrillation and atrial flutter, as well as concomitant arterial hypertension. On physical exam, what might you expect to find? What initial laboratory tests and imaging studies would you order in this case? \n\nInitial Labs/Imaging: \n\n* TEE (Transesophageal Echocardiogram) \n* Left heart catheterization",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "paroxysmal atrial fibrillation and atrial flutter, as well as concomitant arterial hypertension",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "l1",
+        "claim": "TEE (Transesophageal Echocardiogram)",
+        "domain": "lab_result",
+        "depth": 0,
+        "entropy": 0.5
+      },
+      {
+        "id": "h1",
+        "claim": "A 70-year-old male patient",
+        "domain": "history",
+        "depth": 0,
+        "entropy": 0.6
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_3",
+    "description": "Real world case report from PMC (Scrubbed)",
+    "target_diagnosis": "Osteoid Osteoma",
+    "vignette": "**Diagnostic Challenge**\n\nA 33-year-old male presents with a 3-month history of decreased vision in the left eye and a left-sided headache. Physical exam reveals left eye blindness with primary optic atrophy and no other neurological deficits.\n\nInitial labs:\n\n* \n* \n\nImaging:\n\n* A bony tumor is noted in the left ethmoid sinus invading the left orbit and compressing the left optic nerve.\n* Intracranial extension into the anterior cranial fossa on the left side.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "decreased vision in the left eye",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.4
+      },
+      {
+        "id": "l1",
+        "claim": "A bony tumor is noted in the left ethmoid sinus invading the left orbit and compressing the left optic nerve.",
+        "domain": "lab_result",
+        "depth": 0,
+        "entropy": 0.7
+      },
+      {
+        "id": "h1",
+        "claim": "A 33-year-old male presents with a 3-month history of decreased vision in the left eye and a left-sided headache.",
+        "domain": "history",
+        "depth": 0,
+        "entropy": 0.4
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_4",
+    "description": "Real world case report from PMC (Scrubbed)",
+    "target_diagnosis": "Diaphragmatic Hernia with Intrathoracic Appendicitis",
+    "vignette": "A 43-year-old female district nurse presents with a 6-hour history of generalized abdominal pain that has localized to the right, associated with nausea and loss of appetite. The pain worsens with movement and is not relieved by intramuscular morphine injection.\n\nOn examination:\n\n* Tenderness in the right upper quadrant and right iliac fossa\n* Rebound and guarding\n* Rovsing positive sign\n* Normal bowel sounds\n\nLab results:\n\n* Pyrexia (fever)\n* Raised white cell count\n* Elevated C-reactive protein\n\nImaging:\n\n* Abdominal X-ray: absence of gas in the right side of the bowel\n* Chest X-ray: no obvious abnormality",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "A 43-year-old female district nurse presents with a 6-hour history of generalized abdominal pain that has localized to the right, associated with nausea and loss of appetite.",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.5
+      },
+      {
+        "id": "l1",
+        "claim": "Raised white cell count",
+        "domain": "lab_result",
+        "depth": 0,
+        "entropy": 0.7
+      },
+      {
+        "id": "h1",
+        "claim": "Pyrexia (fever)",
+        "domain": "history",
+        "depth": 0,
+        "entropy": 0.7
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_5",
+    "description": "Real world case report from PMC (Scrubbed)",
+    "target_diagnosis": "acute cholecystitis",
+    "vignette": "A 32-year-old female presents with a 3-hour history of epigastric pain radiating into her back. She has vomited multiple times. This is not her first episode, as she experienced two similar episodes in the past week.\n\nOn examination:\n\n* No jaundice or pyrexia\n* Apex beat located at the right fifth intercostal space, midclavicular line\n* Epigastric tenderness without tenderness in the upper quadrants\n\nInitial labs/imaging:\n\n* Normal white cell count and amylase level\n* Elevated C-reactive protein (CRP) level: 290 mg/L\n* Electrocardiograph showing right axis deviation and right ventricular hypertrophy, suggestive of dextrocardia\n* Ultrasound scan of the upper abdomen:\n\t+ Gallbladder located in the left upper quadrant with stones\n\t+ Spleen visualized in the right upper quadrant\n\t+ No evidence of common bile duct or intrahepatic duct dilatation\n* Chest X-Ray confirming dextrocardia",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "3-hour history of epigastric pain radiating into her back.",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.5
+      },
+      {
+        "id": "l1",
+        "claim": "Elevated C-reactive protein (CRP) level: 290 mg/L",
+        "domain": "lab_result",
+        "depth": 0,
+        "entropy": 0.7
+      },
+      {
+        "id": "h1",
+        "claim": "She has experienced two similar episodes in the past week.",
+        "domain": "history",
+        "depth": 0,
+        "entropy": 0.7
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_6",
+    "description": "Real world case report from PMC (Scrubbed)",
+    "target_diagnosis": "posterolateral dislocation of the left elbow in association with Milch type II lateral condyle fracture",
+    "vignette": "A 12-year-old boy presents to the emergency department after a fall from a skateboard, landing directly on his left elbow. The patient reports significant pain and swelling in the affected area, but denies any numbness or weakness in the arm.\n\nPhysical examination reveals a grossly swollen and deformed left elbow. Range of motion is limited due to pain.\n\nInitial laboratory and imaging findings:\n\n* Radiographs show posterolateral dislocation of the left elbow with an associated fracture.\n* There are no abnormal laboratory results reported at this time.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "significant pain and swelling in the affected area",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.6
+      },
+      {
+        "id": "l1",
+        "claim": "posterolateral dislocation of the left elbow with an associated fracture",
+        "domain": "lab_result",
+        "depth": 0,
+        "entropy": 0.5
+      },
+      {
+        "id": "h1",
+        "claim": "fall from a skateboard, landing directly on his left elbow",
+        "domain": "history",
+        "depth": 0,
+        "entropy": 0.6
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_7",
+    "description": "Real world case report from PMC (Scrubbed)",
+    "target_diagnosis": "Congenital Cystic Adenomatoid Malformation (CCAM)",
+    "vignette": "A 26-year-old woman presents with a triplet pregnancy complicated by threatened abortion at 15 weeks of gestation. She has had two previous first-trimester abortions and her mother delivered triplets who died in the early neonatal period.\n\nPhysical examination:\n\n* Vital signs: not provided\n* General appearance: not described\n\nInitial laboratory and imaging results:\n\n* Ultrasonography at 6 weeks showed a single, 17 \u00d7 20 mm gestational sac (chorion)\n* Detailed ultrasonography revealed a monochorionic triamniotic triplet pregnancy with three thin amniotic membranes and an ipsilon zone\n* Biometric measurements of the fetuses were appropriate for 15 weeks of gestation",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "threatened abortion at 15 weeks of gestation",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "l1",
+        "claim": "monochorionic triamniotic triplet pregnancy",
+        "domain": "lab_result",
+        "depth": 0,
+        "entropy": 0.6
+      },
+      {
+        "id": "h1",
+        "claim": "triplets who died in the early neonatal period",
+        "domain": "history",
+        "depth": 0,
+        "entropy": 0.6
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_8",
+    "description": "Real world case report from PMC (Scrubbed)",
+    "target_diagnosis": "Pneumonia",
+    "vignette": "A 19-year-old male is admitted to the ICU with fractures of the 2nd and 3rd cervical vertebrae and concomitant acute respiratory failure type I. On physical exam, you note:\n\n* Cervical spine tenderness\n* Respiratory distress\n* Oxygen saturation: 88% on room air\n\nInitial lab results show:\n\n* WBC count: 18,000 cells/mm^3\n* CRP: 120 mg/L\n* Blood cultures pending\n\nA chest X-ray shows:\n\n* Bilateral infiltrates consistent with pneumonia",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Oxygen saturation: 88% on room air",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "l1",
+        "claim": "WBC count: 18,000 cells/mm^3",
+        "domain": "lab_result",
+        "depth": 0,
+        "entropy": 0.7
+      },
+      {
+        "id": "h1",
+        "claim": "concomitant acute respiratory failure type I",
+        "domain": "history",
+        "depth": 0,
+        "entropy": 0.6
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_9",
+    "description": "Real world case report from PMC (Scrubbed)",
+    "target_diagnosis": "acute respiratory distress syndrome (ARDS)",
+    "vignette": "**Diagnostic Challenge**\n\nA 72-year-old female is admitted to the ICU with a severe urinary tract infection (UTI) and acute respiratory distress syndrome (ARDS). She has a history of repeated hospitalizations for UTIs in the past.\n\n**Initial Presentation:**\n\n* Complicated, severe urinary tract infection\n* Acute respiratory distress syndrome\n\n**Physical Exam:**\n(Not provided)\n\n**First-line Labs/Imaging:**\nWhat initial laboratory and imaging studies would you order to help manage this patient's condition?\n\nLab tests:\n\n* Urine culture\n* Blood cultures\n* Complete blood count (CBC)\n* Basic metabolic panel (BMP)\n* Imaging:\n* Chest X-ray\n* Abdominal ultrasound",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "severe urinary tract infection",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.8
+      },
+      {
+        "id": "l1",
+        "claim": "bilateral infiltrates on chest X-ray",
+        "domain": "lab_result",
+        "depth": 0,
+        "entropy": 0.7
+      },
+      {
+        "id": "h1",
+        "claim": "history of repeated hospitalizations for UTIs in the past",
+        "domain": "history",
+        "depth": 0,
+        "entropy": 0.7
+      }
+    ]
+  },
+  {
+    "case_id": "pmc_case_10",
+    "description": "Real world case report from PMC (Scrubbed)",
+    "target_diagnosis": "Central venous catheter dislocation",
+    "vignette": "**Diagnostic Challenge**\n\nA 49-year-old female with a history of metastatic breast cancer (supraclavicular lymph node metastases) presents with:\n\n* Dyspnea\n* Intermittent coughing\n* General weakness\n\nPhysical examination reveals no significant findings. The patient has a totally implantable venous access port catheter, which was implanted 2 years ago via the left cephalic vein.\n\nLaboratory findings show:\n* Mild leukocytosis: 11.0/nl\n* Hypokalemia: 2.6 mmol/l\n\nFurther radiological diagnostics have been ordered, but the results are pending. You must decide on the next steps in management based on this limited information.",
+    "seed_nodes": [
+      {
+        "id": "s1",
+        "claim": "Dyspnea",
+        "domain": "symptom",
+        "depth": 0,
+        "entropy": 0.7
+      },
+      {
+        "id": "l1",
+        "claim": "Mild leukocytosis: 11.0/nl",
+        "domain": "lab_result",
+        "depth": 0,
+        "entropy": 0.6
+      },
+      {
+        "id": "h1",
+        "claim": "history of metastatic breast cancer (supraclavicular lymph node metastases)",
+        "domain": "history",
+        "depth": 0,
+        "entropy": 0.6
+      }
+    ]
+  }
+]
