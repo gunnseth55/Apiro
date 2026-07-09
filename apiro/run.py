@@ -56,9 +56,10 @@ logger = logging.getLogger(__name__)
 class OllamaLLMClient:
     """Thin wrapper around the Ollama REST API for text generation."""
 
-    def __init__(self, url: str = OLLAMA_BASE_URL, model: str = PRIMARY_MODEL):
-        self.url   = url
-        self.model = model
+    def __init__(self, url: str = OLLAMA_BASE_URL, model: str = PRIMARY_MODEL, timeout: int = 45):
+        self.url     = url
+        self.model   = model
+        self.timeout = timeout
 
     def generate(self, prompt: str) -> str:
         payload = {
@@ -67,9 +68,18 @@ class OllamaLLMClient:
             "stream": False,
             "options": {"temperature": 0.2, "num_predict": 180},
         }
-        resp = requests.post(f"{self.url}/api/generate", json=payload, timeout=90)
-        resp.raise_for_status()
-        return resp.json().get("response", "")
+        # Try once, then retry once more before giving up; keeps stalls bounded.
+        for attempt in range(2):
+            try:
+                resp = requests.post(f"{self.url}/api/generate", json=payload, timeout=self.timeout)
+                resp.raise_for_status()
+                return resp.json().get("response", "")
+            except Exception as e:
+                if attempt == 1:
+                    raise
+                import logging
+                logging.getLogger(__name__).warning(f"[OllamaLLMClient] Attempt {attempt+1} failed ({e}), retrying...")
+        return ""
 
     def chat(self, prompt: str) -> str:
         return self.generate(prompt)
