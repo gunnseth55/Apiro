@@ -102,6 +102,11 @@ class ApiroTraversal:
     def _log(self, event: dict) -> None:
         """Append a structured event to the in-memory traversal log."""
         self._traversal_log.append(event)
+        if hasattr(self, "_on_event") and self._on_event is not None:
+            try:
+                self._on_event(event)
+            except Exception as e:
+                logger.warning(f"Failed to trigger on_event callback: {e}")
 
     def _write_log(self, case_name: str) -> str:
         """Write the traversal log to a JSONL file and return the path."""
@@ -122,7 +127,9 @@ class ApiroTraversal:
         max_depth: int = 8,
         case_name: str = "run",
         vignette: str = None,
+        on_event = None,
     ) -> TraversalResult:
+        self._on_event = on_event
         """
         Run the entropy-first traversal loop.
 
@@ -393,7 +400,9 @@ class HypothesisTestingTraversal:
         seed_nodes: list = None,
         graph=None,
         max_depth: int = 2,
+        on_event = None,
     ) -> "HypothesisTestingResult":
+        self._on_event = on_event
         from apiro.patient.context import extract_patient_context
 
         start_time = time.time()
@@ -499,6 +508,11 @@ class HypothesisTestingTraversal:
 
     def _log(self, event: dict) -> None:
         self._traversal_log.append(event)
+        if hasattr(self, "_on_event") and self._on_event is not None:
+            try:
+                self._on_event(event)
+            except Exception as e:
+                logger.warning(f"Failed to trigger on_event callback: {e}")
 
     def _write_log(self, case_name: str) -> str:
         os.makedirs(self.log_dir, exist_ok=True)
