@@ -23,61 +23,61 @@ OLLAMA_BASE_URL = "http://localhost:11434"
 PRIMARY_MODEL = "llama3.1:8b"
 
 
-def generate_seed_nodes(vignette: str) -> list:
-    prompt = f"""
-You are a clinical AI tasked with extracting key findings for a diagnostic engine.
+def _extract_one(vignette: str, domain: str, id_prefix: str, idx: int) -> dict | None:
+    """Ask the LLM for exactly ONE finding of a specific domain. Much more reliable than bulk."""
+    if domain == "symptom":
+        task = "Extract the SINGLE most important SYMPTOM or SIGN the patient presented with (what they complained about or what was found on exam)."
+    elif domain == "lab_result":
+        task = "Extract the SINGLE most diagnostically relevant LAB RESULT or IMAGING FINDING mentioned (e.g. elevated WBC, bilateral infiltrates, ECG finding, X-ray result)."
+    else:
+        task = "Extract the SINGLE most relevant RISK FACTOR or PAST MEDICAL HISTORY item (e.g. age, comorbidity, prior procedure, recent travel, substance use)."
 
-Read the clinical vignette below and extract EXACTLY 3 to 4 seed nodes covering DIFFERENT clinical domains:
-  - At least 1 MUST be the patient's PRIMARY chief complaint (the main acute symptom they came in with)
-  - At least 1 MUST be a LAB or IMAGING result (e.g. elevated WBC, bilateral infiltrates, ECG finding)
-  - At least 1 SHOULD be a relevant HISTORY or RISK FACTOR (e.g. age, comorbidity, prior procedure)
-  - Additional findings may be included if highly diagnostic
-
-Do NOT extract the final diagnosis or any treatment. Focus on OBJECTIVE findings.
-
-Output EXACTLY a JSON array of objects. Each object must have:
-  - 'id': string (e.g. "s1", "l1", "h1")
-  - 'claim': string (the specific finding verbatim from the vignette)
-  - 'domain': one of "symptom", "lab_result", "imaging", "history", "vital"
-  - 'depth': always 0
-  - 'entropy': float 0.1-0.9 (higher = more ambiguous finding)
-
-Example output:
-[
-  {{"id": "s1", "claim": "severe epigastric pain radiating to the back", "domain": "symptom", "depth": 0, "entropy": 0.7}},
-  {{"id": "l1", "claim": "serum amylase 3x upper limit of normal", "domain": "lab_result", "depth": 0, "entropy": 0.5}},
-  {{"id": "h1", "claim": "heavy alcohol use", "domain": "history", "depth": 0, "entropy": 0.6}}
-]
-
-Clinical Vignette:
-{vignette}
-
-JSON Output:
-"""
+    prompt = (
+        f"{task}\n"
+        "Output ONLY a JSON object with keys: id, claim, domain, depth, entropy.\n"
+        "- id: string\n"
+        "- claim: exact text from the vignette (do NOT add diagnosis or treatment)\n"
+        f"- domain: \"{domain}\"\n"
+        "- depth: 0\n"
+        "- entropy: float 0.1-0.9 (higher = more ambiguous)\n\n"
+        f"Vignette:\n{vignette}\n\nJSON:"
+    )
     try:
-        response = requests.post(
+        res = requests.post(
             f"{OLLAMA_BASE_URL}/api/generate",
-            json={
-                "model": PRIMARY_MODEL,
-                "prompt": prompt,
-                "stream": False,
-                "format": "json"
-            },
-            timeout=120
-        )
-        res = response.json().get("response", "[]")
-        parsed = json.loads(res)
-        if isinstance(parsed, dict):
-            if "seed_nodes" in parsed:
-                return parsed["seed_nodes"]
-            # Single-object response — wrap it
-            return [parsed]
-        # Validate: must have at least 2 seeds with required keys
-        valid = [s for s in parsed if isinstance(s, dict) and "id" in s and "claim" in s]
-        return valid if valid else []
+            json={"model": PRIMARY_MODEL, "prompt": prompt, "stream": False, "format": "json"},
+            timeout=60,
+        ).json().get("response", "{}")
+        obj = json.loads(res)
+        if isinstance(obj, list):
+            obj = obj[0] if obj else {}
+        if "claim" in obj and obj["claim"].strip():
+            obj["id"] = f"{id_prefix}{idx}"
+            obj["domain"] = domain
+            obj["depth"] = 0
+            obj.setdefault("entropy", 0.7)
+            return obj
     except Exception as e:
-        print(f"Error generating seeds: {e}")
-        return []
+        print(f"  Seed extraction ({domain}) failed: {e}")
+    return None
+
+
+def generate_seed_nodes(vignette: str) -> list:
+    """
+    Extract 3-4 seed nodes by making separate focused LLM calls per domain.
+    This is far more reliable than asking for a bulk JSON array in one shot.
+    """
+    seeds = []
+    for domain, prefix, idx in [("symptom", "s", 1), ("lab_result", "l", 1), ("history", "h", 1)]:
+        node = _extract_one(vignette, domain, prefix, idx)
+        if node:
+            seeds.append(node)
+    # Optionally add a second symptom if we have fewer than 3
+    if len(seeds) < 3:
+        node = _extract_one(vignette, "symptom", "s", 2)
+        if node and node["claim"] != (seeds[0]["claim"] if seeds else ""):
+            seeds.append(node)
+    return seeds
 
 
 
