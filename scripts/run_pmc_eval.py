@@ -66,6 +66,8 @@ def run_evaluation(real_components: bool):
         chroma_adapter = _ChromaAdapter(embedder)
         entropy_engine = EntropyEngine(model=PRIMARY_MODEL, ollama_url=OLLAMA_BASE_URL)
 
+        from apiro.run import OllamaLLMClient
+        llm_client = OllamaLLMClient(url=OLLAMA_BASE_URL, model=PRIMARY_MODEL)
 
     # Begin evaluation
     logger.info("=" * 65)
