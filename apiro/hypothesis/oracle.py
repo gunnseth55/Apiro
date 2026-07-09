@@ -44,17 +44,20 @@ generate the {n} most plausible diagnoses ranked from most to least likely.
 Chief Complaint: {chief_complaint}
 Age: {age}
 Gender: {gender}
-Symptoms: {symptoms}
-Labs: {labs}
+Symptoms / Signs: {symptoms}
+Lab Results: {labs}
 Imaging: {imaging}
-Known Background (DO NOT list these as diagnoses): {history}
+Past Medical History / Risk Factors: {history}
 
 === STRICT RULES ===
-1. List ONLY the {n} most plausible ACUTE diagnoses for this specific presentation.
-2. Do NOT list pre-existing background conditions from the "Known Background" section.
+1. Generate the {n} most plausible ACUTE diagnoses that BEST EXPLAIN the combination
+   of ALL the above findings together — chief complaint, symptoms, labs, AND imaging.
+2. Do NOT list pre-existing background conditions from Past Medical History unless
+   they directly explain the acute presentation.
 3. Output EXACTLY {n} disease names, one per line, no numbering, no explanation.
 4. Be specific (e.g. "Acute cholecystitis" not "Gallbladder disease").
-5. Focus strictly on the chief complaint — do not be distracted by incidental findings.
+5. Prioritise diagnoses that explain the LAB and IMAGING findings, not just the
+   chief complaint symptom — the correct answer often lies in the objective data.
 
 === OUTPUT ({n} lines only) ==="""
 
