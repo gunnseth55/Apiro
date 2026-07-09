@@ -25,19 +25,35 @@ PRIMARY_MODEL = "llama3.1:8b"
 
 def generate_seed_nodes(vignette: str) -> list:
     prompt = f"""
-    You are a medical AI. Read the following clinical case report and extract 3 to 4 core initial clinical findings (symptoms, signs, or initial lab results) as seed nodes for a diagnostic engine.
-    IMPORTANT: At least one seed node MUST represent the patient's primary chief complaint (the acute reason they sought care). Do not focus primarily on incidental anatomical anomalies unless they are the direct cause of the acute presentation.
-    Output EXACTLY a JSON array of objects. Each object must have 'id', 'claim', 'domain', 'depth' (always 0), and 'entropy' (a float between 0.1 and 0.9 representing initial uncertainty).
-    Example:
-    [
-      {{"id": "s1", "claim": "<extract a specific symptom from the vignette here>", "domain": "symptom", "depth": 0, "entropy": 0.8}}
-    ]
+You are a clinical AI tasked with extracting key findings for a diagnostic engine.
 
-    Case Report:
-    {vignette}
+Read the clinical vignette below and extract EXACTLY 3 to 4 seed nodes covering DIFFERENT clinical domains:
+  - At least 1 MUST be the patient's PRIMARY chief complaint (the main acute symptom they came in with)
+  - At least 1 MUST be a LAB or IMAGING result (e.g. elevated WBC, bilateral infiltrates, ECG finding)
+  - At least 1 SHOULD be a relevant HISTORY or RISK FACTOR (e.g. age, comorbidity, prior procedure)
+  - Additional findings may be included if highly diagnostic
 
-    JSON Output:
-    """
+Do NOT extract the final diagnosis or any treatment. Focus on OBJECTIVE findings.
+
+Output EXACTLY a JSON array of objects. Each object must have:
+  - 'id': string (e.g. "s1", "l1", "h1")
+  - 'claim': string (the specific finding verbatim from the vignette)
+  - 'domain': one of "symptom", "lab_result", "imaging", "history", "vital"
+  - 'depth': always 0
+  - 'entropy': float 0.1-0.9 (higher = more ambiguous finding)
+
+Example output:
+[
+  {{"id": "s1", "claim": "severe epigastric pain radiating to the back", "domain": "symptom", "depth": 0, "entropy": 0.7}},
+  {{"id": "l1", "claim": "serum amylase 3x upper limit of normal", "domain": "lab_result", "depth": 0, "entropy": 0.5}},
+  {{"id": "h1", "claim": "heavy alcohol use", "domain": "history", "depth": 0, "entropy": 0.6}}
+]
+
+Clinical Vignette:
+{vignette}
+
+JSON Output:
+"""
     try:
         response = requests.post(
             f"{OLLAMA_BASE_URL}/api/generate",
@@ -54,11 +70,15 @@ def generate_seed_nodes(vignette: str) -> list:
         if isinstance(parsed, dict):
             if "seed_nodes" in parsed:
                 return parsed["seed_nodes"]
+            # Single-object response — wrap it
             return [parsed]
-        return parsed
+        # Validate: must have at least 2 seeds with required keys
+        valid = [s for s in parsed if isinstance(s, dict) and "id" in s and "claim" in s]
+        return valid if valid else []
     except Exception as e:
         print(f"Error generating seeds: {e}")
         return []
+
 
 
 print("Loading local PMC-Patients-V2 dataset...")

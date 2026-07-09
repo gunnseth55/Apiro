@@ -25,9 +25,7 @@ logger = logging.getLogger("distractor_eval")
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from apiro.graph.belief_graph import BeliefGraph
 from apiro.graph.node import Node
-from apiro.graph.traversal import ApiroTraversal
 
 def run_evaluation(real_components: bool):
     # Load distractor cases
@@ -67,57 +65,7 @@ def run_evaluation(real_components: bool):
 
         chroma_adapter = _ChromaAdapter(embedder)
         entropy_engine = EntropyEngine(model=PRIMARY_MODEL, ollama_url=OLLAMA_BASE_URL)
-        
-        class OllamaLLMClient:
-            def __init__(self, url, model):
-                self.url   = url
-                self.model = model
-            def generate(self, prompt: str) -> str:
-                import requests as req
-                payload = {
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.2, "num_predict": 180},
-                }
-                resp = req.post(f"{self.url}/api/generate", json=payload, timeout=300)
-                return resp.json().get("response", "")
-            def generate_with_logprobs(self, prompt: str) -> tuple[str, list]:
-                import requests as req
-                payload = {
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.2, "num_predict": 180},
-                    "logprobs": True,
-                }
-                resp = req.post(f"{self.url}/api/generate", json=payload, timeout=300)
-                data = resp.json()
-                return data.get("response", ""), data.get("logprobs", [])
-            def chat(self, prompt: str) -> str:
-                return self.generate(prompt)
 
-        llm_client = OllamaLLMClient(OLLAMA_BASE_URL, PRIMARY_MODEL)
-        contradiction = ContradictionDetector()
-        expander = NodeExpander(
-            entropy_engine=entropy_engine,
-            chroma_client=chroma_adapter,
-            llm_client=llm_client,
-            contradiction_detector=contradiction,
-        )
-        saturation = SaturationDetector()
-        rabbit_hole = RabbitHoleDetector()
-        traversal = ApiroTraversal(
-            expander=expander,
-            saturation=saturation,
-            rabbit_hole=rabbit_hole,
-            contradiction=contradiction,
-        )
-    else:
-        # Import stub components
-        from apiro.graph.expander import NodeExpander, StubEntropyEngine, StubChromaClient
-        from apiro.graph.saturation import SaturationDetector
-        from apiro.graph.rabbit_hole import RabbitHoleDetector
         
         # Stub Contradiction Detector simulating soft-pruning on specific distractor pairs
         class StubContradictionDetector:
@@ -365,45 +313,7 @@ def run_evaluation(real_components: bool):
             llm_client=llm_client if real_components else None
         )
 
-        # 3. Apiro Classic Traversal
-        logger.info("  Running Apiro Classic Traversal...")
-        graph = BeliefGraph()
-        raw_seeds = case.get("seed_nodes", [])
-        if raw_seeds and isinstance(raw_seeds[0], dict) and "seed_nodes" in raw_seeds[0]:
-            # Handle accidental double-nesting from LLM output
-            raw_seeds = raw_seeds[0]["seed_nodes"]
-
-        seeds = [
-            Node(
-                id=s["id"],
-                claim=s["claim"] if " — " in s["claim"] or " ? " in s["claim"] else f"{s['claim']} — {s['domain']}",
-                entropy_score=s["entropy"],
-                domain=s["domain"],
-                depth=s["depth"]
-            )
-            for s in raw_seeds
-        ]
-        
-        traversal_res = traversal.run(
-            seed_nodes=seeds,
-            graph=graph,
-            max_depth=6,
-            case_name=case_id,
-            vignette=vignette
-        )
-        
-        apiro_output = traversal_res.synthesis
-        apiro_output_str = "\n".join(apiro_output)
-        logger.info(f"  Apiro Classic Synthesis:\n{apiro_output_str.strip()}")
-        
-        apiro_success, _ = _check_synthesis_hit(
-            apiro_output,
-            target,
-            embedder=embedder if real_components else None,
-            llm_client=llm_client if real_components else None
-        )
-
-        # 4. Apiro Hypothesis-Testing Traversal
+        # 3. Apiro Hypothesis-Testing Traversal
         logger.info("  Running Apiro Hypothesis-Testing Traversal...")
         ht_success = False
         ht_output = []
@@ -435,21 +345,13 @@ def run_evaluation(real_components: bool):
             except Exception as e:
                 logger.warning(f"  HT traversal failed: {e}")
 
-        # Log soft-pruned nodes
-        for node in graph.nodes.values():
-            if getattr(node, "contradiction_penalty", 0.0) > 0:
-                logger.info(
-                    f"    - Contradiction Soft-Pruned Node: '{node.claim[:45]}' "
-                    f"has penalty={node.contradiction_penalty} (is_rabbit_hole={node.is_rabbit_hole})"
-                )
-
+        # Log soft-pruned nodes (from any prior graph built in this session)
         results.append({
             "case_id": case_id,
             "description": case["description"],
             "target": target,
             "bare_llm": {"success": bare_success, "output": bare_output},
             "rag":      {"success": rag_success,  "output": rag_output},
-            "apiro":    {"success": apiro_success, "output": apiro_output},
             "apiro_ht": {"success": ht_success,   "output": ht_output},
         })
         
@@ -468,24 +370,22 @@ def run_evaluation(real_components: bool):
     
     bare_wins  = sum(1 for r in results if r["bare_llm"]["success"])
     rag_wins   = sum(1 for r in results if r["rag"]["success"])
-    apiro_wins = sum(1 for r in results if r["apiro"]["success"])
     ht_wins    = sum(1 for r in results if r.get("apiro_ht", {}).get("success", False))
     
     for r in results:
         ht = r.get("apiro_ht", {})
         print(f"Case {r['case_id']}: {r['description']}")
         print(f"  Target Diagnosis  : {r['target']}")
-        print(f"  Bare LLM Success  : {'✓ SUCCESS' if r['bare_llm']['success'] else '✗ FAILED'}")
-        print(f"  RAG Success       : {'✓ SUCCESS' if r['rag']['success'] else '✗ FAILED'}")
-        print(f"  Apiro Classic     : {'✓ SUCCESS' if r['apiro']['success'] else '✗ FAILED'}")
-        print(f"  Apiro HT (new)    : {'✓ SUCCESS' if ht.get('success') else '✗ FAILED'} — {ht.get('output', [])}")
+        print(f"  Bare LLM          : {'✓ SUCCESS' if r['bare_llm']['success'] else '✗ FAILED'}")
+        print(f"  RAG               : {'✓ SUCCESS' if r['rag']['success'] else '✗ FAILED'}")
+        print(f"  Apiro HT          : {'✓ SUCCESS' if ht.get('success') else '✗ FAILED'} — {ht.get('output', [])}")
         print("-" * 65)
         
-    print(f"Bare LLM Total Success    : {bare_wins}/{len(results)} ({bare_wins/len(results)*100:.1f}%)")
-    print(f"RAG Baseline Success      : {rag_wins}/{len(results)} ({rag_wins/len(results)*100:.1f}%)")
-    print(f"Apiro Classic Success     : {apiro_wins}/{len(results)} ({apiro_wins/len(results)*100:.1f}%)")
-    print(f"Apiro HT (new) Success    : {ht_wins}/{len(results)} ({ht_wins/len(results)*100:.1f}%)")
+    print(f"Bare LLM Total Success : {bare_wins}/{len(results)} ({bare_wins/len(results)*100:.1f}%)")
+    print(f"RAG Baseline Success   : {rag_wins}/{len(results)} ({rag_wins/len(results)*100:.1f}%)")
+    print(f"Apiro HT Success       : {ht_wins}/{len(results)} ({ht_wins/len(results)*100:.1f}%)")
     print("=" * 65 + "\n")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run distractor-resilience evaluation")
