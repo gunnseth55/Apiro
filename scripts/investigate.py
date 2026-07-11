@@ -59,7 +59,7 @@ def build_components():
     llm_client = OllamaLLMClient(url=OLLAMA_BASE_URL, model=PRIMARY_MODEL)
 
     oracle = HypothesisOracle(model=PRIMARY_MODEL, ollama_url=OLLAMA_BASE_URL)
-    matcher = EvidenceMatcher(chroma_adapter=chroma_adapter)
+    matcher = EvidenceMatcher(chroma_client=chroma_adapter)
     scorer = BayesianScorer()
 
     trav = HypothesisTestingTraversal(
