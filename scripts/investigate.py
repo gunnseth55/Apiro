@@ -58,7 +58,7 @@ def build_components():
     from apiro.run import OllamaLLMClient
     llm_client = OllamaLLMClient(url=OLLAMA_BASE_URL, model=PRIMARY_MODEL)
 
-    oracle = HypothesisOracle(llm_client=llm_client)
+    oracle = HypothesisOracle(model=PRIMARY_MODEL, ollama_url=OLLAMA_BASE_URL)
     matcher = EvidenceMatcher(chroma_adapter=chroma_adapter)
     scorer = BayesianScorer()
 
