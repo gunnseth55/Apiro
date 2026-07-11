@@ -32,7 +32,7 @@ from pydantic import BaseModel
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from scripts.investigate import build_components, parse_findings_to_seeds
+from scripts.investigate import build_components
 from apiro.graph.belief_graph import BeliefGraph
 
 logging.basicConfig(level=logging.INFO)
@@ -43,11 +43,11 @@ app = FastAPI(title="Apiro AI Detective")
 # Shared components — initialised once at startup
 logger.info("Initialising Apiro components...")
 try:
-    traversal, expander, entropy_engine, doc_count = build_components()
+    traversal, doc_count = build_components()
     logger.info(f"Apiro ready. ChromaDB contains {doc_count:,} documents.")
 except Exception as e:
     logger.error(f"Failed to initialise Apiro components: {e}")
-    traversal, expander, entropy_engine, doc_count = None, None, None, 0
+    traversal, doc_count = None, 0
 
 # Thread pool for running CPU-bound traversal without blocking the event loop
 _executor = ThreadPoolExecutor(max_workers=2)
@@ -1055,16 +1055,14 @@ async def run_investigation_stream(req: InvestigationRequest):
 
     def run_traversal() -> None:
         try:
-            ee = entropy_engine if req.real_entropy else None
-            seeds = parse_findings_to_seeds(req.findings, entropy_engine=ee)
-            if not seeds:
+            if not req.findings.strip():
                 asyncio.run_coroutine_threadsafe(
-                    q.put({"event": "error", "message": "Could not parse any valid findings"}), loop
+                    q.put({"event": "error", "message": "No findings provided"}), loop
                 )
                 return
             graph = BeliefGraph()
             traversal.run(
-                seed_nodes=seeds,
+                vignette=req.findings,
                 graph=graph,
                 max_depth=req.max_depth,
                 case_name="api_stream",
