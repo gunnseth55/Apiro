@@ -892,36 +892,24 @@ function addDxBanner(dx) {
 function handleEvent(ev) {
   const t = ev.event;
 
-  if (t === 'seed_added') {
-    nCount++;
-    addNodeToGraph({ node_id: ev.node_id, claim: ev.claim, domain: ev.domain, entropy: ev.entropy, depth: 0 });
-    addCard('seed', '🌱', 'Seed · Anchoring', 'Depth 0', ev.claim, ev.domain, ev.entropy, '');
-    updateStats();
+  if (t === 'patient_context_extracted') {
+    addCard('seed', '🧑‍⚕️', 'Patient Profile', '', `Synthesized presentation:<br><b style="color:var(--text)">${ev.summary}</b>`, null, null, '');
   }
-  else if (t === 'expanding') {
-    addCard('expand', '🔍', 'Investigating', `Iter ${ev.iteration}`, ev.claim, ev.domain, ev.entropy, '');
+  else if (t === 'hypotheses_generated') {
+    const list = ev.hypotheses || [];
+    const html = `Based on the profile, I am considering ${list.length} initial hypotheses:<br><ul style="margin:8px 0 0 20px;padding:0;color:var(--text)">${list.slice(0,3).map(h=>`<li>${h}</li>`).join('')}${list.length>3?'<li>...</li>':''}</ul>`;
+    addCard('hypo', '💡', 'Initial Differential', '', html, null, null, '');
   }
-  else if (t === 'node_expanded') {
-    nCount++; eCount++;
-    addNodeToGraph({ node_id: ev.node_id, claim: ev.claim, domain: ev.domain, entropy: ev.entropy, depth: ev.depth, parent_id: ev.parent_id });
-    addCard('hypo', '💡', 'Hypothesis', `Depth ${ev.depth}`, ev.claim, ev.domain, ev.entropy, '');
-    updateStats();
+  else if (t === 'hypotheses_scored') {
+    const ranked = ev.ranked || [];
+    if (ranked.length > 0) {
+      const top = ranked[0];
+      const html = `Cross-referencing symptoms with literature.<br>Top candidate: <b style="color:var(--text)">${top.hypothesis}</b><br>(Score: ${(top.final_score||0).toFixed(2)})`;
+      addCard('sat', '📊', 'Evidence Scoring', '', html, null, null, '');
+    }
   }
-  else if (t === 'rabbit_hole_flagged') {
-    rCount++;
-    markRabbitHole(ev.node_id);
-    addCard('rabbit', '⚠️', 'Rabbit Hole', `Depth ${ev.depth}`, ev.claim, ev.domain, ev.entropy, 'Pruned');
-    updateStats();
-  }
-  else if (t === 'contradiction_flagged') {
-    cCount++;
-    const body = `<span style="color:#f87171">"${ev.node_a}"</span><br><span style="color:var(--muted2)">conflicts with</span><br><span style="color:#f87171">"${ev.node_b}"</span>`;
-    addCard('contra', '⚡', 'Contradiction', `score ${(ev.score||0).toFixed(2)}`, body, null, null, '');
-    updateStats();
-  }
-  else if (t === 'saturation_fired') {
-    const body = `Entropy stabilised — avg H = <b>${(ev.avg_entropy||0).toFixed(3)}</b>, variance = ${(ev.variance||0).toFixed(4)}`;
-    addCard('sat', '✅', 'Saturated', `Iter ${ev.iteration}`, body, null, null, '');
+  else if (t === 'enrichment_seed') {
+    addCard('expand', '🔍', 'Deep Dive', '', `Investigating literature for:<br><b style="color:var(--text)">${ev.hypothesis}</b>`, null, null, '');
   }
   else if (t === 'traversal_complete') {
     const dx = ev.synthesis || [];
