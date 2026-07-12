@@ -1,6 +1,8 @@
 # Apiro: A Curiosity Engine for Biomedical Graph Traversal
 
-Apiro is an agentic "AI Detective" designed to navigate biomedical knowledge graphs by chasing epistemic uncertainty (entropy) to diagnose complex clinical cases. Unlike standard RAG systems or black-box LLM chatbots, Apiro provides a verifiable, auditable, and mathematically grounded traversal path through clinical evidence to arrive at a precise differential diagnosis.
+Apiro is an agentic "AI Detective" designed to navigate biomedical knowledge graphs to diagnose complex clinical cases. The `main` branch supports two core execution paradigms:
+1. **Hypothesis-Testing Traversal (HT)**: (Default engine for evaluations and CLI execution). Combines System 1 LLM clinical intuition (Oracle) with System 2 deterministic RAG evidence matching and clinical Bayesian prior scoring.
+2. **Apiro Classic Traversal (Entropy-First)**: (Default engine for Web UI and CLI search). Navigates a Belief Graph by explicitly chasing Shannon Entropy (uncertainty) logprobs at decision boundaries, guided by depth-aware frontier scoring.
 
 This document serves as the primary **onboarding and contributor guide** for anyone joining the project.
 
@@ -88,10 +90,16 @@ To prevent the engine from jumping to wild conclusions or getting lost in tangen
 * **Depth 0 (Anchors):** Sort by **lowest entropy** ($1.0 - H$). The engine anchors on solid facts and lab values first (e.g., establishing a certain ground truth of "Elevated AST/ALT").
 * **Depth $\ge$ 1 (Exploration):** Sort by **highest entropy** ($H$). The engine actively targets uncertainty, exploring competing hypotheses and rare conditions.
 
-### 3. Traversal Control Logic
+### 3. Traversal Control Logic (Classic Mode)
 * **Contradiction Detection (`contradiction.py`):** Uses a MiniLM cross-encoder NLI model combined with a NegEx (negation detection) layer. If the cross-encoder flags an NLI contradiction between two active nodes and there is no negation mismatch, a contradiction edge is written in the graph.
 * **Rabbit Hole Prevention (`traversal.py`):** Halts expansion down a specific branch if the engine hits consecutive zero-entropy steps (signifying that we are stuck in a cycle of trivial, low-information facts).
 * **Saturation Detection (`traversal.py`):** Terminates the entire traversal when the change in average graph entropy stabilizes (i.e. rolling average entropy variance drops below a set threshold), indicating that the engine has learned all it can.
+
+### 4. Hypothesis-Testing Traversal (HT Mode)
+To bypass the computational limits, CUDA instabilities, and latency issues of dynamic graph expansion, the default traversal mode is set to a structured hypothesis-testing model:
+* **System 1 (HypothesisOracle)**: Uses a single, fast LLM call to extract clinical findings into a structured `PatientContext` and generate $N=12$ candidate diagnoses based on its internal base rates.
+* **System 2 (EvidenceMatcher)**: A deterministic matching algorithm (0 LLM calls) that queries the vector corpus (`apiro_corpus`) for clinical evidence matching each candidate disease.
+* **Clinical Priors (BayesianScorer)**: Computes final probabilities by matching candidates against demographic constraints (age, gender) and history.
 
 ---
 
@@ -204,18 +212,19 @@ To avoid burning active OpenAI/Anthropic API credits during graph development or
   pytest tests/
   ```
 
-### ### 4. Running a Local Traversal
-You can run a traversal with the mock model, actual LLM backend, or launch the interactive FastAPI Web interface:
+### 4. Running a Local Traversal
+You can run a traversal using either the default Hypothesis-Testing (HT) engine or the Classic Generative Expansion engine:
 ```bash
-# A. Runs the engine CLI on a synthetic case
-python -m apiro.run --case data/synthetic_case_1.json --real-entropy
+# A. Run the default Hypothesis-Testing engine CLI on a case
+python -m apiro.run --case data/synthetic_case_1.json --mode hypothesis
 
-# B. Launches the Interactive FastAPI web server and UI on port 8000
+# B. Run the Classic Generative Expansion engine CLI on a case
+python -m apiro.run --case data/synthetic_case_1.json --mode classic
+
+# C. Launch the interactive FastAPI web server and UI (runs Classic engine)
 uvicorn scripts.app:app --host 0.0.0.0 --port 8000
-uvicorn scripts.app:app --host 127.0.0.1 --port 8000
 
-
-# C. Runs the clinical vignette free-text detective CLI
+# D. Run the Classic clinical vignette free-text detective CLI
 python scripts/investigate.py "72yo male presenting with sudden substernal chest pain..."
 ```
 
