@@ -2,25 +2,31 @@
 """
 scripts/app.py
 ==============
-A minimal FastAPI web interface for Apiro.
+FastAPI web interface for Apiro — with live SSE streaming.
 
 Run with:
-  venv/bin/uvicorn scripts.app:app --reload --port 8000
+  uvicorn scripts.app:app --host 127.0.0.1 --port 8000
 
 Features:
-  - Dark mode card interface for clinical input findings.
-  - Runs real-time Apiro Traversal (stub-free) on Llama 3.1 & ChromaDB.
-  - Renders the interactive D3.js force-directed belief graph dynamically on completion.
-  - Node inspector panel in the web UI.
+  - /run/stream  : Server-Sent Events endpoint — streams each traversal step
+                   (seed_added, expanding, node_expanded, contradiction, etc.)
+                   to the browser in real time via a thread-pool + asyncio queue.
+  - /run         : Legacy sync endpoint (kept for backward compatibility).
+  - New 3-column UI:
+      Left   → Clinical input form + run statistics
+      Center → Live "Thought Log" — stage cards slide in as the model reasons
+      Right  → Incrementally-built D3 force graph + node inspector / differential tabs
 """
 
 import sys
 import logging
 import time
 import json
+import asyncio
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -29,31 +35,33 @@ sys.path.insert(0, str(ROOT))
 from scripts.investigate import build_components, parse_findings_to_seeds
 from apiro.graph.belief_graph import BeliefGraph
 
-# Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("apiro_app")
 
 app = FastAPI(title="Apiro AI Detective")
 
-# Initialize shared components once on startup
-logger.info("Initializing Apiro components...")
+# Shared components — initialised once at startup
+logger.info("Initialising Apiro components...")
 try:
     traversal, expander, entropy_engine, doc_count = build_components()
     logger.info(f"Apiro ready. ChromaDB contains {doc_count:,} documents.")
 except Exception as e:
-    logger.error(f"Failed to initialize Apiro components: {e}")
+    logger.error(f"Failed to initialise Apiro components: {e}")
     traversal, expander, entropy_engine, doc_count = None, None, None, 0
 
+# Thread pool for running CPU-bound traversal without blocking the event loop
+_executor = ThreadPoolExecutor(max_workers=2)
 
 DOMAIN_COLORS = {
-    "pathophysiology": "#6366f1",   # indigo
-    "pharmacology":    "#f59e0b",   # amber
-    "genetics":        "#10b981",   # emerald
-    "imaging":         "#3b82f6",   # blue
-    "lab":             "#8b5cf6",   # violet
-    "treatment":       "#06b6d4",   # cyan
-    "comorbidity":     "#f97316",   # orange
-    "unknown":         "#6b7280",   # grey
+    "pathophysiology": "#6366f1",
+    "pharmacology":    "#f59e0b",
+    "genetics":        "#10b981",
+    "imaging":         "#3b82f6",
+    "lab":             "#8b5cf6",
+    "treatment":       "#06b6d4",
+    "comorbidity":     "#f97316",
+    "symptom":         "#ec4899",
+    "unknown":         "#6b7280",
 }
 
 
@@ -64,594 +72,1046 @@ class InvestigationRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# HTML + CSS + JS Frontend
+# HTML — complete frontend
+# Placeholders replaced at request time: {doc_count}, {domain_colors}
 # ---------------------------------------------------------------------------
-
 INDEX_HTML = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Apiro AI Clinical Detective</title>
+<meta name="description" content="Apiro — an entropy-first AI clinical detective that reasons through biomedical knowledge graphs to generate differential diagnoses.">
+<title>Apiro · AI Clinical Detective</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  /* ── Design tokens ─────────────────────────────────────────────────────── */
   :root {
-    --bg: #090b11;
-    --surface: #131625;
-    --border: #222538;
-    --text: #f1f5f9;
-    --muted: #64748b;
-    --accent: #6366f1;
-    --accent-hover: #4f46e5;
-    --success: #10b981;
-    --danger: #ef4444;
+    --bg:        #060810;
+    --surface:   #0d1020;
+    --surface2:  #111828;
+    --border:    #1a2035;
+    --border2:   #232a40;
+    --text:      #e2e8f0;
+    --muted:     #3f4a60;
+    --muted2:    #5a6880;
+    --accent:    #6366f1;
+    --accent-g:  rgba(99,102,241,0.25);
+    --success:   #10b981;
+    --danger:    #ef4444;
+    --warning:   #f59e0b;
+    --teal:      #14b8a6;
+    --purple:    #a855f7;
+
+    /* stage-card accent colours */
+    --c-seed:   #3b82f6;
+    --c-expand: #6366f1;
+    --c-hypo:   #10b981;
+    --c-rabbit: #f59e0b;
+    --c-contra: #ef4444;
+    --c-sat:    #14b8a6;
+    --c-done:   #a855f7;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── Reset ─────────────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     display: flex;
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
   }
+
+  /* ── Header ────────────────────────────────────────────────────────────── */
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 16px 24px;
+    padding: 12px 22px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    gap: 16px;
   }
-  header h1 {
-    font-size: 18px;
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .logo-text h1 {
+    font-size: 15px;
     font-weight: 700;
-    color: var(--accent);
-    letter-spacing: -0.025em;
+    color: var(--text);
+    letter-spacing: -0.02em;
   }
-  header .tagline {
+  .logo-text .sub {
+    font-size: 10.5px;
+    color: var(--muted2);
+    margin-top: 1px;
+  }
+  #status-pill {
     font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: var(--border);
+    color: var(--muted2);
+    border: 1px solid transparent;
+    transition: all 0.25s ease;
+    white-space: nowrap;
   }
+  #status-pill.running {
+    background: rgba(99,102,241,0.12);
+    color: #818cf8;
+    border-color: rgba(99,102,241,0.3);
+    animation: pillPulse 2s ease-in-out infinite;
+  }
+  #status-pill.done {
+    background: rgba(16,185,129,0.1);
+    color: var(--success);
+    border-color: rgba(16,185,129,0.25);
+  }
+  @keyframes pillPulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
+  }
+
+  /* ── Main layout ───────────────────────────────────────────────────────── */
   #main-layout {
     flex: 1;
     display: flex;
     overflow: hidden;
+    min-height: 0;
   }
-  /* Left Panel: Input & Findings */
+
+  /* ── LEFT — Input panel ────────────────────────────────────────────────── */
   #input-panel {
-    width: 380px;
+    width: 300px;
+    min-width: 280px;
     background: var(--surface);
     border-right: 1px solid var(--border);
-    padding: 24px;
+    padding: 18px 16px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 14px;
     overflow-y: auto;
+    flex-shrink: 0;
   }
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  label {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--muted);
-  }
-  textarea {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    padding: 12px;
-    font-size: 13px;
-    line-height: 1.5;
-    resize: none;
-    height: 120px;
-    outline: none;
-    transition: border-color 0.15s ease;
-  }
-  textarea:focus {
-    border-color: var(--accent);
-  }
-  .input-hint {
-    font-size: 10px;
-    color: var(--muted);
-    line-height: 1.4;
-  }
-  button {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 12px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s ease;
-  }
-  button:hover {
-    background: var(--accent-hover);
-  }
-  button:disabled {
-    background: var(--border);
-    color: var(--muted);
-    cursor: not-allowed;
-  }
-  .toggle-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-  }
-  /* Middle Panel: Visualizer viewport */
-  #viewport-panel {
-    flex: 1;
-    position: relative;
-    background: var(--bg);
-  }
-  svg {
-    width: 100%;
-    height: 100%;
-    cursor: grab;
-  }
-  svg:active { cursor: grabbing; }
-  /* Right Panel: Inspector & Differential */
-  #inspector-panel {
-    width: 320px;
-    background: var(--surface);
-    border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .inspector-section {
-    padding: 20px;
-    border-bottom: 1px solid var(--border);
-  }
-  .inspector-section:last-child {
-    border-bottom: none;
-    flex: 1;
-    overflow-y: auto;
-  }
-  .section-title {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 12px;
-  }
-  #synthesis-list {
-    padding-left: 18px;
-    font-size: 13px;
-    line-height: 1.8;
-  }
-  #synthesis-list li:first-child {
-    color: #a5f3fc;
+  #input-panel::-webkit-scrollbar { width: 3px; }
+  #input-panel::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  .section-label {
+    font-size: 9.5px;
     font-weight: 700;
-  }
-  #node-detail .field {
-    margin-bottom: 12px;
-  }
-  #node-detail .label {
-    font-size: 9px;
     text-transform: uppercase;
-    color: var(--muted);
+    letter-spacing: 0.1em;
+    color: var(--muted2);
     margin-bottom: 2px;
   }
-  #node-detail .value {
-    font-size: 12px;
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  textarea, input[type="number"] {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 7px;
     color: var(--text);
-    word-break: break-word;
+    padding: 9px 11px;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.55;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .domain-pill {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 9px;
-    font-weight: 600;
-    color: #fff;
+  textarea { resize: none; height: 115px; }
+  textarea:focus, input[type="number"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-g);
   }
-  .entropy-bar-container {
-    height: 6px;
-    background: var(--border);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 4px;
-  }
-  .entropy-bar {
-    height: 100%;
-    border-radius: 3px;
-  }
-  .tag {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 9px;
-    font-weight: 600;
-    margin: 2px 2px 0 0;
-  }
-  .tag.rabbit-hole { background: #7f1d1d; color: #fca5a5; }
-  .tag.seed { background: #1e3a5f; color: #93c5fd; }
-  /* Link / node CSS styles */
-  .link {
-    stroke: #2e324e;
-    stroke-width: 1.5px;
-    stroke-opacity: 0.7;
-    fill: none;
-  }
-  .link.contradiction {
-    stroke: var(--danger);
-    stroke-width: 2px;
-    stroke-dasharray: 4,3;
-  }
-  .node circle {
-    stroke-width: 2px;
+  .hint { font-size: 10px; color: var(--muted); line-height: 1.5; }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11.5px;
+    color: var(--muted2);
     cursor: pointer;
-    transition: all 0.15s ease;
+    user-select: none;
   }
-  .node circle:hover {
-    stroke-width: 3.5px;
+  input[type="checkbox"] { width: 13px; height: 13px; accent-color: var(--accent); cursor: pointer; }
+
+  #run-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    box-shadow: 0 2px 14px rgba(99,102,241,0.4);
+    letter-spacing: -0.01em;
   }
-  .node.rabbit-hole circle {
-    stroke-dasharray: 4,3;
-    opacity: 0.5;
+  #run-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 5px 20px rgba(99,102,241,0.55); }
+  #run-btn:active:not(:disabled) { transform: translateY(0); }
+  #run-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+  .divider { height: 1px; background: var(--border); }
+
+  /* Stats grid */
+  .stats-grid { display: flex; flex-direction: column; gap: 5px; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; }
+  .stat-k  { font-size: 11px; color: var(--muted2); }
+  .stat-v  { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+  .stat-v.accent { color: var(--accent); }
+
+  /* ── CENTER — Thought Log ──────────────────────────────────────────────── */
+  #thought-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+    min-width: 0;
   }
-  .node.selected circle {
-    stroke: #fff !important;
-    stroke-width: 3.5px;
+  #thought-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
   }
-  .node text {
-    font-size: 8px;
-    fill: #94a3b8;
-    pointer-events: none;
-    text-anchor: middle;
-    dominant-baseline: central;
+  .panel-title-lg {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--muted2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
-  .node .depth-badge {
-    font-size: 6px;
-    fill: rgba(255,255,255,0.4);
+  #thought-count {
+    font-size: 10.5px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    background: var(--border);
+    padding: 2px 8px;
+    border-radius: 10px;
   }
-  /* Overlay & loaders */
-  #loader-overlay {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(9,11,17,0.85);
+
+  #thought-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    scroll-behavior: smooth;
+  }
+  #thought-log::-webkit-scrollbar { width: 3px; }
+  #thought-log::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* Empty state */
+  #log-empty {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    z-index: 50;
-    backdrop-filter: blur(4px);
-    display: none;
+    gap: 10px;
+    color: var(--muted2);
+    text-align: center;
+    pointer-events: none;
+    padding: 40px 20px;
   }
-  .spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--border);
-    border-top: 3px solid var(--accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+  #log-empty .e-icon { font-size: 44px; opacity: 0.2; }
+  #log-empty p { font-size: 12.5px; max-width: 240px; line-height: 1.65; opacity: 0.5; }
+
+  /* ── Stage Cards ───────────────────────────────────────────────────────── */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 11px 13px;
+    animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    flex-shrink: 0;
   }
-  #loader-text {
-    font-size: 13px;
+  .card.seed   { border-left-color: var(--c-seed); }
+  .card.expand { border-left-color: var(--c-expand); background: rgba(99,102,241,0.04); }
+  .card.hypo   { border-left-color: var(--c-hypo); }
+  .card.rabbit { border-left-color: var(--c-rabbit); background: rgba(245,158,11,0.04); }
+  .card.contra { border-left-color: var(--c-contra); background: rgba(239,68,68,0.04); }
+  .card.sat    { border-left-color: var(--c-sat); background: rgba(20,184,166,0.04); }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 7px;
+  }
+  .card-icon { font-size: 13px; line-height: 1; }
+  .card-type {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .card-type.seed   { color: var(--c-seed); }
+  .card-type.expand { color: var(--c-expand); }
+  .card-type.hypo   { color: var(--c-hypo); }
+  .card-type.rabbit { color: var(--c-rabbit); }
+  .card-type.contra { color: var(--c-contra); }
+  .card-type.sat    { color: var(--c-sat); }
+  .card-badge {
+    margin-left: auto;
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted2);
+    background: var(--border);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .card-body {
+    font-size: 12.5px;
     color: var(--text);
+    line-height: 1.55;
+    font-weight: 450;
+    margin-bottom: 8px;
+    word-break: break-word;
   }
+  .card-body.dim { color: var(--muted2); font-size: 11.5px; font-style: italic; }
+
+  .card-foot {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  .dpill {
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 10px;
+    color: #fff;
+  }
+  .hpill {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .mini-bar { width: 44px; height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; }
+  .mini-fill { height: 100%; border-radius: 2px; }
+  .foot-right { margin-left: auto; font-size: 9.5px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  /* Final diagnosis banner */
+  .dx-banner {
+    background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(99,102,241,0.06));
+    border: 1px solid rgba(168,85,247,0.22);
+    border-left: 3px solid var(--c-done);
+    border-radius: 10px;
+    padding: 14px 16px;
+    animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    flex-shrink: 0;
+  }
+  .dx-banner-title {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--c-done);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dx-list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+  .dx-item { display: flex; align-items: flex-start; gap: 9px; font-size: 12.5px; color: var(--text); line-height: 1.45; }
+  .dx-rank {
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    min-width: 24px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .dx-rank.r1 { background: rgba(251,191,36,0.18); color: #fbbf24; }
+  .dx-rank.r2 { background: rgba(148,163,184,0.14); color: #94a3b8; }
+  .dx-rank.r3 { background: rgba(180,83,9,0.14); color: #d97706; }
+
+  /* ── RIGHT — Graph panel ────────────────────────────────────────────────── */
+  #graph-panel {
+    width: 350px;
+    min-width: 300px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  #graph-header {
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .graph-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted2); }
+  #node-badge {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    background: rgba(99,102,241,0.1);
+    padding: 2px 7px;
+    border-radius: 10px;
+    border: 1px solid rgba(99,102,241,0.2);
+  }
+  #graph-viewport {
+    flex: 0 0 52%;
+    position: relative;
+    overflow: hidden;
+  }
+  #g-svg {
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+  }
+  #g-svg:active { cursor: grabbing; }
+
+  /* Inspector */
+  #insp-panel {
+    flex: 1;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+  #insp-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1;
+    padding: 8px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted2);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  #insp-body { flex: 1; overflow-y: auto; padding: 12px; }
+  #insp-body::-webkit-scrollbar { width: 3px; }
+  #insp-body::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  .ifield { margin-bottom: 9px; }
+  .ilabel { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted2); margin-bottom: 3px; }
+  .ivalue { font-size: 11.5px; color: var(--text); line-height: 1.5; word-break: break-word; }
+  .ivalue.mono { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted2); }
+  .iebar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 5px; }
+  .iebar-fill { height: 100%; border-radius: 2px; }
+  .insp-empty { color: var(--muted2); font-size: 11.5px; text-align: center; padding: 20px 10px; line-height: 1.7; }
+
+  /* D3 node/link styles */
+  .g-link { stroke: #1a2540; stroke-width: 1.5; stroke-opacity: 0.85; fill: none; }
+  .g-link.contra { stroke: var(--danger); stroke-dasharray: 5,3; stroke-width: 2; }
+  .g-node circle { stroke-width: 2; cursor: pointer; transition: stroke-width 0.12s, filter 0.12s; }
+  .g-node circle:hover { stroke-width: 3; filter: brightness(1.35); }
+  .g-node.selected circle { stroke: #fff !important; stroke-width: 3; }
+  .g-node.rhole circle { stroke-dasharray: 4,3; opacity: 0.35; }
+  .g-node text { font-size: 6.5px; fill: rgba(148,163,184,0.7); pointer-events: none; text-anchor: middle; }
+
   /* Tooltip */
   #tooltip {
-    position: absolute;
-    background: rgba(19,22,37,0.95);
-    border: 1px solid var(--border);
-    border-radius: 6px;
+    position: fixed;
+    background: rgba(10,13,28,0.97);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
     padding: 8px 12px;
     font-size: 11px;
     pointer-events: none;
-    max-width: 250px;
-    line-height: 1.4;
+    max-width: 240px;
+    line-height: 1.45;
     display: none;
-    z-index: 100;
+    z-index: 9999;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.6);
+  }
+
+  @keyframes nodeIn {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
   }
 </style>
 </head>
 <body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
 <header>
-  <div>
-    <h1>Apiro Clinical Detective</h1>
-    <div class="tagline">Cognitive Belief-Graph Uncertainty Engine &bull; ChromaDB {doc_count} docs</div>
+  <div class="logo">
+    <div class="logo-icon">⬡</div>
+    <div class="logo-text">
+      <h1>Apiro · Clinical Detective</h1>
+      <div class="sub">Entropy-First Belief Graph &bull; {doc_count} corpus docs</div>
+    </div>
   </div>
+  <div id="status-pill">Idle</div>
 </header>
+
+<!-- ── Main layout ─────────────────────────────────────────────────────────── -->
 <div id="main-layout">
+
+  <!-- LEFT: Input -->
   <div id="input-panel">
     <div class="form-group">
-      <label>Clinical Findings</label>
-      <textarea id="findings-input" placeholder="Paste patient symptoms, labs, vitals here... e.g. 45yo male, chest pain, troponin 2.1, ST elevation V3-V5"></textarea>
-      <div class="input-hint">Provide detailed history, symptoms, or lab findings separated by commas.</div>
+      <div class="section-label">Clinical Findings</div>
+      <textarea id="findings-input" placeholder="e.g. 45yo male, substernal chest pain, troponin 2.1, ST elevation V3-V5, diaphoresis, dyspnoea"></textarea>
+      <div class="hint">Patient history, symptoms, labs, imaging — separated by commas.</div>
     </div>
     <div class="form-group">
-      <label>Max Graph Depth</label>
-      <input type="number" id="depth-input" value="5" min="2" max="8" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;font-size:13px;outline:none;">
+      <div class="section-label">Max Graph Depth</div>
+      <input type="number" id="depth-input" value="5" min="2" max="8">
     </div>
-    <div class="toggle-container">
+    <label class="toggle-row">
       <input type="checkbox" id="real-entropy-input">
-      <label for="real-entropy-input" style="cursor:pointer;text-transform:none;">Real-time seed entropy (slower)</label>
+      Real-time seed entropy (slower)
+    </label>
+    <button id="run-btn" onclick="startInvestigation()">▶ Run Detective</button>
+    <div class="divider"></div>
+    <div class="section-label">Run Statistics</div>
+    <div class="stats-grid">
+      <div class="stat-row"><span class="stat-k">Nodes</span><span class="stat-v" id="sv-nodes">—</span></div>
+      <div class="stat-row"><span class="stat-k">Edges</span><span class="stat-v" id="sv-edges">—</span></div>
+      <div class="stat-row"><span class="stat-k">Rabbit Holes</span><span class="stat-v" id="sv-rabbits">—</span></div>
+      <div class="stat-row"><span class="stat-k">Contradictions</span><span class="stat-v" id="sv-contras">—</span></div>
+      <div class="stat-row"><span class="stat-k">Stop Reason</span><span class="stat-v" id="sv-stop">—</span></div>
+      <div class="stat-row"><span class="stat-k">Duration</span><span class="stat-v accent" id="sv-dur">—</span></div>
     </div>
-    <button id="run-btn" onclick="startInvestigation()">Run Detective</button>
   </div>
-  
-  <div id="viewport-panel">
-    <svg id="svg"></svg>
-    <div id="loader-overlay">
-      <div class="spinner"></div>
-      <div id="loader-text">Analyzing clinical findings...</div>
+
+  <!-- CENTER: Thought Log -->
+  <div id="thought-panel">
+    <div id="thought-header">
+      <span class="panel-title-lg">🧠 Detective's Reasoning</span>
+      <span id="thought-count">0 thoughts</span>
     </div>
-    <div id="tooltip"></div>
-  </div>
-  
-  <div id="inspector-panel">
-    <div class="inspector-section">
-      <div class="section-title">Top Differential Diagnoses</div>
-      <ol id="synthesis-list">
-        <li style="color: var(--muted); list-style: none;">Run investigation to generate differential.</li>
-      </ol>
-    </div>
-    <div class="inspector-section">
-      <div class="section-title">Node Inspector</div>
-      <div id="node-detail">
-        <div style="color: var(--muted); text-align:center; padding-top: 30px;">Click nodes to view metadata.</div>
+    <div id="thought-log">
+      <div id="log-empty">
+        <div class="e-icon">🔬</div>
+        <p>Enter clinical findings and click <strong>Run Detective</strong> to watch the AI reason through the case in real time.</p>
       </div>
     </div>
   </div>
-</div>
+
+  <!-- RIGHT: Graph + Inspector -->
+  <div id="graph-panel">
+    <div id="graph-header">
+      <span class="graph-title">Belief Graph</span>
+      <span id="node-badge">0 nodes</span>
+    </div>
+    <div id="graph-viewport">
+      <svg id="g-svg"></svg>
+    </div>
+    <div id="insp-panel">
+      <div id="insp-tabs">
+        <button class="tab active" id="tab-insp" onclick="switchTab('insp')">Node Inspector</button>
+        <button class="tab" id="tab-dx" onclick="switchTab('dx')">Differential Dx</button>
+      </div>
+      <div id="insp-body">
+        <div class="insp-empty">Click a graph node<br>to inspect it.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /#main-layout -->
+
+<div id="tooltip"></div>
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
+/* ─── Config ───────────────────────────────────────────────────────────────── */
 const DOMAIN_COLORS = {domain_colors};
 
+/* ─── State ────────────────────────────────────────────────────────────────── */
+let nodesData = [], linksData = [];
+let linkGroup, nodeGroup, simulation;
+let selectedId  = null;
+let activeTab   = 'insp';
+let savedDx     = [];
+let tCount = 0, nCount = 0, eCount = 0, rCount = 0, cCount = 0;
+
+/* ─── Colour helpers ───────────────────────────────────────────────────────── */
 function entropyColor(h) {
-  h = Math.max(0, Math.min(1, h));
+  h = Math.max(0, Math.min(1, h || 0));
   if (h < 0.5) {
     const t = h * 2;
-    return `rgb(${Math.round(t*60)},${Math.round(t*100)},${Math.round(140 + t*80)})`;
-  } else {
-    const t = (h - 0.5) * 2;
-    return `rgb(${Math.round(180 + t*75)},${Math.round(100*(1-t))},${Math.round(220*(1-t))})`;
+    return `rgb(${Math.round(t * 70)},${Math.round(130 + t * 70)},230)`;
   }
+  const t = (h - 0.5) * 2;
+  return `rgb(${Math.round(190 + t * 65)},${Math.round(90 * (1 - t))},${Math.round(210 * (1 - t))})`;
 }
 
-let svg = d3.select('#svg');
-let g = svg.append('g');
-svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e => g.attr('transform', e.transform)));
-
-let simulation = null;
-
-function renderGraph(graphData) {
-  g.selectAll('*').remove();
-  
-  const nodeMap = {};
-  graphData.nodes.forEach(n => nodeMap[n.id] = n);
-
-  const nodes = graphData.nodes.map(n => ({
-    ...n,
-    color: n.is_rabbit_hole ? '#374151' : entropyColor(n.entropy_score),
-    radius: n.depth === 0 ? 20 : Math.max(10, 16 - n.depth * 2),
-  }));
-
-  const linkSet = new Set();
-  const links = [];
-  nodes.forEach(n => {
-    if (n.parent_id && nodeMap[n.parent_id]) {
-      const key = n.parent_id + '->' + n.id;
-      if (!linkSet.has(key)) {
-        linkSet.add(key);
-        links.push({ source: n.parent_id, target: n.id, contradiction: false });
-      }
-    }
-  });
-  if (graphData.edges) {
-    graphData.edges.forEach(e => {
-      const key = e.parent_id + '->' + e.child_id;
-      if (!linkSet.has(key)) {
-        linkSet.add(key);
-        links.push({ source: e.parent_id, target: e.child_id, contradiction: e.contradiction_flag || false });
-      }
+/* ─── D3 graph ─────────────────────────────────────────────────────────────── */
+function initGraph() {
+  const svg = d3.select('#g-svg');
+  svg.selectAll('*').remove();
+  const g = svg.append('g').attr('id', 'root-g');
+  svg.call(d3.zoom().scaleExtent([0.15, 5]).on('zoom', e => g.attr('transform', e.transform)));
+  linkGroup = g.append('g');
+  nodeGroup = g.append('g');
+  const vp = document.getElementById('graph-viewport');
+  simulation = d3.forceSimulation([])
+    .force('link', d3.forceLink([]).id(d => d.id).distance(55))
+    .force('charge', d3.forceManyBody().strength(-110))
+    .force('center', d3.forceCenter((vp.clientWidth || 350) / 2, (vp.clientHeight || 200) / 2))
+    .force('collision', d3.forceCollide().radius(d => (d.r || 10) + 4))
+    .on('tick', () => {
+      linkGroup.selectAll('line')
+        .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+      nodeGroup.selectAll('.g-node').attr('transform', d => `translate(${d.x},${d.y})`);
     });
-  }
+}
 
-  const width = document.getElementById('viewport-panel').clientWidth;
-  const height = document.getElementById('viewport-panel').clientHeight;
+function refreshGraph() {
+  /* Links */
+  const lSel = linkGroup.selectAll('line').data(linksData, d => d.key);
+  lSel.enter().append('line').attr('class', d => 'g-link' + (d.contra ? ' contra' : ''));
+  lSel.exit().remove();
 
-  simulation = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(d => d.id).distance(d => 80 + d.target.depth * 10))
-    .force('charge', d3.forceManyBody().strength(-200))
-    .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collision', d3.forceCollide().radius(d => d.radius + 6));
-
-  const link = g.append('g')
-    .selectAll('line')
-    .data(links)
-    .join('line')
-    .attr('class', d => 'link' + (d.contradiction ? ' contradiction' : ''));
-
-  const nodeG = g.append('g')
-    .selectAll('.node')
-    .data(nodes)
-    .join('g')
-    .attr('class', d => 'node' + (d.is_rabbit_hole ? ' rabbit-hole' : ''))
+  /* Nodes */
+  const nSel = nodeGroup.selectAll('.g-node').data(nodesData, d => d.id);
+  const enter = nSel.enter().append('g')
+    .attr('class', d => 'g-node' + (d.rhole ? ' rhole' : ''))
     .call(d3.drag()
-      .on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
-      .on('drag',  (e, d) => { d.fx=e.x; d.fy=e.y; })
-      .on('end',   (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx=null; d.fy=null; }));
+      .on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on('end',   (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
 
-  nodeG.append('circle')
-    .attr('r', d => d.radius)
+  enter.append('circle')
+    .attr('r', d => d.r)
     .attr('fill', d => d.color)
-    .attr('stroke', d => d.is_rabbit_hole ? '#9ca3af' : d3.color(d.color).darker(0.5).toString());
+    .attr('stroke', d => { try { return d3.color(d.color).darker(0.5).toString(); } catch { return '#333'; } });
+  enter.append('text').attr('dy', 4).text(d => `H=${(d.entropy||0).toFixed(2)}`);
+  nSel.exit().remove();
 
-  nodeG.append('text')
-    .attr('dy', -4)
-    .text(d => d.domain ? d.domain.slice(0, 4).toUpperCase() : '');
-
-  nodeG.append('text')
-    .attr('class', 'depth-badge')
-    .attr('dy', 6)
-    .text(d => `H=${d.entropy_score.toFixed(2)}`);
-
-  const tooltip = document.getElementById('tooltip');
-  nodeG.on('mouseover', (e, d) => {
-    tooltip.style.display = 'block';
-    tooltip.innerHTML = `<b>${d.domain || 'unknown'}</b> | depth ${d.depth} | H=${d.entropy_score.toFixed(3)}<br>
-      <span style="color:#94a3b8">${d.claim}</span>`;
-  }).on('mousemove', e => {
-    tooltip.style.left = (e.pageX + 12) + 'px';
-    tooltip.style.top  = (e.pageY - 20) + 'px';
-  }).on('mouseout', () => { tooltip.style.display = 'none'; });
-
-  let selected = null;
-  nodeG.on('click', (e, d) => {
-    e.stopPropagation();
-    if (selected) d3.select(selected).classed('selected', false);
-    selected = e.currentTarget;
-    d3.select(selected).classed('selected', true);
-
-    const tags = [];
-    if (d.depth === 0) tags.push('<span class="tag seed">SEED</span>');
-    if (d.is_rabbit_hole) tags.push('<span class="tag rabbit-hole">RABBIT HOLE</span>');
-
-    const domColor = DOMAIN_COLORS[d.domain] || '#6b7280';
-    const barPct = Math.round(d.entropy_score * 100);
-    const barColor = d.is_rabbit_hole ? '#4b5563' : entropyColor(d.entropy_score);
-
-    document.getElementById('node-detail').innerHTML = `
-      <div class="field">
-        <div class="label">Node ID</div>
-        <div class="value" style="font-family:monospace;color:#94a3b8">${d.id}</div>
-      </div>
-      <div class="field">
-        <div class="label">Claim</div>
-        <div class="value">${d.claim}</div>
-      </div>
-      <div class="field">
-        <div class="label">Domain</div>
-        <span class="domain-pill" style="background:${domColor}">${d.domain || 'unknown'}</span>
-      </div>
-      <div class="field">
-        <div class="label">Entropy Score</div>
-        <div class="value">${d.entropy_score.toFixed(4)} nats</div>
-        <div class="entropy-bar-container">
-          <div class="entropy-bar" style="width:${barPct}%;background:${barColor}"></div>
-        </div>
-      </div>
-      <div class="field">
-        <div class="label">Depth</div>
-        <div class="value">${d.depth}</div>
-      </div>
-      ${d.parent_id ? `<div class="field"><div class="label">Parent</div><div class="value" style="font-family:monospace;color:#94a3b8">${d.parent_id}</div></div>` : ''}
-    `;
-  });
-
-  simulation.on('tick', () => {
-    link
-      .attr('x1', d => d.source.x)
-      .attr('y1', d => d.source.y)
-      .attr('x2', d => d.target.x)
-      .attr('y2', d => d.target.y);
-    nodeG.attr('transform', d => `translate(${d.x},${d.y})`);
-  });
-}
-
-function startInvestigation() {
-  const findings = document.getElementById('findings-input').value.trim();
-  const maxDepth = parseInt(document.getElementById('depth-input').value);
-  const realEnt  = document.getElementById('real-entropy-input').checked;
-
-  if (!findings) {
-    alert("Please enter clinical findings.");
-    return;
-  }
-
-  document.getElementById('loader-overlay').style.display = 'flex';
-  document.getElementById('run-btn').disabled = true;
-
-  fetch('/run', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      findings: document.getElementById('findings-input').value,
-      max_depth: maxDepth,
-      real_entropy: realEnt
+  /* Re-attach events to all nodes (enter + existing) */
+  nodeGroup.selectAll('.g-node')
+    .on('mouseover', (e, d) => {
+      const tip = document.getElementById('tooltip');
+      tip.style.display = 'block';
+      tip.innerHTML = `<b style="color:#94a3b8">${d.domain||'unknown'}</b> · depth ${d.depth} · H=${(d.entropy||0).toFixed(3)}<br><span>${d.claim}</span>`;
     })
-  })
-  .then(resp => {
-    if (!resp.ok) throw new Error("Investigation traversal failed.");
-    return resp.json();
-  })
-  .then(data => {
-    document.getElementById('loader-overlay').style.display = 'none';
-    document.getElementById('run-btn').disabled = false;
-    
-    // Render synthesis
-    const listEl = document.getElementById('synthesis-list');
-    listEl.innerHTML = '';
-    if (data.synthesis && data.synthesis.length > 0) {
-      data.synthesis.forEach(dx => {
-        const li = document.createElement('li');
-        li.innerText = dx;
-        listEl.appendChild(li);
-      });
-    } else {
-      listEl.innerHTML = '<li style="color:var(--muted)">No synthesis generated</li>';
-    }
+    .on('mousemove', e => {
+      const tip = document.getElementById('tooltip');
+      tip.style.left = (e.clientX + 14) + 'px';
+      tip.style.top  = (e.clientY - 30) + 'px';
+    })
+    .on('mouseout', () => { document.getElementById('tooltip').style.display = 'none'; })
+    .on('click', (e, d) => { e.stopPropagation(); pickNode(d); });
 
-    // Render graph
-    renderGraph(data);
-  })
-  .catch(err => {
-    document.getElementById('loader-overlay').style.display = 'none';
-    document.getElementById('run-btn').disabled = false;
-    alert(err.message);
-  });
+  simulation.nodes(nodesData);
+  simulation.force('link').links(linksData);
+  simulation.alpha(0.4).restart();
+  document.getElementById('node-badge').textContent = `${nodesData.length} nodes`;
 }
+
+function addNodeToGraph(ev) {
+  if (nodesData.find(n => n.id === ev.node_id)) return;
+  const depth  = ev.depth || 0;
+  const r      = depth === 0 ? 15 : Math.max(7, 13 - depth * 1.5);
+  nodesData.push({
+    id: ev.node_id, claim: ev.claim, domain: ev.domain,
+    entropy: ev.entropy || 0, depth, parent_id: ev.parent_id || null,
+    rhole: false, r, color: entropyColor(ev.entropy || 0),
+  });
+  if (ev.parent_id && nodesData.find(n => n.id === ev.parent_id)) {
+    const key = `${ev.parent_id}->${ev.node_id}`;
+    if (!linksData.find(l => l.key === key))
+      linksData.push({ key, source: ev.parent_id, target: ev.node_id, contra: false });
+  }
+  refreshGraph();
+}
+
+function markRabbitHole(nodeId) {
+  const n = nodesData.find(n => n.id === nodeId);
+  if (n) {
+    n.rhole = true;
+    nodeGroup.selectAll('.g-node').filter(d => d.id === nodeId).classed('rhole', true);
+  }
+}
+
+/* ─── Inspector ────────────────────────────────────────────────────────────── */
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'insp') {
+    const n = selectedId ? nodesData.find(n => n.id === selectedId) : null;
+    n ? renderInspector(n) : setInspEmpty('Click a graph node<br>to inspect it.');
+  } else {
+    renderDx(savedDx);
+  }
+}
+
+function pickNode(d) {
+  selectedId = d.id;
+  nodeGroup.selectAll('.g-node').classed('selected', n => n.id === d.id);
+  switchTab('insp');
+}
+
+function renderInspector(d) {
+  const dc = DOMAIN_COLORS[d.domain] || '#6b7280';
+  const pct = Math.round((d.entropy || 0) * 100);
+  const bc  = entropyColor(d.entropy || 0);
+  document.getElementById('insp-body').innerHTML = `
+    <div class="ifield"><div class="ilabel">Node ID</div><div class="ivalue mono">${d.id}</div></div>
+    <div class="ifield"><div class="ilabel">Claim</div><div class="ivalue">${d.claim}</div></div>
+    <div class="ifield"><div class="ilabel">Domain</div><span class="dpill" style="background:${dc}">${d.domain||'unknown'}</span></div>
+    <div class="ifield">
+      <div class="ilabel">Entropy</div>
+      <div class="ivalue">${(d.entropy||0).toFixed(4)}</div>
+      <div class="iebar"><div class="iebar-fill" style="width:${pct}%;background:${bc}"></div></div>
+    </div>
+    <div class="ifield"><div class="ilabel">Depth</div><div class="ivalue">${d.depth}</div></div>
+    ${d.parent_id ? `<div class="ifield"><div class="ilabel">Parent</div><div class="ivalue mono">${d.parent_id}</div></div>` : ''}
+    ${d.rhole ? `<div class="ifield"><div class="ilabel">Flag</div><span class="dpill" style="background:#7f1d1d">⚠ Rabbit Hole</span></div>` : ''}
+  `;
+}
+
+function renderDx(dx) {
+  if (!dx || dx.length === 0) { setInspEmpty('Run investigation<br>to generate differential.'); return; }
+  const ranks = ['r1','r2','r3'];
+  document.getElementById('insp-body').innerHTML = `
+    <ul class="dx-list">
+      ${dx.map((d, i) => `<li class="dx-item"><span class="dx-rank ${ranks[i]||''}">#${i+1}</span><span>${d}</span></li>`).join('')}
+    </ul>`;
+}
+
+function setInspEmpty(html) {
+  document.getElementById('insp-body').innerHTML = `<div class="insp-empty">${html}</div>`;
+}
+
+/* ─── Stats ────────────────────────────────────────────────────────────────── */
+function updateStats() {
+  document.getElementById('sv-nodes').textContent   = nCount || '—';
+  document.getElementById('sv-edges').textContent   = eCount || '—';
+  document.getElementById('sv-rabbits').textContent = rCount || '—';
+  document.getElementById('sv-contras').textContent = cCount || '—';
+}
+
+/* ─── Thought log ──────────────────────────────────────────────────────────── */
+function clearEmpty() {
+  const e = document.getElementById('log-empty');
+  if (e) e.remove();
+}
+
+function addCard(cls, icon, typeLabel, badge, bodyHtml, domain, entropy, footRight) {
+  clearEmpty();
+  const dc  = domain ? (DOMAIN_COLORS[domain] || '#6b7280') : null;
+  const pct = entropy != null ? Math.round(entropy * 100) : 0;
+  const bc  = entropy != null ? entropyColor(entropy) : '';
+  const card = document.createElement('div');
+  card.className = `card ${cls}`;
+  card.innerHTML = `
+    <div class="card-head">
+      <span class="card-icon">${icon}</span>
+      <span class="card-type ${cls}">${typeLabel}</span>
+      ${badge ? `<span class="card-badge">${badge}</span>` : ''}
+    </div>
+    <div class="card-body${bodyHtml.length > 120 ? '' : ''}">${bodyHtml}</div>
+    <div class="card-foot">
+      ${dc ? `<span class="dpill" style="background:${dc}">${domain}</span>` : ''}
+      ${entropy != null ? `
+        <span class="hpill">H=${entropy.toFixed(3)}
+          <span class="mini-bar"><span class="mini-fill" style="width:${pct}%;background:${bc}"></span></span>
+        </span>` : ''}
+      ${footRight ? `<span class="foot-right">${footRight}</span>` : ''}
+    </div>`;
+  const log = document.getElementById('thought-log');
+  log.appendChild(card);
+  log.scrollTop = log.scrollHeight;
+  tCount++;
+  document.getElementById('thought-count').textContent = `${tCount} thought${tCount !== 1 ? 's' : ''}`;
+}
+
+function addDxBanner(dx) {
+  clearEmpty();
+  const ranks = ['r1','r2','r3'];
+  const el = document.createElement('div');
+  el.className = 'dx-banner';
+  el.innerHTML = `
+    <div class="dx-banner-title">🏁 Final Differential Diagnosis</div>
+    <ul class="dx-list">
+      ${dx.map((d, i) => `<li class="dx-item"><span class="dx-rank ${ranks[i]||''}">#${i+1}</span><span>${d}</span></li>`).join('')}
+    </ul>`;
+  const log = document.getElementById('thought-log');
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+
+/* ─── Event dispatcher ─────────────────────────────────────────────────────── */
+function handleEvent(ev) {
+  const t = ev.event;
+
+  if (t === 'seed_added') {
+    nCount++;
+    addNodeToGraph({ node_id: ev.node_id, claim: ev.claim, domain: ev.domain, entropy: ev.entropy, depth: 0 });
+    addCard('seed', '🌱', 'Seed · Anchoring', 'Depth 0', ev.claim, ev.domain, ev.entropy, '');
+    updateStats();
+  }
+  else if (t === 'expanding') {
+    addCard('expand', '🔍', 'Investigating', `Iter ${ev.iteration}`, ev.claim, ev.domain, ev.entropy, '');
+  }
+  else if (t === 'node_expanded') {
+    nCount++; eCount++;
+    addNodeToGraph({ node_id: ev.node_id, claim: ev.claim, domain: ev.domain, entropy: ev.entropy, depth: ev.depth, parent_id: ev.parent_id });
+    addCard('hypo', '💡', 'Hypothesis', `Depth ${ev.depth}`, ev.claim, ev.domain, ev.entropy, '');
+    updateStats();
+  }
+  else if (t === 'rabbit_hole_flagged') {
+    rCount++;
+    markRabbitHole(ev.node_id);
+    addCard('rabbit', '⚠️', 'Rabbit Hole', `Depth ${ev.depth}`, ev.claim, ev.domain, ev.entropy, 'Pruned');
+    updateStats();
+  }
+  else if (t === 'contradiction_flagged') {
+    cCount++;
+    const body = `<span style="color:#f87171">"${ev.node_a}"</span><br><span style="color:var(--muted2)">conflicts with</span><br><span style="color:#f87171">"${ev.node_b}"</span>`;
+    addCard('contra', '⚡', 'Contradiction', `score ${(ev.score||0).toFixed(2)}`, body, null, null, '');
+    updateStats();
+  }
+  else if (t === 'saturation_fired') {
+    const body = `Entropy stabilised — avg H = <b>${(ev.avg_entropy||0).toFixed(3)}</b>, variance = ${(ev.variance||0).toFixed(4)}`;
+    addCard('sat', '✅', 'Saturated', `Iter ${ev.iteration}`, body, null, null, '');
+  }
+  else if (t === 'traversal_complete') {
+    const dx = ev.synthesis || [];
+    savedDx = dx;
+    if (dx.length) { addDxBanner(dx); if (activeTab === 'dx') renderDx(dx); }
+    document.getElementById('sv-stop').textContent = ev.stop_reason || '—';
+    document.getElementById('sv-dur').textContent  = ev.duration_seconds ? `${(+ev.duration_seconds).toFixed(1)}s` : '—';
+    setStatus('done', `✓ Done · ${(ev.duration_seconds||0).toFixed(1)}s`);
+  }
+  else if (t === 'error') {
+    addCard('contra', '❌', 'Error', '', ev.message || 'Unknown error', null, null, '');
+    setStatus('idle', 'Error');
+  }
+}
+
+/* ─── Status pill ──────────────────────────────────────────────────────────── */
+function setStatus(state, text) {
+  const el = document.getElementById('status-pill');
+  el.textContent = text;
+  el.className = state === 'running' ? 'running' : (state === 'done' ? 'done' : '');
+}
+
+/* ─── Main investigation ───────────────────────────────────────────────────── */
+async function startInvestigation() {
+  const findings = document.getElementById('findings-input').value.trim();
+  const maxDepth = parseInt(document.getElementById('depth-input').value) || 5;
+  const realEnt  = document.getElementById('real-entropy-input').checked;
+  if (!findings) { alert('Please enter clinical findings.'); return; }
+
+  // Reset all state
+  nodesData = []; linksData = [];
+  tCount = 0; nCount = 0; eCount = 0; rCount = 0; cCount = 0;
+  selectedId = null; savedDx = [];
+
+  // Reset UI
+  document.getElementById('thought-log').innerHTML =
+    `<div id="log-empty"><div class="e-icon" style="opacity:0.2;font-size:36px">⏳</div><p style="opacity:0.4;margin-top:8px">Starting analysis…</p></div>`;
+  document.getElementById('thought-count').textContent = '0 thoughts';
+  setInspEmpty('Click a graph node<br>to inspect it.');
+  ['sv-nodes','sv-edges','sv-rabbits','sv-contras','sv-stop','sv-dur'].forEach(id => {
+    document.getElementById(id).textContent = '—';
+    document.getElementById(id).classList.remove('accent');
+  });
+
+  initGraph();
+  document.getElementById('run-btn').disabled = true;
+  setStatus('running', '⟳ Reasoning…');
+
+  try {
+    const resp = await fetch('/run/stream', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ findings, max_depth: maxDepth, real_entropy: realEnt }),
+    });
+    if (!resp.ok) throw new Error(`Server error ${resp.status}`);
+
+    const reader  = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        const t = line.trim();
+        if (t.startsWith('data: ')) {
+          try { handleEvent(JSON.parse(t.slice(6))); } catch(e) { console.warn('parse', t, e); }
+        }
+      }
+    }
+    // flush remainder
+    if (buf.trim().startsWith('data: ')) {
+      try { handleEvent(JSON.parse(buf.trim().slice(6))); } catch {}
+    }
+  } catch(err) {
+    addCard('contra', '❌', 'Error', '', err.message, null, null, '');
+    setStatus('idle', 'Error');
+  } finally {
+    document.getElementById('run-btn').disabled = false;
+    if (document.getElementById('status-pill').classList.contains('running'))
+      setStatus('done', 'Complete');
+  }
+}
+
+// Init D3 graph on page load
+initGraph();
 </script>
 </body>
 </html>
 """
 
 
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
+
 @app.get("/", response_class=HTMLResponse)
 def get_index():
     if not traversal:
         return HTMLResponse(
-            "<h3>Apiro engine not initialized. Please ensure Ollama is running and run build_corpus first.</h3>",
+            "<h3 style='font-family:sans-serif;padding:40px;color:#ef4444'>"
+            "Apiro engine not initialised. Ensure Ollama is running and run build_corpus first.</h3>",
             status_code=500
         )
-    return INDEX_HTML.replace("{doc_count}", f"{doc_count:,}")\
-                     .replace("{domain_colors}", json.dumps(DOMAIN_COLORS))
+    return INDEX_HTML \
+        .replace("{doc_count}", f"{doc_count:,}") \
+        .replace("{domain_colors}", json.dumps(DOMAIN_COLORS))
+
+
+@app.post("/run/stream")
+async def run_investigation_stream(req: InvestigationRequest):
+    """
+    Server-Sent Events endpoint.
+
+    Runs the Apiro traversal in a ThreadPoolExecutor thread and emits each
+    traversal event to the browser the moment it fires, so the UI can update
+    the thought log and D3 graph in real time without waiting for completion.
+    """
+    if not traversal:
+        raise HTTPException(status_code=500, detail="Apiro engine not initialised")
+
+    loop = asyncio.get_running_loop()
+    q: asyncio.Queue = asyncio.Queue()
+
+    def on_event(event: dict) -> None:
+        """Called from the traversal thread — schedules a put on the async queue."""
+        asyncio.run_coroutine_threadsafe(q.put(event), loop)
+
+    def run_traversal() -> None:
+        try:
+            ee = entropy_engine if req.real_entropy else None
+            seeds = parse_findings_to_seeds(req.findings, entropy_engine=ee)
+            if not seeds:
+                asyncio.run_coroutine_threadsafe(
+                    q.put({"event": "error", "message": "Could not parse any valid findings"}), loop
+                )
+                return
+            graph = BeliefGraph()
+            traversal.run(
+                seed_nodes=seeds,
+                graph=graph,
+                max_depth=req.max_depth,
+                case_name="api_stream",
+                on_event=on_event,
+            )
+        except Exception as exc:
+            logger.error(f"Streaming traversal error: {exc}", exc_info=True)
+            asyncio.run_coroutine_threadsafe(
+                q.put({"event": "error", "message": str(exc)}), loop
+            )
+        finally:
+            asyncio.run_coroutine_threadsafe(q.put(None), loop)   # sentinel → close stream
+
+    # Launch traversal in background thread
+    loop.run_in_executor(_executor, run_traversal)
+
+    async def event_stream():
+        while True:
+            event = await q.get()
+            if event is None:
+                return
+            yield f"data: {json.dumps(event)}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control":     "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection":        "keep-alive",
+        },
+    )
 
 
 @app.post("/run")
 def run_investigation(req: InvestigationRequest):
+    """Legacy synchronous endpoint — kept for backward compatibility."""
     if not traversal:
-        raise HTTPException(status_code=500, detail="Apiro engine not initialized")
+        raise HTTPException(status_code=500, detail="Apiro engine not initialised")
 
     t0 = time.time()
     try:
-        # Parse seeds using our demographic-preserving logic
         ee = entropy_engine if req.real_entropy else None
         seeds = parse_findings_to_seeds(req.findings, entropy_engine=ee)
         if not seeds:
             raise HTTPException(status_code=400, detail="Could not parse any valid findings")
 
-        # Run traversal
         graph = BeliefGraph()
         result = traversal.run(
             seed_nodes=seeds,
@@ -661,36 +1121,32 @@ def run_investigation(req: InvestigationRequest):
         )
         elapsed = time.time() - t0
 
-        # Export graph data
-        nodes_list = []
-        for n in graph.nodes.values():
-            nodes_list.append({
-                "id": n.id,
-                "claim": n.claim,
-                "domain": n.domain,
+        nodes_list = [
+            {
+                "id":            n.id,
+                "claim":         n.claim,
+                "domain":        n.domain,
                 "entropy_score": n.entropy_score,
-                "resolved": n.resolved,
+                "resolved":      n.resolved,
                 "is_rabbit_hole": n.is_rabbit_hole,
-                "depth": n.depth,
-                "parent_id": n.parent_id,
-            })
-
-        edges_list = []
-        for e in graph.edges:
-            edges_list.append({
-                "parent_id": e.parent_id,
-                "child_id": e.child_id,
-                "contradiction_flag": e.contradiction_flag,
-            })
+                "depth":         n.depth,
+                "parent_id":     n.parent_id,
+            }
+            for n in graph.nodes.values()
+        ]
+        edges_list = [
+            {"parent_id": e.parent_id, "child_id": e.child_id, "contradiction_flag": e.contradiction_flag}
+            for e in graph.edges
+        ]
 
         return {
-            "synthesis": result.synthesis or [],
-            "nodes": nodes_list,
-            "edges": edges_list,
-            "duration": elapsed,
-            "stop_reason": result.stop_reason
+            "synthesis":   result.synthesis or [],
+            "nodes":       nodes_list,
+            "edges":       edges_list,
+            "duration":    elapsed,
+            "stop_reason": result.stop_reason,
         }
 
-    except Exception as e:
-        logger.error(f"Error during API investigation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as exc:
+        logger.error(f"Error during API investigation: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
