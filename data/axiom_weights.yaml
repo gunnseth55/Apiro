@@ -1,0 +1,51 @@
+high_weight:
+  - entity: "janeway lesions"
+    weight: 0.95
+  - entity: "roth spots"
+    weight: 0.92
+  - entity: "troponin"
+    weight: 0.85
+  - entity: "d-dimer"
+    weight: 0.85
+  - entity: "b-type natriuretic peptide"
+    weight: 0.85
+  - entity: "bnp"
+    weight: 0.85
+  - entity: "creatinine"
+    weight: 0.80
+  - entity: "mycobacterium tuberculosis"
+    weight: 1.00
+  - entity: "afb"
+    weight: 0.95
+  - entity: "acid-fast bacilli"
+    weight: 0.95
+
+medium_weight:
+  - entity: "unilateral leg swelling"
+    weight: 0.55
+  - entity: "productive cough"
+    weight: 0.45
+  - entity: "dyspnea on exertion"
+    weight: 0.50
+  - entity: "chest pain"
+    weight: 0.40
+  - entity: "consolidation"
+    weight: 0.60
+  - entity: "infiltrate"
+    weight: 0.60
+  - entity: "tachycardia"
+    weight: 0.45
+
+low_weight:
+  - entity: "fatigue"
+    weight: 0.10
+  - entity: "fever"
+    weight: 0.15
+  - entity: "nausea"
+    weight: 0.10
+  - entity: "vomiting"
+    weight: 0.10
+  - entity: "malaise"
+    weight: 0.10
+  - entity: "weakness"
+    weight: 0.10

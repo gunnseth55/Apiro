@@ -28,3 +28,6 @@ torch>=2.2.0
 fastapi>=0.111.0
 uvicorn>=0.30.0
 pydantic>=2.7.0
+
+# Phase 5 - HADCE NLP Pipeline
+pyyaml>=6.0.1
