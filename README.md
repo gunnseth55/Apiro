@@ -22,6 +22,7 @@ Apiro translates this clinical reasoning process into a graph traversal algorith
 ```
 .
 ├── README.md                   # Onboarding, architecture, and developer guide
+├── Log.md                      # Comprehensive project history, architectural shifts, and evaluations
 ├── PROJECT_STATUS.md           # Active state, benchmarks, and known risks
 ├── DEVELOPER_NOTES.md          # File classification map (production vs debug), cleanup, and configs
 ├── pyproject.toml              # Project configuration and packaging
@@ -226,6 +227,8 @@ python scripts/investigate.py "72yo male presenting with sudden substernal chest
 ---
 
 ## 🎢 Project History (The Ups and Downs)
+
+**Note:** For the complete, detailed history of Apiro—including our transition from the original Entropy Engine (Apiro 1.0), to Hypothesis Testing (HT), and finally to Evidence-Driven Abductive Reasoning (EDAR)—please read the definitive [Log.md](Log.md).
 
 Building Apiro was not a straight path. Over successive cycles of debugging and evaluation, we hit several roadblocks:
 
