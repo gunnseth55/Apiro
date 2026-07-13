@@ -262,11 +262,14 @@ class ApiroTraversal:
                         )
                         continue
 
-                    # Single pair NLI check (bypasses batched GPU kernel bugs, matches cache)
-                    result = self.contradiction.check(new_node.claim, existing.claim)
+                    batch_pairs.append((new_node.claim, existing.claim))
+                    batch_meta.append((new_node, existing))
 
+            # Run the batched NLI cross-encoder check
+            if batch_pairs:
+                results = self.contradiction.check_batch(batch_pairs)
+                for (new_node, existing), result in zip(batch_meta, results):
                     if result.label == "contradiction" and result.score > CONTRADICTION_THRESHOLD_EF:
-
                         # Find the edge and flag it
                         for edge in graph.edges:
                             if edge.parent_id == new_node.parent_id and edge.child_id == new_node.id:

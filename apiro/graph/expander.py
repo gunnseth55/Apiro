@@ -465,10 +465,10 @@ class NodeExpander:
 
     def _batch_entropy(self, hypotheses: list[str], chunks: list[str]) -> list[float]:
         """
-        Score entropy for all hypotheses in one pass where possible.
+        Score entropy for all hypotheses concurrently.
 
         Uses the entropy engine's temperature_corrected_entropy on the pre-built
-        verification prompt for each hypothesis. Results are collected serially
+        verification prompt for each hypothesis. Results are collected concurrently
         but share the already-retrieved RAG chunks, avoiding redundant context
         construction and letting the caller reuse the same chunk list.
 
@@ -476,14 +476,19 @@ class NodeExpander:
         stays high-priority in the frontier.
         """
         DEFAULT = 0.693  # ln(2) — max binary uncertainty fallback
-        scores: list[float] = []
-        for hyp in hypotheses:
+        
+        def _score_hyp(hyp: str) -> float:
             try:
                 prompt = self.entropy_engine._build_verification_prompt(hyp, chunks)
                 val = self.entropy_engine.temperature_corrected_entropy(prompt)
-                scores.append(val if val is not None else DEFAULT)
+                return val if val is not None else DEFAULT
             except Exception:
-                scores.append(DEFAULT)
+                return DEFAULT
+
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            scores = list(executor.map(_score_hyp, hypotheses))
+            
         return scores
 
     def expand(self, node: Node, graph, vignette: str = None) -> list[Node]:
