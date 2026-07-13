@@ -1,17 +1,43 @@
-# Python virtual env
-.venv/
+# =========================
+# Python & Virtual Env
+# =========================
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
 
-# IDEs
+# =========================
+# Build & Distribution
+# =========================
+build/
+dist/
+*.egg-info/
+apiro.egg-info/
+*.egg
+
+# =========================
+# Testing & Type Checking
+# =========================
+.pytest_cache/
+.mypy_cache/
+.tox/
+.coverage
+htmlcov/
+
+# =========================
+# IDEs & OS Files
+# =========================
 .idea/
 .vscode/
 .DS_Store
+Thumbs.db
 
-# Pytest
-.pytest_cache/
-
-# Local data databases/caches (keep folders but ignore contents)
+# =========================
+# Project Specific & Data
+# =========================
+# Local data databases/caches
 data/chroma_db/
 data/corpus/
 data/logs/
@@ -21,11 +47,17 @@ data/graph_*.json
 data/graph_*.html
 data/traversal_log_*.jsonl
 data/phase3_results.json
+
+# Figures and Outputs
 figures/
 *.html
 *.jsonl
+
+# Documentation & Logs
 DEVELOPER_NOTES.md
 PROJECT_STATUS.md
-*.egg-info/
-apiro.egg-info/
 implementation_plan.md
+*.log
+
+# Secrets / Config
+.env
