@@ -129,6 +129,7 @@ class ApiroTraversal:
         max_depth: int = 8,
         case_name: str = "run",
         vignette: str = None,
+        on_event = None,
     ) -> TraversalResult:
         self._on_event = on_event
         """

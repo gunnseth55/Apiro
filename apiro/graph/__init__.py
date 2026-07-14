@@ -15,7 +15,7 @@ Stubs (for testing without Ollama/ChromaDB/model download):
 from apiro.graph.node import Node
 from apiro.graph.edge import Edge
 from apiro.graph.belief_graph import BeliefGraph
-from apiro.graph.traversal import HypothesisTestingTraversal, TraversalResult
+from apiro.graph.traversal import ApiroTraversal, TraversalResult
 from apiro.graph.stub_llm import StubLLMClient, CyclingStubLLMClient
 
 # NOTE: ContradictionDetector is NOT imported here because it pulls in
@@ -29,7 +29,7 @@ __all__ = [
     "Edge",
     "BeliefGraph",
     # Orchestration
-    "HypothesisTestingTraversal",
+    "ApiroTraversal",
     "TraversalResult",
     # Stubs
     "StubLLMClient",
