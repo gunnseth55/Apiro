@@ -29,8 +29,6 @@ from apiro.graph.belief_graph import BeliefGraph
 from apiro.graph.node import Node
 from apiro.graph.traversal import ApiroTraversal
 from apiro.axioms.extractor import AxiomExtractor
-from apiro.hypothesis.generator import HypothesisGenerator
-from apiro.curiosity.engine import HADCEngine
 
 def run_evaluation(real_components: bool):
     # Load distractor cases
@@ -313,10 +311,8 @@ def run_evaluation(real_components: bool):
         )
 
 
-    # HADCE Setup
+    # Axiom Extractor Setup
     axiom_extractor = AxiomExtractor()
-    hypothesis_generator = HypothesisGenerator(contradiction_detector=contradiction, model="llama3.1:8b" if real_components else "stub")
-    hadc_engine = HADCEngine(embedder if real_components else None, llm_client, contradiction, rabbit_hole)
 
     # Begin evaluation
     logger.info("=" * 65)
@@ -435,27 +431,6 @@ def run_evaluation(real_components: bool):
                     f"has penalty={node.contradiction_penalty} (is_rabbit_hole={node.is_rabbit_hole})"
                 )
 
-        # 4. HADCE
-        logger.info("  Running HADCE...")
-        axioms = axiom_extractor.extract(vignette)
-        if not real_components:
-            from apiro.hypothesis.models import Hypothesis
-            hypotheses = [Hypothesis(id="h1", name=target, probability=0.9, initial_probability=0.9, supporting_axioms=[], contradicting_axioms=[])]
-        else:
-            hypotheses = hypothesis_generator.generate(axioms, n_samples=3)
-            
-        hadc_results = hadc_engine.run(axioms, hypotheses, max_iterations=3)
-        hadc_output = [h.name for h in hadc_results[:3]]
-        hadc_output_str = "\n".join(hadc_output)
-        logger.info(f"  HADCE Final Synthesis:\n{hadc_output_str.strip()}")
-        
-        hadc_success, _ = _check_synthesis_hit(
-            hadc_output,
-            target,
-            embedder=embedder if real_components else None,
-            llm_client=llm_client if real_components else None
-        )
-
         results.append({
             "case_id": case_id,
             "description": case["description"],
@@ -471,10 +446,6 @@ def run_evaluation(real_components: bool):
             "apiro": {
                 "success": apiro_success,
                 "output": apiro_output
-            },
-            "hadce": {
-                "success": hadc_success,
-                "output": hadc_output
             }
         })
 
@@ -486,7 +457,6 @@ def run_evaluation(real_components: bool):
     bare_wins = sum(1 for r in results if r["bare_llm"]["success"])
     rag_wins = sum(1 for r in results if r["rag"]["success"])
     apiro_wins = sum(1 for r in results if r["apiro"]["success"])
-    hadce_wins = sum(1 for r in results if r["hadce"]["success"])
     
     for r in results:
         print(f"Case {r['case_id']}: {r['description']}")
@@ -494,13 +464,11 @@ def run_evaluation(real_components: bool):
         print(f"  Bare LLM Success : {'✓ SUCCESS' if r['bare_llm']['success'] else '✗ FAILED (Hallucinated distractor)'}")
         print(f"  RAG Success      : {'✓ SUCCESS' if r['rag']['success'] else '✗ FAILED (Hallucinated distractor)'}")
         print(f"  Apiro Success    : {'✓ SUCCESS' if r['apiro']['success'] else '✗ FAILED'}")
-        print(f"  HADCE Success    : {'✓ SUCCESS' if r['hadce']['success'] else '✗ FAILED'}")
         print("-" * 65)
         
     print(f"Bare LLM Total Success: {bare_wins}/{len(results)} ({bare_wins/len(results)*100:.1f}%)")
     print(f"RAG Baseline Success  : {rag_wins}/{len(results)} ({rag_wins/len(results)*100:.1f}%)")
     print(f"Apiro Total Success   : {apiro_wins}/{len(results)} ({apiro_wins/len(results)*100:.1f}%)")
-    print(f"HADCE Total Success   : {hadce_wins}/{len(results)} ({hadce_wins/len(results)*100:.1f}%)")
     print("=" * 65 + "\n")
 
 if __name__ == "__main__":
