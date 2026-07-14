@@ -186,6 +186,8 @@ source venv/bin/activate  (cmd: venv\Scripts\activate)
 pip install -r requirements.txt
 pip install -e . 
 ```
+> [!NOTE]
+> **Model Downloads:** Hugging Face models (NER, NLI Cross-Encoder) are downloaded automatically on the first execution of `scripts/run_pmc_eval.py` or the FastAPI server. No manual downloading or pushing of model files is required.
 
 ### 2. Building the Corpus & Vector Database
 The persistent database directory (`data/chroma_db/`) is excluded from Git to prevent large binary files in version control. After checking out the codebase, you must populate your local vector database. **We recommend loading at least 50k to 100k records for a viable corpus:**
