@@ -333,7 +333,7 @@ class ApiroTraversal:
         duration = round(time.time() - start_time, 2)
 
         # ── Synthesize differential ───────────────────────────────────────────
-        synthesis = self.expander.synthesize_differential(graph, vignette=vignette)
+        synthesis = self.expander.synthesize_differential(graph)
 
         self._log({
             "event":            "traversal_complete",
