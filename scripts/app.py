@@ -43,11 +43,11 @@ app = FastAPI(title="Apiro AI Detective")
 # Shared components — initialised once at startup
 logger.info("Initialising Apiro components...")
 try:
-    traversal, doc_count = build_components()
+    (traversal, axiom_extractor), doc_count = build_components()
     logger.info(f"Apiro ready. ChromaDB contains {doc_count:,} documents.")
 except Exception as e:
     logger.error(f"Failed to initialise Apiro components: {e}")
-    traversal, doc_count = None, 0
+    traversal, axiom_extractor, doc_count = None, None, 0
 
 # Thread pool for running CPU-bound traversal without blocking the event loop
 _executor = ThreadPoolExecutor(max_workers=2)
@@ -1049,8 +1049,22 @@ async def run_investigation_stream(req: InvestigationRequest):
                 )
                 return
             graph = BeliefGraph()
+            from apiro.graph.node import Node
+            axioms = axiom_extractor.extract(req.findings)
+            seeds = []
+            enriched_vignette = req.findings + "\n\n[Deterministic Clinical Findings]\n"
+            for ax in axioms:
+                enriched_vignette += f"- {ax.text}\n"
+                seeds.append(Node(
+                    id=ax.id,
+                    claim=ax.text,
+                    entropy_score=0.01,
+                    domain=ax.domain,
+                    depth=0
+                ))
             traversal.run(
-                vignette=req.findings,
+                seed_nodes=seeds,
+                vignette=enriched_vignette,
                 graph=graph,
                 max_depth=req.max_depth,
                 case_name="api_stream",
@@ -1093,14 +1107,26 @@ def run_investigation(req: InvestigationRequest):
 
     t0 = time.time()
     try:
-        ee = entropy_engine if req.real_entropy else None
-        seeds = parse_findings_to_seeds(req.findings, entropy_engine=ee)
+        from apiro.graph.node import Node
+        axioms = axiom_extractor.extract(req.findings)
+        seeds = []
+        enriched_vignette = req.findings + "\n\n[Deterministic Clinical Findings]\n"
+        for ax in axioms:
+            enriched_vignette += f"- {ax.text}\n"
+            seeds.append(Node(
+                id=ax.id,
+                claim=ax.text,
+                entropy_score=0.01,
+                domain=ax.domain,
+                depth=0
+            ))
         if not seeds:
             raise HTTPException(status_code=400, detail="Could not parse any valid findings")
 
         graph = BeliefGraph()
         result = traversal.run(
             seed_nodes=seeds,
+            vignette=enriched_vignette,
             graph=graph,
             max_depth=req.max_depth,
             case_name="api_run",

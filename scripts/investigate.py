@@ -23,10 +23,13 @@ sys.path.insert(0, str(ROOT))
 def build_components():
     import requests
     from apiro.corpus.embedder import Embedder
-    from apiro.graph.traversal import HypothesisTestingTraversal
-    from apiro.hypothesis.oracle import HypothesisOracle
-    from apiro.hypothesis.evidence_matcher import EvidenceMatcher
-    from apiro.hypothesis.bayesian_scorer import BayesianScorer
+    from apiro.entropy.engine import EntropyEngine
+    from apiro.axioms.extractor import AxiomExtractor
+    from apiro.graph.expander import NodeExpander
+    from apiro.graph.saturation import SaturationDetector
+    from apiro.graph.rabbit_hole import RabbitHoleDetector
+    from apiro.graph.contradiction import ContradictionDetector
+    from apiro.graph.traversal import ApiroTraversal
     from apiro.config import OLLAMA_BASE_URL, PRIMARY_MODEL
 
     try:
@@ -41,7 +44,7 @@ def build_components():
     doc_count = embedder.count
     if doc_count == 0:
         print("\n❌  ChromaDB corpus is empty.")
-        print("    Build it with:  python scripts/build_corpus.py")
+        print("    Build it with:  python -m apiro.corpus.build_corpus")
         sys.exit(1)
 
     class _ChromaAdapter:
@@ -54,23 +57,58 @@ def build_components():
             return {"documents": [[r["text"] for r in results]]}
 
     chroma_adapter = _ChromaAdapter(embedder)
+    entropy_engine = EntropyEngine(model=PRIMARY_MODEL, ollama_url=OLLAMA_BASE_URL)
+    axiom_extractor = AxiomExtractor()
+    contradiction = ContradictionDetector()
 
-    from apiro.run import OllamaLLMClient
-    llm_client = OllamaLLMClient(url=OLLAMA_BASE_URL, model=PRIMARY_MODEL)
+    class OllamaLLMClient:
+        def __init__(self, url, model):
+            self.url   = url
+            self.model = model
+        def generate(self, prompt: str) -> str:
+            import requests as req
+            payload = {
+                "model": self.model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {"temperature": 0.2, "num_predict": 180},
+            }
+            resp = req.post(f"{self.url}/api/generate", json=payload, timeout=90)
+            return resp.json().get("response", "")
+        def generate_with_logprobs(self, prompt: str) -> tuple[str, list]:
+            import requests as req
+            payload = {
+                "model": self.model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {"temperature": 0.2, "num_predict": 180},
+                "logprobs": True,
+            }
+            resp = req.post(f"{self.url}/api/generate", json=payload, timeout=90)
+            data = resp.json()
+            return data.get("response", ""), data.get("logprobs", [])
+        def chat(self, prompt: str) -> str:
+            return self.generate(prompt)
 
-    oracle = HypothesisOracle(model=PRIMARY_MODEL, ollama_url=OLLAMA_BASE_URL)
-    matcher = EvidenceMatcher(chroma_client=chroma_adapter)
-    scorer = BayesianScorer()
-
-    trav = HypothesisTestingTraversal(
-        oracle=oracle,
-        matcher=matcher,
-        scorer=scorer,
-        n_hypotheses=10,
-        enrich_top_k=0
+    llm_client = OllamaLLMClient(OLLAMA_BASE_URL, PRIMARY_MODEL)
+    
+    expander = NodeExpander(
+        entropy_engine=entropy_engine,
+        chroma_client=chroma_adapter,
+        llm_client=llm_client,
+        contradiction_detector=contradiction,
+    )
+    saturation = SaturationDetector()
+    rabbit_hole = RabbitHoleDetector()
+    
+    traversal = ApiroTraversal(
+        expander=expander,
+        saturation=saturation,
+        rabbit_hole=rabbit_hole,
+        contradiction=contradiction,
     )
 
-    return trav, doc_count
+    return (traversal, axiom_extractor), doc_count
 
 def print_report(result, elapsed: float) -> None:
     print("\n+" + "-" * 58 + "+")
@@ -147,19 +185,38 @@ def main():
         sys.exit(1)
 
     print("\n[*] Initialising Apiro components...")
-    traversal, doc_count = build_components()
+    (traversal, axiom_extractor), doc_count = build_components()
     print(f"[+] Components ready. Corpus: {doc_count:,} documents.\n")
 
     print(f"\n[*] Apiro is investigating...")
     t0 = time.time()
     
     from apiro.graph.belief_graph import BeliefGraph
+    from apiro.graph.node import Node
     graph = BeliefGraph()
+
+    # Extract deterministic axioms and seed the graph
+    print("[*] Extracting deterministic clinical axioms...")
+    axioms = axiom_extractor.extract(raw_findings)
+    seeds = []
+    enriched_vignette = raw_findings + "\n\n[Deterministic Clinical Findings]\n"
+    for ax in axioms:
+        enriched_vignette += f"- {ax.text}\n"
+        seeds.append(Node(
+            id=ax.id,
+            claim=ax.text,
+            entropy_score=0.01,
+            domain=ax.domain,
+            depth=0
+        ))
+    print(f"[+] Extracted {len(axioms)} axioms and anchored them to the graph.\n")
+
     result = traversal.run(
-        vignette=raw_findings,
+        seed_nodes=seeds,
         graph=graph,
         max_depth=args.max_depth,
         case_name="investigate",
+        vignette=enriched_vignette,
     )
     elapsed = time.time() - t0
 

@@ -1,550 +1,0 @@
-15:18:44  INFO     apiro.corpus.embedder Loading embedding model: all-mpnet-base-v2 on device='cpu'
-15:18:45  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-15:18:45  WARNING  huggingface_hub.utils._http Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-15:18:45  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/modules.json "HTTP/1.1 200 OK"
-15:18:45  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
-15:18:45  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/config_sentence_transformers.json "HTTP/1.1 200 OK"
-15:18:45  INFO     sentence_transformers.base.model Loading SentenceTransformer model from sentence-transformers/all-mpnet-base-v2.
-15:18:45  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
-15:18:45  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/config_sentence_transformers.json "HTTP/1.1 200 OK"
-15:18:46  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
-15:18:46  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/README.md "HTTP/1.1 200 OK"
-15:18:46  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
-15:18:46  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/modules.json "HTTP/1.1 200 OK"
-15:18:46  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:46  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/sentence_bert_config.json "HTTP/1.1 200 OK"
-15:18:47  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
-15:18:47  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:47  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/config.json "HTTP/1.1 200 OK"
-Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 20946.78it/s]
-15:18:48  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
-15:18:48  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
-15:18:48  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
-15:18:49  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
-15:18:49  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:49  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/tokenizer_config.json "HTTP/1.1 200 OK"
-15:18:49  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:49  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/config.json "HTTP/1.1 200 OK"
-15:18:49  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:49  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/config.json "HTTP/1.1 200 OK"
-15:18:50  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:50  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/tokenizer_config.json "HTTP/1.1 200 OK"
-15:18:50  INFO     httpx                HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-mpnet-base-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
-15:18:50  INFO     httpx                HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-mpnet-base-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
-15:18:51  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:51  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
-15:18:51  INFO     httpx                HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-mpnet-base-v2 "HTTP/1.1 200 OK"
-15:18:51  INFO     apiro.corpus.embedder Connecting to ChromaDB at /home/theroid/PycharmProjects/Apiro/data/chroma_db
-15:18:51  INFO     apiro.corpus.embedder Collection 'apiro_corpus' has 100,000 existing documents. Upsert is idempotent — safe to re-run.
-15:18:51  INFO     sentence_transformers.base.model No device provided, using cuda:0
-15:18:51  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
-15:18:52  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/modules.json "HTTP/1.1 200 OK"
-15:18:52  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
-15:18:52  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/config_sentence_transformers.json "HTTP/1.1 200 OK"
-15:18:52  INFO     sentence_transformers.base.model Loading SentenceTransformer model from sentence-transformers/all-mpnet-base-v2.
-15:18:52  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
-15:18:52  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/config_sentence_transformers.json "HTTP/1.1 200 OK"
-15:18:52  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
-15:18:52  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/README.md "HTTP/1.1 200 OK"
-15:18:53  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
-15:18:53  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/modules.json "HTTP/1.1 200 OK"
-15:18:53  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:53  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/sentence_bert_config.json "HTTP/1.1 200 OK"
-15:18:53  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
-15:18:54  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:54  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/config.json "HTTP/1.1 200 OK"
-Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 5823.55it/s]
-15:18:54  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
-15:18:54  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
-15:18:55  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
-15:18:55  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
-15:18:55  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:55  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/tokenizer_config.json "HTTP/1.1 200 OK"
-15:18:55  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:55  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/config.json "HTTP/1.1 200 OK"
-15:18:56  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:56  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/config.json "HTTP/1.1 200 OK"
-15:18:56  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:56  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/tokenizer_config.json "HTTP/1.1 200 OK"
-15:18:56  INFO     httpx                HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-mpnet-base-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
-15:18:57  INFO     httpx                HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-mpnet-base-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
-15:18:57  INFO     httpx                HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-mpnet-base-v2/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
-15:18:57  INFO     httpx                HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-mpnet-base-v2/e8c3b32edf5434bc2275fc9bab85f82640a19130/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
-15:18:57  INFO     httpx                HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-mpnet-base-v2 "HTTP/1.1 200 OK"
-15:18:57  INFO     apiro.hypothesis.evidence_matcher [EvidenceMatcher] Semantic matching enabled (all-mpnet-base-v2)
-15:18:57  INFO     edar_eval            ======================================================================
-15:18:57  INFO     edar_eval              3-WAY EVALUATION: Bare LLM vs RAG vs Apiro EDAR
-15:18:57  INFO     edar_eval            ======================================================================
-15:18:57  INFO     edar_eval            
-──────────────────────────────────────────────────────────────────────
-15:18:57  INFO     edar_eval            Case: pmc_case_1 — Real world case report from PMC (Scrubbed)
-15:18:57  INFO     edar_eval            Target: Multidrug-resistant tuberculosis
-15:18:57  INFO     edar_eval              [1/3] Bare LLM Zero-Shot...
-15:18:59  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Multidrug-resistant tuberculosis' vs ['1. Cutaneous Tuberculosis (M. tuberculosis infection)', '2. Mycobacterium marinum Infection', '3. Mycobacterium abscessus Infection'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 44.58it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 68.92it/s]
-15:18:59  INFO     edar_eval              Bare LLM: ✗ — ['1. Cutaneous Tuberculosis (M. tuberculosis infection)', '2. Mycobacterium marinum Infection', '3. Mycobacterium abscessus Infection']
-15:18:59  INFO     edar_eval              [2/3] Standard RAG Baseline...
-15:19:03  INFO     apiro.eval.evaluator [LLM-Judge] Match confirmed for 'Multidrug-resistant tuberculosis' vs ['Here are the top 3 differential diagnoses:', '* **Tuberculosis Lymphadenitis**: a form of extrapulmonary tuberculosis that presents with painless swelling of lymph nodes, often in the posterior cervical or supraclavicular regions.', '* **Disseminated Tuberculosis**: a condition where M. tuberculosis infects multiple organs and systems, including lymph nodes, skin, and bones.', '* **Nontuberculous Mycobacterial Infection (NTM)**: an infection caused by mycobacteria other than M. tuberculosis, such as M. avium complex or M. kansasii, which can present with similar symptoms to TB, especially in immunocompromised patients.']
-15:19:03  INFO     edar_eval              RAG:      ✓ — ['Here are the top 3 differential diagnoses:', '* **Tuberculosis Lymphadenitis**: a form of extrapulmonary tuberculosis that presents with painless swelling of lymph nodes, often in the posterior cervical or supraclavicular regions.', '* **Disseminated Tuberculosis**: a condition where M. tuberculosis infects multiple organs and systems, including lymph nodes, skin, and bones.']
-15:19:03  INFO     edar_eval              [3/3] Apiro EDAR...
-15:19:03  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 1: Extracting PatientContext...
-15:19:06  INFO     apiro.patient.context [PatientContext] Extracted: 23yo | M | CC=Single cutaneous abscess on the right side of the neck | symptoms=2 | labs=2
-15:19:06  INFO     apiro.graph.edar_traversal [EdarTraversal] PatientContext: PatientContext(23yo | M | CC=Single cutaneous abscess on the right side of the neck | symptoms=2 | labs=2)
-15:19:06  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 2: Oracle generating candidates (1 LLM call)...
-15:19:06  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Querying corpus with patient presentation...
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 40.12it/s]
-15:19:06  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Discovered 10 candidates from 60 corpus chunks. Top 5: ['Tularemia', 'Kikuchi-Fujimoto disease', 'Chronic granulomatous disease 2, autosomal recessive', 'Immunodeficiency 51', 'Cutaneous small vessel vasculitis']
-15:19:06  INFO     apiro.graph.edar_traversal [EdarTraversal] Candidates: ['Tularemia', 'Kikuchi-Fujimoto disease', 'Chronic granulomatous disease 2, autosomal recessive', 'Immunodeficiency 51', 'Cutaneous small vessel vasculitis', 'Progressive nodular histiocytosis', 'Extracranial carotid artery aneurysm', 'Bullous impetigo', 'Paraneoplastic pemphigus', 'Melioidosis']
-15:19:06  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 3: Building evidence graph (0 LLM)...
-15:19:06  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Building evidence graph for 10 candidates...
-15:19:08  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Evidence graph complete. 10 nodes built.
-15:19:08  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 4: Bayesian belief revision (0 LLM)...
-15:19:08  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Updating 10 candidates (rate-normalised, scale=sqrt(n_expected))...
-15:19:08  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Ranked 10 candidates. Top 3: [('Tularemia', '0.2224'), ('Cutaneous small vessel vasculitis', '0.1390'), ('Bullous impetigo', '0.1013')]
-15:19:08  INFO     apiro.graph.edar_traversal   [EDAR #1] 'Tularemia' (posterior=0.2224, ✅6 ❌3 ⚡0)
-15:19:08  INFO     apiro.graph.edar_traversal   [EDAR #2] 'Cutaneous small vessel vasculitis' (posterior=0.1390, ✅1 ❌1 ⚡0)
-15:19:08  INFO     apiro.graph.edar_traversal   [EDAR #3] 'Bullous impetigo' (posterior=0.1013, ✅1 ❌3 ⚡0)
-15:19:08  INFO     apiro.graph.edar_traversal   [EDAR #4] 'Progressive nodular histiocytosis' (posterior=0.0957, ✅2 ❌7 ⚡0)
-15:19:08  INFO     apiro.graph.edar_traversal   [EDAR #5] 'Melioidosis' (posterior=0.0957, ✅2 ❌7 ⚡0)
-15:19:08  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 5: Discriminative evidence seeking (0 LLM)...
-15:19:08  INFO     apiro.edar.discriminator [Discriminator] Candidates not close enough — skipping. Top1=0.2224, Top2=0.1390
-15:19:08  INFO     apiro.graph.edar_traversal [EdarTraversal] Done. synthesis=['Tularemia', 'Cutaneous small vessel vasculitis', 'Bullous impetigo'], time=4.48s
-15:19:08  INFO     apiro.graph.edar_traversal [EdarTraversal] Log written to /home/theroid/PycharmProjects/Apiro/data/edar_log_pmc_case_1_edar.jsonl
-15:19:08  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Multidrug-resistant tuberculosis' vs ['Tularemia', 'Cutaneous small vessel vasculitis', 'Bullous impetigo'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 92.31it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 73.25it/s]
-15:19:08  INFO     edar_eval              EDAR:     ✗ — ['Tularemia', 'Cutaneous small vessel vasculitis', 'Bullous impetigo']
-15:19:08  INFO     edar_eval            
-──────────────────────────────────────────────────────────────────────
-15:19:08  INFO     edar_eval            Case: pmc_case_2 — Real world case report from PMC (Scrubbed)
-15:19:08  INFO     edar_eval            Target: Complicated transseptal puncture due to anomalous intracardiac anatomy
-15:19:08  INFO     edar_eval              [1/3] Bare LLM Zero-Shot...
-15:19:09  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Complicated transseptal puncture due to anomalous intracardiac anatomy' vs ['1. Atrial Fibrillation with Atrial Flutter', '2. Mitral Stenosis', '3. Atrial Septal Defect'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 80.47it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 67.75it/s]
-15:19:09  INFO     edar_eval              Bare LLM: ✗ — ['1. Atrial Fibrillation with Atrial Flutter', '2. Mitral Stenosis', '3. Atrial Septal Defect']
-15:19:09  INFO     edar_eval              [2/3] Standard RAG Baseline...
-15:19:14  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Complicated transseptal puncture due to anomalous intracardiac anatomy' vs ['Here are the top 3 differential diagnoses for a 70-year-old male patient with paroxysmal atrial fibrillation and atrial flutter, as well as concomitant arterial hypertension:', '* Atrial Fibrillation (AF) - chronic AF is often asymptomatic but may present with shortness of breath, chest pain, or palpitations; physical exam reveals irregularly irregular pulse.', '* Hypertrophic Cardiomyopathy (HCM) - impaired contractility and/or relaxation, left ventricular cavity size increased in diastole, ejection fraction decreased.', '* Aortic Stenosis (AS) - stiff/hypertrophic ventricle, holosystolic murmur, signs of heart failure on exam.'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 43.77it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 22.34it/s]
-15:19:14  INFO     edar_eval              RAG:      ✗ — ['Here are the top 3 differential diagnoses for a 70-year-old male patient with paroxysmal atrial fibrillation and atrial flutter, as well as concomitant arterial hypertension:', '* Atrial Fibrillation (AF) - chronic AF is often asymptomatic but may present with shortness of breath, chest pain, or palpitations; physical exam reveals irregularly irregular pulse.', '* Hypertrophic Cardiomyopathy (HCM) - impaired contractility and/or relaxation, left ventricular cavity size increased in diastole, ejection fraction decreased.']
-15:19:14  INFO     edar_eval              [3/3] Apiro EDAR...
-15:19:14  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 1: Extracting PatientContext...
-15:19:16  INFO     apiro.patient.context [PatientContext] Extracted: 70yo | M | CC=paroxysmal atrial fibrillation and atrial flutter | symptoms=2 | labs=0
-15:19:16  INFO     apiro.graph.edar_traversal [EdarTraversal] PatientContext: PatientContext(70yo | M | CC=paroxysmal atrial fibrillation and atrial flutter | symptoms=2 | labs=0)
-15:19:16  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 2: Oracle generating candidates (1 LLM call)...
-15:19:16  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Querying corpus with patient presentation...
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 63.22it/s]
-15:19:16  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Discovered 10 candidates from 60 corpus chunks. Top 5: ['Atrial tachyarrhythmia with short pr interval', 'Brugada syndrome 7', 'Atrial fibrillation, familial, 10', 'Atrial fibrillation, familial, 4', 'Atrial fibrillation, familial, 12']
-15:19:16  INFO     apiro.graph.edar_traversal [EdarTraversal] Candidates: ['Atrial tachyarrhythmia with short pr interval', 'Brugada syndrome 7', 'Atrial fibrillation, familial, 10', 'Atrial fibrillation, familial, 4', 'Atrial fibrillation, familial, 12', 'Atrial fibrillation, familial, 18', 'Atrial fibrillation, familial, 7', 'Atrial fibrillation, familial, 9', 'Brugada syndrome 1', 'Atrial standstill 1']
-15:19:16  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 3: Building evidence graph (0 LLM)...
-15:19:16  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Building evidence graph for 10 candidates...
-15:19:18  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Evidence graph complete. 10 nodes built.
-15:19:18  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 4: Bayesian belief revision (0 LLM)...
-15:19:18  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Updating 10 candidates (rate-normalised, scale=sqrt(n_expected))...
-15:19:18  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Ranked 10 candidates. Top 3: [('Atrial tachyarrhythmia with short pr int', '0.2145'), ('Atrial standstill 1', '0.1272'), ('Atrial fibrillation, familial, 9', '0.1240')]
-15:19:18  INFO     apiro.graph.edar_traversal   [EDAR #1] 'Atrial tachyarrhythmia with short pr interval' (posterior=0.2145, ✅12 ❌0 ⚡0)
-15:19:18  INFO     apiro.graph.edar_traversal   [EDAR #2] 'Atrial standstill 1' (posterior=0.1272, ✅7 ❌1 ⚡0)
-15:19:18  INFO     apiro.graph.edar_traversal   [EDAR #3] 'Atrial fibrillation, familial, 9' (posterior=0.1240, ✅9 ❌3 ⚡0)
-15:19:18  INFO     apiro.graph.edar_traversal   [EDAR #4] 'Atrial fibrillation, familial, 18' (posterior=0.1150, ✅6 ❌1 ⚡0)
-15:19:18  INFO     apiro.graph.edar_traversal   [EDAR #5] 'Atrial fibrillation, familial, 10' (posterior=0.1021, ✅7 ❌3 ⚡0)
-15:19:18  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 5: Discriminative evidence seeking (0 LLM)...
-15:19:18  INFO     apiro.edar.discriminator [Discriminator] Candidates not close enough — skipping. Top1=0.2145, Top2=0.1272
-15:19:18  INFO     apiro.graph.edar_traversal [EdarTraversal] Done. synthesis=['Atrial tachyarrhythmia with short pr interval', 'Atrial standstill 1', 'Atrial fibrillation, familial, 9'], time=4.25s
-15:19:18  INFO     apiro.graph.edar_traversal [EdarTraversal] Log written to /home/theroid/PycharmProjects/Apiro/data/edar_log_pmc_case_2_edar.jsonl
-15:19:18  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Complicated transseptal puncture due to anomalous intracardiac anatomy' vs ['Atrial tachyarrhythmia with short pr interval', 'Atrial standstill 1', 'Atrial fibrillation, familial, 9'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 88.64it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 65.79it/s]
-15:19:18  INFO     edar_eval              EDAR:     ✗ — ['Atrial tachyarrhythmia with short pr interval', 'Atrial standstill 1', 'Atrial fibrillation, familial, 9']
-15:19:18  INFO     edar_eval            
-──────────────────────────────────────────────────────────────────────
-15:19:18  INFO     edar_eval            Case: pmc_case_3 — Real world case report from PMC (Scrubbed)
-15:19:18  INFO     edar_eval            Target: Osteoid Osteoma
-15:19:18  INFO     edar_eval              [1/3] Bare LLM Zero-Shot...
-15:19:20  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Osteoid Osteoma' vs ['1. Ethmoid Sinus Malignancy (e.g., Squamous Cell Carcinoma)', '2. Mucocele of the Ethmoid Sinus with Secondary Infection', '3. Rhinogenic Orbital Pseudotumor'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 52.87it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 42.58it/s]
-15:19:20  INFO     edar_eval              Bare LLM: ✗ — ['1. Ethmoid Sinus Malignancy (e.g., Squamous Cell Carcinoma)', '2. Mucocele of the Ethmoid Sinus with Secondary Infection', '3. Rhinogenic Orbital Pseudotumor']
-15:19:20  INFO     edar_eval              [2/3] Standard RAG Baseline...
-15:19:23  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Osteoid Osteoma' vs ['Here are the top 3 differential diagnoses based on the clinical presentation:', '* **Meningioma of the tuberculum sellae**: This tumor can cause compression of the optic nerve and chiasm, leading to visual loss and optic atrophy.', '* **Craniopharyngioma**: This tumor can also compress the optic nerve and chiasm, causing visual loss and optic atrophy, and is more common in children and adolescents.', '* **Optic nerve glioma**: This tumor arises from the optic nerve and can cause compression of the optic nerve and chiasm, leading to visual loss and optic atrophy.'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 46.59it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 22.08it/s]
-15:19:24  INFO     edar_eval              RAG:      ✗ — ['Here are the top 3 differential diagnoses based on the clinical presentation:', '* **Meningioma of the tuberculum sellae**: This tumor can cause compression of the optic nerve and chiasm, leading to visual loss and optic atrophy.', '* **Craniopharyngioma**: This tumor can also compress the optic nerve and chiasm, causing visual loss and optic atrophy, and is more common in children and adolescents.']
-15:19:24  INFO     edar_eval              [3/3] Apiro EDAR...
-15:19:24  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 1: Extracting PatientContext...
-15:19:26  INFO     apiro.patient.context [PatientContext] Extracted: 33yo | M | CC=decreased vision in the left eye and a left-sided headache | symptoms=2 | labs=0
-15:19:26  INFO     apiro.graph.edar_traversal [EdarTraversal] PatientContext: PatientContext(33yo | M | CC=decreased vision in the left eye and a left-sided headache | symptoms=2 | labs=0)
-15:19:26  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 2: Oracle generating candidates (1 LLM call)...
-15:19:26  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Querying corpus with patient presentation...
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 72.16it/s]
-15:19:27  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Discovered 10 candidates from 60 corpus chunks. Top 5: ['Multiple sclerosis-ichthyosis-factor VIII deficiency syndrome', 'Optic atrophy 1', 'Åland Islands eye disease', 'Episodic ataxia type 4', 'Isolated optic neuritis']
-15:19:27  INFO     apiro.graph.edar_traversal [EdarTraversal] Candidates: ['Multiple sclerosis-ichthyosis-factor VIII deficiency syndrome', 'Optic atrophy 1', 'Åland Islands eye disease', 'Episodic ataxia type 4', 'Isolated optic neuritis', 'Retinal degeneration-nanophthalmos-glaucoma syndrome', 'Episodic ataxia, type 4', 'Wagner disease', 'Leber hereditary optic neuropathy', 'Morning glory disc anomaly']
-15:19:27  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 3: Building evidence graph (0 LLM)...
-15:19:27  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Building evidence graph for 10 candidates...
-15:19:28  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Evidence graph complete. 10 nodes built.
-15:19:28  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 4: Bayesian belief revision (0 LLM)...
-15:19:28  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Updating 10 candidates (rate-normalised, scale=sqrt(n_expected))...
-15:19:28  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Ranked 10 candidates. Top 3: [('Isolated optic neuritis', '0.2095'), ('Retinal degeneration-nanophthalmos-glauc', '0.1696'), ('Optic atrophy 1', '0.1428')]
-15:19:28  INFO     apiro.graph.edar_traversal   [EDAR #1] 'Isolated optic neuritis' (posterior=0.2095, ✅6 ❌0 ⚡0)
-15:19:28  INFO     apiro.graph.edar_traversal   [EDAR #2] 'Retinal degeneration-nanophthalmos-glaucoma syndrome' (posterior=0.1696, ✅2 ❌0 ⚡0)
-15:19:28  INFO     apiro.graph.edar_traversal   [EDAR #3] 'Optic atrophy 1' (posterior=0.1428, ✅4 ❌1 ⚡0)
-15:19:28  INFO     apiro.graph.edar_traversal   [EDAR #4] 'Episodic ataxia, type 4' (posterior=0.1428, ✅4 ❌1 ⚡0)
-15:19:28  INFO     apiro.graph.edar_traversal   [EDAR #5] 'Episodic ataxia type 4' (posterior=0.1236, ✅3 ❌1 ⚡0)
-15:19:28  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 5: Discriminative evidence seeking (0 LLM)...
-15:19:28  INFO     apiro.edar.discriminator [Discriminator] Close candidates! 'Isolated optic neuritis' (0.2095) vs 'Retinal degeneration-nanophthalmos-glaucoma syndrome' (0.1696). Seeking discriminating evidence...
-15:19:28  INFO     apiro.edar.discriminator [Discriminator] Both or neither confirmed — no update applied.
-15:19:28  INFO     apiro.graph.edar_traversal [EdarTraversal] Done. synthesis=['Isolated optic neuritis', 'Retinal degeneration-nanophthalmos-glaucoma syndrome', 'Optic atrophy 1'], time=4.57s
-15:19:28  INFO     apiro.graph.edar_traversal [EdarTraversal] Log written to /home/theroid/PycharmProjects/Apiro/data/edar_log_pmc_case_3_edar.jsonl
-15:19:28  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Osteoid Osteoma' vs ['Isolated optic neuritis', 'Retinal degeneration-nanophthalmos-glaucoma syndrome', 'Optic atrophy 1'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 98.41it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 49.99it/s]
-15:19:28  INFO     edar_eval              EDAR:     ✗ — ['Isolated optic neuritis', 'Retinal degeneration-nanophthalmos-glaucoma syndrome', 'Optic atrophy 1']
-15:19:28  INFO     edar_eval            
-──────────────────────────────────────────────────────────────────────
-15:19:28  INFO     edar_eval            Case: pmc_case_4 — Real world case report from PMC (Scrubbed)
-15:19:28  INFO     edar_eval            Target: Diaphragmatic Hernia with Intrathoracic Appendicitis
-15:19:28  INFO     edar_eval              [1/3] Bare LLM Zero-Shot...
-15:19:30  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Diaphragmatic Hernia with Intrathoracic Appendicitis' vs ['1. Acute appendicitis', '2. Gastroenteritis with possible intestinal obstruction or ileus', '3. Cholecystitis'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 92.06it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 62.52it/s]
-15:19:30  INFO     edar_eval              Bare LLM: ✗ — ['1. Acute appendicitis', '2. Gastroenteritis with possible intestinal obstruction or ileus', '3. Cholecystitis']
-15:19:30  INFO     edar_eval              [2/3] Standard RAG Baseline...
-15:19:34  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Diaphragmatic Hernia with Intrathoracic Appendicitis' vs ['Here are the top 3 differential diagnoses based on the clinical presentation and retrieved medical context:', "* **Acute Appendicitis**: The patient's symptoms, including right lower quadrant pain, rebound tenderness, guarding, and a positive Rovsing sign, are consistent with acute appendicitis.", "* **Acute Cholecystitis**: The patient's fever, elevated white cell count, and localized right upper quadrant pain suggest an inflammatory process, which is consistent with acute cholecystitis.", "* **Mesenteric Ischemia**: The patient's severe abdominal pain that worsens with movement and is not relieved by morphine injection may indicate mesenteric ischemia, particularly given the absence of gas in the right side of the bowel on X-ray."] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 70.34it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 14.97it/s]
-15:19:34  INFO     edar_eval              RAG:      ✗ — ['Here are the top 3 differential diagnoses based on the clinical presentation and retrieved medical context:', "* **Acute Appendicitis**: The patient's symptoms, including right lower quadrant pain, rebound tenderness, guarding, and a positive Rovsing sign, are consistent with acute appendicitis.", "* **Acute Cholecystitis**: The patient's fever, elevated white cell count, and localized right upper quadrant pain suggest an inflammatory process, which is consistent with acute cholecystitis."]
-15:19:34  INFO     edar_eval              [3/3] Apiro EDAR...
-15:19:34  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 1: Extracting PatientContext...
-15:19:37  INFO     apiro.patient.context [PatientContext] Extracted: 43yo | F | CC=6-hour history of generalized abdominal pain that has locali | symptoms=3 | labs=0
-15:19:37  INFO     apiro.graph.edar_traversal [EdarTraversal] PatientContext: PatientContext(43yo | F | CC=6-hour history of generalized abdominal pain that has locali | symptoms=3 | labs=0)
-15:19:37  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 2: Oracle generating candidates (1 LLM call)...
-15:19:37  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Querying corpus with patient presentation...
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 71.88it/s]
-15:19:38  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Discovered 10 candidates from 60 corpus chunks. Top 5: ['Urachal sinus', 'Neuroendocrine neoplasm of appendix', 'Glucagonoma', 'Castleman disease', 'Somatostatinoma']
-15:19:38  INFO     apiro.graph.edar_traversal [EdarTraversal] Candidates: ['Urachal sinus', 'Neuroendocrine neoplasm of appendix', 'Glucagonoma', 'Castleman disease', 'Somatostatinoma', 'Pseudomyxoma peritonei', 'Primary peritoneal carcinoma', 'Ileal neuroendocrine tumor', 'Chronic diarrhea due to glucoamylase deficiency', 'PPoma']
-15:19:38  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 3: Building evidence graph (0 LLM)...
-15:19:38  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Building evidence graph for 10 candidates...
-15:19:39  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Evidence graph complete. 10 nodes built.
-15:19:39  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 4: Bayesian belief revision (0 LLM)...
-15:19:39  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Updating 10 candidates (rate-normalised, scale=sqrt(n_expected))...
-15:19:39  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Ranked 10 candidates. Top 3: [('PPoma', '0.1507'), ('Pseudomyxoma peritonei', '0.1490'), ('Neuroendocrine neoplasm of appendix', '0.1484')]
-15:19:39  INFO     apiro.graph.edar_traversal   [EDAR #1] 'PPoma' (posterior=0.1507, ✅8 ❌4 ⚡0)
-15:19:39  INFO     apiro.graph.edar_traversal   [EDAR #2] 'Pseudomyxoma peritonei' (posterior=0.1490, ✅7 ❌3 ⚡0)
-15:19:39  INFO     apiro.graph.edar_traversal   [EDAR #3] 'Neuroendocrine neoplasm of appendix' (posterior=0.1484, ✅6 ❌2 ⚡0)
-15:19:39  INFO     apiro.graph.edar_traversal   [EDAR #4] 'Primary peritoneal carcinoma' (posterior=0.1484, ✅6 ❌2 ⚡0)
-15:19:39  INFO     apiro.graph.edar_traversal   [EDAR #5] 'Chronic diarrhea due to glucoamylase deficiency' (posterior=0.1256, ✅7 ❌5 ⚡0)
-15:19:39  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 5: Discriminative evidence seeking (0 LLM)...
-15:19:39  INFO     apiro.edar.discriminator [Discriminator] Close candidates! 'PPoma' (0.1507) vs 'Pseudomyxoma peritonei' (0.1490). Seeking discriminating evidence...
-15:19:39  INFO     apiro.edar.discriminator [Discriminator] Both or neither confirmed — no update applied.
-15:19:39  INFO     apiro.graph.edar_traversal [EdarTraversal] Done. synthesis=['PPoma', 'Pseudomyxoma peritonei', 'Neuroendocrine neoplasm of appendix'], time=5.37s
-15:19:39  INFO     apiro.graph.edar_traversal [EdarTraversal] Log written to /home/theroid/PycharmProjects/Apiro/data/edar_log_pmc_case_4_edar.jsonl
-15:19:40  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Diaphragmatic Hernia with Intrathoracic Appendicitis' vs ['PPoma', 'Pseudomyxoma peritonei', 'Neuroendocrine neoplasm of appendix'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 79.69it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 69.90it/s]
-15:19:40  INFO     edar_eval              EDAR:     ✗ — ['PPoma', 'Pseudomyxoma peritonei', 'Neuroendocrine neoplasm of appendix']
-15:19:40  INFO     edar_eval            
-──────────────────────────────────────────────────────────────────────
-15:19:40  INFO     edar_eval            Case: pmc_case_5 — Real world case report from PMC (Scrubbed)
-15:19:40  INFO     edar_eval            Target: acute cholecystitis
-15:19:40  INFO     edar_eval              [1/3] Bare LLM Zero-Shot...
-15:19:41  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'acute cholecystitis' vs ['1. Acute pancreatitis', '2. Gastroesophageal reflux disease (GERD) with possible esophagitis', "3. Boerhaave's syndrome"] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 102.24it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 43.91it/s]
-15:19:41  INFO     edar_eval              Bare LLM: ✓ — ['1. Acute pancreatitis', '2. Gastroesophageal reflux disease (GERD) with possible esophagitis', "3. Boerhaave's syndrome"]
-15:19:41  INFO     edar_eval              [2/3] Standard RAG Baseline...
-15:19:46  INFO     edar_eval              RAG:      ✓ — ['Here are the top 3 differential diagnoses based on the clinical presentation:', "* **Acute Pancreatitis**: The patient's epigastric pain radiating to the back, vomiting, elevated CRP level, and ultrasound findings of gallstones in an abnormal location (left upper quadrant) suggest acute pancreatitis.", "* **Mesenteric Thrombosis or Ischemia**: The patient's intermittent colicky pain, elevated CRP level, and abdominal tenderness could be indicative of mesenteric thrombosis or ischemia, especially given the association with gallstones."]
-15:19:46  INFO     edar_eval              [3/3] Apiro EDAR...
-15:19:46  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 1: Extracting PatientContext...
-15:19:49  INFO     apiro.patient.context [PatientContext] Extracted: 32yo | F | CC=A 3-hour history of epigastric pain radiating into her back | symptoms=2 | labs=1
-15:19:49  INFO     apiro.graph.edar_traversal [EdarTraversal] PatientContext: PatientContext(32yo | F | CC=A 3-hour history of epigastric pain radiating into her back | symptoms=2 | labs=1)
-15:19:49  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 2: Oracle generating candidates (1 LLM call)...
-15:19:49  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Querying corpus with patient presentation...
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 51.92it/s]
-15:19:49  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Discovered 10 candidates from 60 corpus chunks. Top 5: ['Bronchogenic cyst', 'Neuroblastoma', 'Hereditary coproporphyria', 'Kaposiform lymphangiomatosis', 'Multiple endocrine neoplasia type 2']
-15:19:49  INFO     apiro.graph.edar_traversal [EdarTraversal] Candidates: ['Bronchogenic cyst', 'Neuroblastoma', 'Hereditary coproporphyria', 'Kaposiform lymphangiomatosis', 'Multiple endocrine neoplasia type 2', 'Non-functioning paraganglioma', 'SAPHO syndrome', 'Hypermobile Ehlers-Danlos syndrome', 'Peripheral primitive neuroectodermal tumor', 'Sporadic pheochromocytoma/secreting paraganglioma']
-15:19:49  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 3: Building evidence graph (0 LLM)...
-15:19:49  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Building evidence graph for 10 candidates...
-15:19:51  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Evidence graph complete. 10 nodes built.
-15:19:51  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 4: Bayesian belief revision (0 LLM)...
-15:19:51  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Updating 10 candidates (rate-normalised, scale=sqrt(n_expected))...
-15:19:51  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Ranked 10 candidates. Top 3: [('Peripheral primitive neuroectodermal tum', '0.2776'), ('SAPHO syndrome', '0.1530'), ('Kaposiform lymphangiomatosis', '0.1358')]
-15:19:51  INFO     apiro.graph.edar_traversal   [EDAR #1] 'Peripheral primitive neuroectodermal tumor' (posterior=0.2776, ✅6 ❌2 ⚡0)
-15:19:51  INFO     apiro.graph.edar_traversal   [EDAR #2] 'SAPHO syndrome' (posterior=0.1530, ✅4 ❌6 ⚡0)
-15:19:51  INFO     apiro.graph.edar_traversal   [EDAR #3] 'Kaposiform lymphangiomatosis' (posterior=0.1358, ✅4 ❌8 ⚡0)
-15:19:51  INFO     apiro.graph.edar_traversal   [EDAR #4] 'Bronchogenic cyst' (posterior=0.0943, ✅2 ❌10 ⚡0)
-15:19:51  INFO     apiro.graph.edar_traversal   [EDAR #5] 'Hereditary coproporphyria' (posterior=0.0785, ✅1 ❌11 ⚡0)
-15:19:51  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 5: Discriminative evidence seeking (0 LLM)...
-15:19:51  INFO     apiro.edar.discriminator [Discriminator] Candidates not close enough — skipping. Top1=0.2776, Top2=0.1530
-15:19:51  INFO     apiro.graph.edar_traversal [EdarTraversal] Done. synthesis=['Peripheral primitive neuroectodermal tumor', 'SAPHO syndrome', 'Kaposiform lymphangiomatosis'], time=5.20s
-15:19:51  INFO     apiro.graph.edar_traversal [EdarTraversal] Log written to /home/theroid/PycharmProjects/Apiro/data/edar_log_pmc_case_5_edar.jsonl
-15:19:51  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'acute cholecystitis' vs ['Peripheral primitive neuroectodermal tumor', 'SAPHO syndrome', 'Kaposiform lymphangiomatosis'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 89.69it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 68.74it/s]
-15:19:51  INFO     edar_eval              EDAR:     ✗ — ['Peripheral primitive neuroectodermal tumor', 'SAPHO syndrome', 'Kaposiform lymphangiomatosis']
-15:19:51  INFO     edar_eval            
-──────────────────────────────────────────────────────────────────────
-15:19:51  INFO     edar_eval            Case: pmc_case_6 — Real world case report from PMC (Scrubbed)
-15:19:51  INFO     edar_eval            Target: posterolateral dislocation of the left elbow in association with Milch type II lateral condyle fracture
-15:19:51  INFO     edar_eval              [1/3] Bare LLM Zero-Shot...
-15:19:54  INFO     apiro.eval.evaluator [LLM-Judge] Match confirmed for 'posterolateral dislocation of the left elbow in association with Milch type II lateral condyle fracture' vs ['1. Posterolateral dislocation of the elbow', '2. Fracture of the elbow (specific type not specified)', '3. Olecranon fracture']
-15:19:54  INFO     edar_eval              Bare LLM: ✓ — ['1. Posterolateral dislocation of the elbow', '2. Fracture of the elbow (specific type not specified)', '3. Olecranon fracture']
-15:19:54  INFO     edar_eval              [2/3] Standard RAG Baseline...
-15:19:56  INFO     apiro.eval.evaluator [LLM-Judge] Match confirmed for 'posterolateral dislocation of the left elbow in association with Milch type II lateral condyle fracture' vs ['• Posterolateral dislocation of the elbow', "• Radial head subluxation (Nursemaid's elbow)", '• Fracture of the olecranon']
-15:19:56  INFO     edar_eval              RAG:      ✓ — ['• Posterolateral dislocation of the elbow', "• Radial head subluxation (Nursemaid's elbow)", '• Fracture of the olecranon']
-15:19:56  INFO     edar_eval              [3/3] Apiro EDAR...
-15:19:56  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 1: Extracting PatientContext...
-15:19:58  INFO     apiro.patient.context [PatientContext] Extracted: 12yo | M | CC=Significant pain and swelling in the left elbow after a fall | symptoms=2 | labs=0
-15:19:58  INFO     apiro.graph.edar_traversal [EdarTraversal] PatientContext: PatientContext(12yo | M | CC=Significant pain and swelling in the left elbow after a fall | symptoms=2 | labs=0)
-15:19:58  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 2: Oracle generating candidates (1 LLM call)...
-15:19:58  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Querying corpus with patient presentation...
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 55.50it/s]
-15:19:58  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Discovered 10 candidates from 60 corpus chunks. Top 5: ['Osteochondritis dissecans', 'Panner disease', 'Sinding-Larsen-Johansson disease', 'Hemophilia A', 'Intermittent hydrarthrosis']
-15:19:58  INFO     apiro.graph.edar_traversal [EdarTraversal] Candidates: ['Osteochondritis dissecans', 'Panner disease', 'Sinding-Larsen-Johansson disease', 'Hemophilia A', 'Intermittent hydrarthrosis', 'Ring chromosome 4 syndrome', 'Isolated radio-ulnar synostosis', 'Kyphoscoliotic Ehlers-Danlos syndrome due to lysyl hydroxylase 1 deficiency', 'Adamantinoma', 'Leri pleonosteosis']
-15:19:58  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 3: Building evidence graph (0 LLM)...
-15:19:58  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Building evidence graph for 10 candidates...
-15:20:00  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Evidence graph complete. 10 nodes built.
-15:20:00  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 4: Bayesian belief revision (0 LLM)...
-15:20:00  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Updating 10 candidates (rate-normalised, scale=sqrt(n_expected))...
-15:20:00  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Ranked 10 candidates. Top 3: [('Osteochondritis dissecans', '0.2170'), ('Leri pleonosteosis', '0.1255'), ('Hemophilia A', '0.0928')]
-15:20:00  INFO     apiro.graph.edar_traversal   [EDAR #1] 'Osteochondritis dissecans' (posterior=0.2170, ✅4 ❌8 ⚡0)
-15:20:00  INFO     apiro.graph.edar_traversal   [EDAR #2] 'Leri pleonosteosis' (posterior=0.1255, ✅1 ❌11 ⚡0)
-15:20:00  INFO     apiro.graph.edar_traversal   [EDAR #3] 'Hemophilia A' (posterior=0.0928, ✅0 ❌2 ⚡0)
-15:20:00  INFO     apiro.graph.edar_traversal   [EDAR #4] 'Ring chromosome 4 syndrome' (posterior=0.0928, ✅0 ❌2 ⚡0)
-15:20:00  INFO     apiro.graph.edar_traversal   [EDAR #5] 'Kyphoscoliotic Ehlers-Danlos syndrome due to lysyl hydroxylase 1 deficiency' (posterior=0.0928, ✅0 ❌3 ⚡0)
-15:20:00  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 5: Discriminative evidence seeking (0 LLM)...
-15:20:00  INFO     apiro.edar.discriminator [Discriminator] Candidates not close enough — skipping. Top1=0.2170, Top2=0.1255
-15:20:00  INFO     apiro.graph.edar_traversal [EdarTraversal] Done. synthesis=['Osteochondritis dissecans', 'Leri pleonosteosis', 'Hemophilia A'], time=3.90s
-15:20:00  INFO     apiro.graph.edar_traversal [EdarTraversal] Log written to /home/theroid/PycharmProjects/Apiro/data/edar_log_pmc_case_6_edar.jsonl
-15:20:00  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'posterolateral dislocation of the left elbow in association with Milch type II lateral condyle fracture' vs ['Osteochondritis dissecans', 'Leri pleonosteosis', 'Hemophilia A'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 84.08it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 75.71it/s]
-15:20:00  INFO     edar_eval              EDAR:     ✗ — ['Osteochondritis dissecans', 'Leri pleonosteosis', 'Hemophilia A']
-15:20:00  INFO     edar_eval            
-──────────────────────────────────────────────────────────────────────
-15:20:00  INFO     edar_eval            Case: pmc_case_7 — Real world case report from PMC (Scrubbed)
-15:20:00  INFO     edar_eval            Target: Congenital Cystic Adenomatoid Malformation (CCAM)
-15:20:00  INFO     edar_eval              [1/3] Bare LLM Zero-Shot...
-15:20:02  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Congenital Cystic Adenomatoid Malformation (CCAM)' vs ['1. Monochorionic Triamniotic Triploidy', '2. Complete Hydatidiform Mole (with coexisting triploid fetus)', '3. Partial Molar Pregnancy with a normal fetus and two triploid products of conception'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 24.67it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 45.74it/s]
-15:20:02  INFO     edar_eval              Bare LLM: ✗ — ['1. Monochorionic Triamniotic Triploidy', '2. Complete Hydatidiform Mole (with coexisting triploid fetus)', '3. Partial Molar Pregnancy with a normal fetus and two triploid products of conception']
-15:20:02  INFO     edar_eval              [2/3] Standard RAG Baseline...
-15:20:06  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Congenital Cystic Adenomatoid Malformation (CCAM)' vs ['Here are the top 3 differential diagnoses based on the clinical presentation:', "* **Monochorionic Triamniotic Triploid Pregnancy**: Given the patient's history of triplet pregnancies and her current monochorionic triamniotic triplet pregnancy, this diagnosis is a strong consideration.", '* **Twin-to-Twin Transfusion Syndrome (TTTS)**: The presence of an ipsilon zone in a monochorionic triamniotic triplet pregnancy increases the risk for TTTS, which can lead to complications such as fetal growth restriction and demise.', "* **Spontaneous Reduction of Multiple Pregnancy**: Given the patient's history of previous spontaneous abortions and her current threatened abortion at 15 weeks of gestation, spontaneous reduction of one or more fetuses is a possible consideration."] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 91.46it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 15.77it/s]
-15:20:06  INFO     edar_eval              RAG:      ✗ — ['Here are the top 3 differential diagnoses based on the clinical presentation:', "* **Monochorionic Triamniotic Triploid Pregnancy**: Given the patient's history of triplet pregnancies and her current monochorionic triamniotic triplet pregnancy, this diagnosis is a strong consideration.", '* **Twin-to-Twin Transfusion Syndrome (TTTS)**: The presence of an ipsilon zone in a monochorionic triamniotic triplet pregnancy increases the risk for TTTS, which can lead to complications such as fetal growth restriction and demise.']
-15:20:06  INFO     edar_eval              [3/3] Apiro EDAR...
-15:20:06  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 1: Extracting PatientContext...
-15:20:09  INFO     apiro.patient.context [PatientContext] Extracted: F | CC=triplet pregnancy complicated by threatened abortion | symptoms=1 | labs=0
-15:20:09  INFO     apiro.graph.edar_traversal [EdarTraversal] PatientContext: PatientContext(F | CC=triplet pregnancy complicated by threatened abortion | symptoms=1 | labs=0)
-15:20:09  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 2: Oracle generating candidates (1 LLM call)...
-15:20:09  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Querying corpus with patient presentation...
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 74.25it/s]
-15:20:09  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Discovered 10 candidates from 60 corpus chunks. Top 5: ['Pregnancy loss, recurrent, susceptibility to, 1', 'Pregnancy loss, recurrent, susceptibility to, 2', 'Pregnancy loss, recurrent, susceptibility to, 3', 'Oocyte maturation defect 10', 'Fetal akinesia syndrome, X-linked']
-15:20:09  INFO     apiro.graph.edar_traversal [EdarTraversal] Candidates: ['Pregnancy loss, recurrent, susceptibility to, 1', 'Pregnancy loss, recurrent, susceptibility to, 2', 'Pregnancy loss, recurrent, susceptibility to, 3', 'Oocyte maturation defect 10', 'Fetal akinesia syndrome, X-linked', 'Umbilical cord ulceration-intestinal atresia syndrome', 'Preimplantation embryonic lethality 2', 'Hydrops fetalis', 'Cardiac-Urogenital syndrome', 'Hydrops, lactic acidosis, and sideroblastic anemia']
-15:20:09  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 3: Building evidence graph (0 LLM)...
-15:20:09  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Building evidence graph for 10 candidates...
-15:20:11  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Evidence graph complete. 10 nodes built.
-15:20:11  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 4: Bayesian belief revision (0 LLM)...
-15:20:11  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Updating 10 candidates (rate-normalised, scale=sqrt(n_expected))...
-15:20:11  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Ranked 10 candidates. Top 3: [('Pregnancy loss, recurrent, susceptibilit', '0.1997'), ('Pregnancy loss, recurrent, susceptibilit', '0.1310'), ('Pregnancy loss, recurrent, susceptibilit', '0.1310')]
-15:20:11  INFO     apiro.graph.edar_traversal   [EDAR #1] 'Pregnancy loss, recurrent, susceptibility to, 1' (posterior=0.1997, ✅1 ❌0 ⚡0)
-15:20:11  INFO     apiro.graph.edar_traversal   [EDAR #2] 'Pregnancy loss, recurrent, susceptibility to, 2' (posterior=0.1310, ✅2 ❌1 ⚡0)
-15:20:11  INFO     apiro.graph.edar_traversal   [EDAR #3] 'Pregnancy loss, recurrent, susceptibility to, 3' (posterior=0.1310, ✅2 ❌1 ⚡0)
-15:20:11  INFO     apiro.graph.edar_traversal   [EDAR #4] 'Fetal akinesia syndrome, X-linked' (posterior=0.1310, ✅2 ❌1 ⚡0)
-15:20:11  INFO     apiro.graph.edar_traversal   [EDAR #5] 'Oocyte maturation defect 10' (posterior=0.1061, ✅1 ❌1 ⚡0)
-15:20:11  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 5: Discriminative evidence seeking (0 LLM)...
-15:20:11  INFO     apiro.edar.discriminator [Discriminator] Candidates not close enough — skipping. Top1=0.1997, Top2=0.1310
-15:20:11  INFO     apiro.graph.edar_traversal [EdarTraversal] Done. synthesis=['Pregnancy loss, recurrent, susceptibility to, 1', 'Pregnancy loss, recurrent, susceptibility to, 2', 'Pregnancy loss, recurrent, susceptibility to, 3'], time=4.56s
-15:20:11  INFO     apiro.graph.edar_traversal [EdarTraversal] Log written to /home/theroid/PycharmProjects/Apiro/data/edar_log_pmc_case_7_edar.jsonl
-15:20:11  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Congenital Cystic Adenomatoid Malformation (CCAM)' vs ['Pregnancy loss, recurrent, susceptibility to, 1', 'Pregnancy loss, recurrent, susceptibility to, 2', 'Pregnancy loss, recurrent, susceptibility to, 3'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 87.03it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 64.66it/s]
-15:20:11  INFO     edar_eval              EDAR:     ✗ — ['Pregnancy loss, recurrent, susceptibility to, 1', 'Pregnancy loss, recurrent, susceptibility to, 2', 'Pregnancy loss, recurrent, susceptibility to, 3']
-15:20:11  INFO     edar_eval            
-──────────────────────────────────────────────────────────────────────
-15:20:11  INFO     edar_eval            Case: pmc_case_8 — Real world case report from PMC (Scrubbed)
-15:20:11  INFO     edar_eval            Target: Pneumonia
-15:20:11  INFO     edar_eval              [1/3] Bare LLM Zero-Shot...
-15:20:12  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Pneumonia' vs ['1. Cervical spine infection (e.g., osteomyelitis)', '2. Spinal epidural abscess', '3. Tuberculous spondylitis'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 72.75it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 50.24it/s]
-15:20:13  INFO     edar_eval              Bare LLM: ✗ — ['1. Cervical spine infection (e.g., osteomyelitis)', '2. Spinal epidural abscess', '3. Tuberculous spondylitis']
-15:20:13  INFO     edar_eval              [2/3] Standard RAG Baseline...
-15:20:14  INFO     edar_eval              RAG:      ✓ — ['Here are the top 3 differential diagnoses:', '* Acute Respiratory Distress Syndrome (ARDS)', '* Ventilator-Associated Pneumonia (VAP)']
-15:20:14  INFO     edar_eval              [3/3] Apiro EDAR...
-15:20:14  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 1: Extracting PatientContext...
-15:20:17  INFO     apiro.patient.context [PatientContext] Extracted: 19yo | M | CC=admitted to the ICU with fractures of the 2nd and 3rd cervic | symptoms=2 | labs=2
-15:20:17  INFO     apiro.graph.edar_traversal [EdarTraversal] PatientContext: PatientContext(19yo | M | CC=admitted to the ICU with fractures of the 2nd and 3rd cervic | symptoms=2 | labs=2)
-15:20:17  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 2: Oracle generating candidates (1 LLM call)...
-15:20:17  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Querying corpus with patient presentation...
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 40.96it/s]
-15:20:17  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Discovered 10 candidates from 60 corpus chunks. Top 5: ['Aspergillosis', 'Congenital pseudoarthrosis of the clavicle', 'Kaposiform lymphangiomatosis', 'SAPHO syndrome', 'X-linked hypophosphatemia']
-15:20:17  INFO     apiro.graph.edar_traversal [EdarTraversal] Candidates: ['Aspergillosis', 'Congenital pseudoarthrosis of the clavicle', 'Kaposiform lymphangiomatosis', 'SAPHO syndrome', 'X-linked hypophosphatemia', 'Albers-Schönberg osteopetrosis', 'Intermediate osteopetrosis', 'Japanese encephalitis', 'Mycetoma', "Spondylometaphyseal dysplasia, 'corner fracture' type"]
-15:20:17  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 3: Building evidence graph (0 LLM)...
-15:20:17  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Building evidence graph for 10 candidates...
-15:20:19  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Evidence graph complete. 10 nodes built.
-15:20:19  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 4: Bayesian belief revision (0 LLM)...
-15:20:19  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Updating 10 candidates (rate-normalised, scale=sqrt(n_expected))...
-15:20:19  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Ranked 10 candidates. Top 3: [('Aspergillosis', '0.2485'), ('Intermediate osteopetrosis', '0.1574'), ("Spondylometaphyseal dysplasia, 'corner f", '0.1123')]
-15:20:19  INFO     apiro.graph.edar_traversal   [EDAR #1] 'Aspergillosis' (posterior=0.2485, ✅9 ❌3 ⚡0)
-15:20:19  INFO     apiro.graph.edar_traversal   [EDAR #2] 'Intermediate osteopetrosis' (posterior=0.1574, ✅3 ❌1 ⚡0)
-15:20:19  INFO     apiro.graph.edar_traversal   [EDAR #3] 'Spondylometaphyseal dysplasia, 'corner fracture' type' (posterior=0.1123, ✅4 ❌6 ⚡0)
-15:20:19  INFO     apiro.graph.edar_traversal   [EDAR #4] 'Kaposiform lymphangiomatosis' (posterior=0.0997, ✅4 ❌8 ⚡0)
-15:20:19  INFO     apiro.graph.edar_traversal   [EDAR #5] 'Japanese encephalitis' (posterior=0.0885, ✅2 ❌5 ⚡0)
-15:20:19  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 5: Discriminative evidence seeking (0 LLM)...
-15:20:19  INFO     apiro.edar.discriminator [Discriminator] Candidates not close enough — skipping. Top1=0.2485, Top2=0.1574
-15:20:19  INFO     apiro.graph.edar_traversal [EdarTraversal] Done. synthesis=['Aspergillosis', 'Intermediate osteopetrosis', "Spondylometaphyseal dysplasia, 'corner fracture' type"], time=5.05s
-15:20:19  INFO     apiro.graph.edar_traversal [EdarTraversal] Log written to /home/theroid/PycharmProjects/Apiro/data/edar_log_pmc_case_8_edar.jsonl
-15:20:19  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Pneumonia' vs ['Aspergillosis', 'Intermediate osteopetrosis', "Spondylometaphyseal dysplasia, 'corner fracture' type"] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 103.11it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 47.05it/s]
-15:20:19  INFO     edar_eval              EDAR:     ✗ — ['Aspergillosis', 'Intermediate osteopetrosis', "Spondylometaphyseal dysplasia, 'corner fracture' type"]
-15:20:19  INFO     edar_eval            
-──────────────────────────────────────────────────────────────────────
-15:20:19  INFO     edar_eval            Case: pmc_case_9 — Real world case report from PMC (Scrubbed)
-15:20:19  INFO     edar_eval            Target: acute respiratory distress syndrome (ARDS)
-15:20:19  INFO     edar_eval              [1/3] Bare LLM Zero-Shot...
-15:20:21  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'acute respiratory distress syndrome (ARDS)' vs ['1. **Pneumonia**', '2. **Urosepsis**', '3. **Acute Kidney Injury**'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 82.70it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 59.19it/s]
-15:20:21  INFO     edar_eval              Bare LLM: ✗ — ['1. **Pneumonia**', '2. **Urosepsis**', '3. **Acute Kidney Injury**']
-15:20:21  INFO     edar_eval              [2/3] Standard RAG Baseline...
-15:20:27  INFO     apiro.eval.evaluator [LLM-Judge] Match confirmed for 'acute respiratory distress syndrome (ARDS)' vs ['Here are the top 3 differential diagnoses for the patient:', "* **Complicated Urinary Tract Infection (UTI) due to E. coli**: Given the patient's history of repeated hospitalizations for UTIs and her current presentation with severe UTI and ARDS, E. coli is a likely cause.", "* **Enterococcal Urinary Tract Infection (UTI)**: The presence of leukocytes in the urine and systemic manifestations such as fever suggest an enterococcal UTI, particularly given the patient's comorbidities and indwelling catheter.", "* **Candiduria**: Although Candida is not typically a cause of UTIs in healthy individuals, it has become a common pathogen in nosocomial UTIs among ICU patients. The patient's severe illness and prolonged hospitalization make candiduria a possible differential diagnosis."]
-15:20:27  INFO     edar_eval              RAG:      ✓ — ['Here are the top 3 differential diagnoses for the patient:', "* **Complicated Urinary Tract Infection (UTI) due to E. coli**: Given the patient's history of repeated hospitalizations for UTIs and her current presentation with severe UTI and ARDS, E. coli is a likely cause.", "* **Enterococcal Urinary Tract Infection (UTI)**: The presence of leukocytes in the urine and systemic manifestations such as fever suggest an enterococcal UTI, particularly given the patient's comorbidities and indwelling catheter."]
-15:20:27  INFO     edar_eval              [3/3] Apiro EDAR...
-15:20:27  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 1: Extracting PatientContext...
-15:20:30  INFO     apiro.patient.context [PatientContext] Extracted: 72yo | F | CC=severe urinary tract infection and acute respiratory distres | symptoms=2 | labs=0
-15:20:30  INFO     apiro.graph.edar_traversal [EdarTraversal] PatientContext: PatientContext(72yo | F | CC=severe urinary tract infection and acute respiratory distres | symptoms=2 | labs=0)
-15:20:30  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 2: Oracle generating candidates (1 LLM call)...
-15:20:30  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Querying corpus with patient presentation...
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 45.87it/s]
-15:20:30  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Discovered 10 candidates from 60 corpus chunks. Top 5: ['Urachal diverticulum', 'Severe acute respiratory syndrome', 'Vesicoureteral reflux 8', 'Hinman syndrome', 'Atresia of urethra']
-15:20:30  INFO     apiro.graph.edar_traversal [EdarTraversal] Candidates: ['Urachal diverticulum', 'Severe acute respiratory syndrome', 'Vesicoureteral reflux 8', 'Hinman syndrome', 'Atresia of urethra', 'Idiopathic bronchiectasis', 'Hypouricemia, renal, 1', 'Melioidosis', 'Pneumocystosis', 'Immunodeficiency due to ficolin 3 deficiency']
-15:20:30  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 3: Building evidence graph (0 LLM)...
-15:20:30  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Building evidence graph for 10 candidates...
-15:20:32  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Evidence graph complete. 10 nodes built.
-15:20:32  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 4: Bayesian belief revision (0 LLM)...
-15:20:32  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Updating 10 candidates (rate-normalised, scale=sqrt(n_expected))...
-15:20:32  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Ranked 10 candidates. Top 3: [('Severe acute respiratory syndrome', '0.1715'), ('Atresia of urethra', '0.1715'), ('Urachal diverticulum', '0.1429')]
-15:20:32  INFO     apiro.graph.edar_traversal   [EDAR #1] 'Severe acute respiratory syndrome' (posterior=0.1715, ✅9 ❌3 ⚡0)
-15:20:32  INFO     apiro.graph.edar_traversal   [EDAR #2] 'Atresia of urethra' (posterior=0.1715, ✅9 ❌3 ⚡0)
-15:20:32  INFO     apiro.graph.edar_traversal   [EDAR #3] 'Urachal diverticulum' (posterior=0.1429, ✅8 ❌4 ⚡0)
-15:20:32  INFO     apiro.graph.edar_traversal   [EDAR #4] 'Idiopathic bronchiectasis' (posterior=0.1407, ✅6 ❌2 ⚡0)
-15:20:32  INFO     apiro.graph.edar_traversal   [EDAR #5] 'Pneumocystosis' (posterior=0.0775, ✅4 ❌6 ⚡0)
-15:20:32  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 5: Discriminative evidence seeking (0 LLM)...
-15:20:32  INFO     apiro.edar.discriminator [Discriminator] Close candidates! 'Severe acute respiratory syndrome' (0.1715) vs 'Atresia of urethra' (0.1715). Seeking discriminating evidence...
-15:20:32  INFO     apiro.edar.discriminator [Discriminator] Both or neither confirmed — no update applied.
-15:20:32  INFO     apiro.graph.edar_traversal [EdarTraversal] Done. synthesis=['Severe acute respiratory syndrome', 'Atresia of urethra', 'Urachal diverticulum'], time=5.29s
-15:20:32  INFO     apiro.graph.edar_traversal [EdarTraversal] Log written to /home/theroid/PycharmProjects/Apiro/data/edar_log_pmc_case_9_edar.jsonl
-15:20:32  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'acute respiratory distress syndrome (ARDS)' vs ['Severe acute respiratory syndrome', 'Atresia of urethra', 'Urachal diverticulum'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 72.16it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 74.91it/s]
-15:20:32  INFO     edar_eval              EDAR:     ✓ — ['Severe acute respiratory syndrome', 'Atresia of urethra', 'Urachal diverticulum']
-15:20:32  INFO     edar_eval            
-──────────────────────────────────────────────────────────────────────
-15:20:32  INFO     edar_eval            Case: pmc_case_10 — Real world case report from PMC (Scrubbed)
-15:20:32  INFO     edar_eval            Target: Central venous catheter dislocation
-15:20:32  INFO     edar_eval              [1/3] Bare LLM Zero-Shot...
-15:20:33  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Central venous catheter dislocation' vs ['1. Superior vena cava syndrome (SVCS)', '2. Catheter-related thrombosis or central line-associated infection', '3. Pulmonary embolism (PE)'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 50.26it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 53.77it/s]
-15:20:33  INFO     edar_eval              Bare LLM: ✗ — ['1. Superior vena cava syndrome (SVCS)', '2. Catheter-related thrombosis or central line-associated infection', '3. Pulmonary embolism (PE)']
-15:20:33  INFO     edar_eval              [2/3] Standard RAG Baseline...
-15:20:38  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Central venous catheter dislocation' vs ['Here are the top 3 differential diagnoses based on the clinical presentation:', "* **Superior Vena Cava Syndrome (SVCS)**: Given the patient's history of metastatic breast cancer and symptoms such as dyspnea, intermittent coughing, and general weakness.", '* **Pulmonary Lymphangitic Carcinomatosis**: A complication of advanced malignancy, which can cause diffuse interstitial infiltrates on chest radiographs and symptoms such as dyspnea and nonproductive cough.', "* **Deep Vein Thrombosis (DVT) with or without Pulmonary Embolism (PE)**: Given the patient's history of a totally implantable venous access port catheter, which increases the risk of DVT and PE."] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 75.59it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 16.19it/s]
-15:20:38  INFO     edar_eval              RAG:      ✗ — ['Here are the top 3 differential diagnoses based on the clinical presentation:', "* **Superior Vena Cava Syndrome (SVCS)**: Given the patient's history of metastatic breast cancer and symptoms such as dyspnea, intermittent coughing, and general weakness.", '* **Pulmonary Lymphangitic Carcinomatosis**: A complication of advanced malignancy, which can cause diffuse interstitial infiltrates on chest radiographs and symptoms such as dyspnea and nonproductive cough.']
-15:20:38  INFO     edar_eval              [3/3] Apiro EDAR...
-15:20:38  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 1: Extracting PatientContext...
-15:20:41  INFO     apiro.patient.context [PatientContext] Extracted: 49yo | F | CC=Dyspnea | symptoms=3 | labs=2
-15:20:41  INFO     apiro.graph.edar_traversal [EdarTraversal] PatientContext: PatientContext(49yo | F | CC=Dyspnea | symptoms=3 | labs=2)
-15:20:41  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 2: Oracle generating candidates (1 LLM call)...
-15:20:41  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Querying corpus with patient presentation...
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 45.95it/s]
-15:20:41  INFO     apiro.edar.candidate_discoverer [CandidateDiscoverer] Discovered 10 candidates from 60 corpus chunks. Top 5: ['Acute interstitial pneumonia', 'Bronchiolitis obliterans', 'Cryptogenic organizing pneumonia', 'Autoimmune pulmonary alveolar proteinosis', 'Pleural mesothelioma']
-15:20:41  INFO     apiro.graph.edar_traversal [EdarTraversal] Candidates: ['Acute interstitial pneumonia', 'Bronchiolitis obliterans', 'Cryptogenic organizing pneumonia', 'Autoimmune pulmonary alveolar proteinosis', 'Pleural mesothelioma', 'Respiratory bronchiolitis-interstitial lung disease syndrome', 'Diffuse alveolar hemorrhage', 'Asbestos intoxication', 'Thymic carcinoma', 'Panbronchiolitis, diffuse']
-15:20:41  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 3: Building evidence graph (0 LLM)...
-15:20:41  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Building evidence graph for 10 candidates...
-15:20:43  INFO     apiro.edar.evidence_graph [EvidenceGraphBuilder] Evidence graph complete. 10 nodes built.
-15:20:43  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 4: Bayesian belief revision (0 LLM)...
-15:20:43  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Updating 10 candidates (rate-normalised, scale=sqrt(n_expected))...
-15:20:43  INFO     apiro.edar.belief_updater [BayesianBeliefUpdater] Ranked 10 candidates. Top 3: [('Bronchiolitis obliterans', '0.1903'), ('Acute interstitial pneumonia', '0.1689'), ('Cryptogenic organizing pneumonia', '0.1546')]
-15:20:43  INFO     apiro.graph.edar_traversal   [EDAR #1] 'Bronchiolitis obliterans' (posterior=0.1903, ✅7 ❌1 ⚡0)
-15:20:43  INFO     apiro.graph.edar_traversal   [EDAR #2] 'Acute interstitial pneumonia' (posterior=0.1689, ✅8 ❌3 ⚡0)
-15:20:43  INFO     apiro.graph.edar_traversal   [EDAR #3] 'Cryptogenic organizing pneumonia' (posterior=0.1546, ✅8 ❌4 ⚡0)
-15:20:43  INFO     apiro.graph.edar_traversal   [EDAR #4] 'Respiratory bronchiolitis-interstitial lung disease syndrome' (posterior=0.1546, ✅8 ❌4 ⚡0)
-15:20:43  INFO     apiro.graph.edar_traversal   [EDAR #5] 'Autoimmune pulmonary alveolar proteinosis' (posterior=0.1066, ✅4 ❌3 ⚡0)
-15:20:43  INFO     apiro.graph.edar_traversal [EdarTraversal] Phase 5: Discriminative evidence seeking (0 LLM)...
-15:20:43  INFO     apiro.edar.discriminator [Discriminator] Close candidates! 'Bronchiolitis obliterans' (0.1903) vs 'Acute interstitial pneumonia' (0.1689). Seeking discriminating evidence...
-15:20:43  INFO     apiro.edar.discriminator [Discriminator] Both or neither confirmed — no update applied.
-15:20:43  INFO     apiro.graph.edar_traversal [EdarTraversal] Done. synthesis=['Bronchiolitis obliterans', 'Acute interstitial pneumonia', 'Cryptogenic organizing pneumonia'], time=5.11s
-15:20:43  INFO     apiro.graph.edar_traversal [EdarTraversal] Log written to /home/theroid/PycharmProjects/Apiro/data/edar_log_pmc_case_10_edar.jsonl
-15:20:43  INFO     apiro.eval.evaluator [LLM-Judge] No match for 'Central venous catheter dislocation' vs ['Bronchiolitis obliterans', 'Acute interstitial pneumonia', 'Cryptogenic organizing pneumonia'] (response: NO)
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 76.24it/s]
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|██████████| 1/1 [00:00<00:00, 74.51it/s]
-15:20:43  INFO     edar_eval              EDAR:     ✗ — ['Bronchiolitis obliterans', 'Acute interstitial pneumonia', 'Cryptogenic organizing pneumonia']
-15:20:43  INFO     edar_eval            Results saved to /home/theroid/PycharmProjects/Apiro/data/edar_eval_results.json
-
-======================================================================
-  3-WAY EVALUATION RESULTS
-======================================================================
-
-Case pmc_case_1: Target → Multidrug-resistant tuberculosis
-  Bare LLM : ✗ FAIL — ['1. Cutaneous Tuberculosis (M. tuberculosis infection)', '2. Mycobacterium marinum Infection', '3. Mycobacterium abscessus Infection']
-  RAG      : ✓ PASS      — ['Here are the top 3 differential diagnoses:', '* **Tuberculosis Lymphadenitis**: a form of extrapulmonary tuberculosis that presents with painless swelling of lymph nodes, often in the posterior cervical or supraclavicular regions.', '* **Disseminated Tuberculosis**: a condition where M. tuberculosis infects multiple organs and systems, including lymph nodes, skin, and bones.']
-  EDAR     : ✗ FAIL     — ['Tularemia', 'Cutaneous small vessel vasculitis', 'Bullous impetigo']
-
-Case pmc_case_2: Target → Complicated transseptal puncture due to anomalous intracardiac anatomy
-  Bare LLM : ✗ FAIL — ['1. Atrial Fibrillation with Atrial Flutter', '2. Mitral Stenosis', '3. Atrial Septal Defect']
-  RAG      : ✗ FAIL      — ['Here are the top 3 differential diagnoses for a 70-year-old male patient with paroxysmal atrial fibrillation and atrial flutter, as well as concomitant arterial hypertension:', '* Atrial Fibrillation (AF) - chronic AF is often asymptomatic but may present with shortness of breath, chest pain, or palpitations; physical exam reveals irregularly irregular pulse.', '* Hypertrophic Cardiomyopathy (HCM) - impaired contractility and/or relaxation, left ventricular cavity size increased in diastole, ejection fraction decreased.']
-  EDAR     : ✗ FAIL     — ['Atrial tachyarrhythmia with short pr interval', 'Atrial standstill 1', 'Atrial fibrillation, familial, 9']
-
-Case pmc_case_3: Target → Osteoid Osteoma
-  Bare LLM : ✗ FAIL — ['1. Ethmoid Sinus Malignancy (e.g., Squamous Cell Carcinoma)', '2. Mucocele of the Ethmoid Sinus with Secondary Infection', '3. Rhinogenic Orbital Pseudotumor']
-  RAG      : ✗ FAIL      — ['Here are the top 3 differential diagnoses based on the clinical presentation:', '* **Meningioma of the tuberculum sellae**: This tumor can cause compression of the optic nerve and chiasm, leading to visual loss and optic atrophy.', '* **Craniopharyngioma**: This tumor can also compress the optic nerve and chiasm, causing visual loss and optic atrophy, and is more common in children and adolescents.']
-  EDAR     : ✗ FAIL     — ['Isolated optic neuritis', 'Retinal degeneration-nanophthalmos-glaucoma syndrome', 'Optic atrophy 1']
-
-Case pmc_case_4: Target → Diaphragmatic Hernia with Intrathoracic Appendicitis
-  Bare LLM : ✗ FAIL — ['1. Acute appendicitis', '2. Gastroenteritis with possible intestinal obstruction or ileus', '3. Cholecystitis']
-  RAG      : ✗ FAIL      — ['Here are the top 3 differential diagnoses based on the clinical presentation and retrieved medical context:', "* **Acute Appendicitis**: The patient's symptoms, including right lower quadrant pain, rebound tenderness, guarding, and a positive Rovsing sign, are consistent with acute appendicitis.", "* **Acute Cholecystitis**: The patient's fever, elevated white cell count, and localized right upper quadrant pain suggest an inflammatory process, which is consistent with acute cholecystitis."]
-  EDAR     : ✗ FAIL     — ['PPoma', 'Pseudomyxoma peritonei', 'Neuroendocrine neoplasm of appendix']
-
-Case pmc_case_5: Target → acute cholecystitis
-  Bare LLM : ✓ PASS — ['1. Acute pancreatitis', '2. Gastroesophageal reflux disease (GERD) with possible esophagitis', "3. Boerhaave's syndrome"]
-  RAG      : ✓ PASS      — ['Here are the top 3 differential diagnoses based on the clinical presentation:', "* **Acute Pancreatitis**: The patient's epigastric pain radiating to the back, vomiting, elevated CRP level, and ultrasound findings of gallstones in an abnormal location (left upper quadrant) suggest acute pancreatitis.", "* **Mesenteric Thrombosis or Ischemia**: The patient's intermittent colicky pain, elevated CRP level, and abdominal tenderness could be indicative of mesenteric thrombosis or ischemia, especially given the association with gallstones."]
-  EDAR     : ✗ FAIL     — ['Peripheral primitive neuroectodermal tumor', 'SAPHO syndrome', 'Kaposiform lymphangiomatosis']
-
-Case pmc_case_6: Target → posterolateral dislocation of the left elbow in association with Milch type II lateral condyle fracture
-  Bare LLM : ✓ PASS — ['1. Posterolateral dislocation of the elbow', '2. Fracture of the elbow (specific type not specified)', '3. Olecranon fracture']
-  RAG      : ✓ PASS      — ['• Posterolateral dislocation of the elbow', "• Radial head subluxation (Nursemaid's elbow)", '• Fracture of the olecranon']
-  EDAR     : ✗ FAIL     — ['Osteochondritis dissecans', 'Leri pleonosteosis', 'Hemophilia A']
-
-Case pmc_case_7: Target → Congenital Cystic Adenomatoid Malformation (CCAM)
-  Bare LLM : ✗ FAIL — ['1. Monochorionic Triamniotic Triploidy', '2. Complete Hydatidiform Mole (with coexisting triploid fetus)', '3. Partial Molar Pregnancy with a normal fetus and two triploid products of conception']
-  RAG      : ✗ FAIL      — ['Here are the top 3 differential diagnoses based on the clinical presentation:', "* **Monochorionic Triamniotic Triploid Pregnancy**: Given the patient's history of triplet pregnancies and her current monochorionic triamniotic triplet pregnancy, this diagnosis is a strong consideration.", '* **Twin-to-Twin Transfusion Syndrome (TTTS)**: The presence of an ipsilon zone in a monochorionic triamniotic triplet pregnancy increases the risk for TTTS, which can lead to complications such as fetal growth restriction and demise.']
-  EDAR     : ✗ FAIL     — ['Pregnancy loss, recurrent, susceptibility to, 1', 'Pregnancy loss, recurrent, susceptibility to, 2', 'Pregnancy loss, recurrent, susceptibility to, 3']
-
-Case pmc_case_8: Target → Pneumonia
-  Bare LLM : ✗ FAIL — ['1. Cervical spine infection (e.g., osteomyelitis)', '2. Spinal epidural abscess', '3. Tuberculous spondylitis']
-  RAG      : ✓ PASS      — ['Here are the top 3 differential diagnoses:', '* Acute Respiratory Distress Syndrome (ARDS)', '* Ventilator-Associated Pneumonia (VAP)']
-  EDAR     : ✗ FAIL     — ['Aspergillosis', 'Intermediate osteopetrosis', "Spondylometaphyseal dysplasia, 'corner fracture' type"]
-
-Case pmc_case_9: Target → acute respiratory distress syndrome (ARDS)
-  Bare LLM : ✗ FAIL — ['1. **Pneumonia**', '2. **Urosepsis**', '3. **Acute Kidney Injury**']
-  RAG      : ✓ PASS      — ['Here are the top 3 differential diagnoses for the patient:', "* **Complicated Urinary Tract Infection (UTI) due to E. coli**: Given the patient's history of repeated hospitalizations for UTIs and her current presentation with severe UTI and ARDS, E. coli is a likely cause.", "* **Enterococcal Urinary Tract Infection (UTI)**: The presence of leukocytes in the urine and systemic manifestations such as fever suggest an enterococcal UTI, particularly given the patient's comorbidities and indwelling catheter."]
-  EDAR     : ✓ PASS     — ['Severe acute respiratory syndrome', 'Atresia of urethra', 'Urachal diverticulum']
-
-Case pmc_case_10: Target → Central venous catheter dislocation
-  Bare LLM : ✗ FAIL — ['1. Superior vena cava syndrome (SVCS)', '2. Catheter-related thrombosis or central line-associated infection', '3. Pulmonary embolism (PE)']
-  RAG      : ✗ FAIL      — ['Here are the top 3 differential diagnoses based on the clinical presentation:', "* **Superior Vena Cava Syndrome (SVCS)**: Given the patient's history of metastatic breast cancer and symptoms such as dyspnea, intermittent coughing, and general weakness.", '* **Pulmonary Lymphangitic Carcinomatosis**: A complication of advanced malignancy, which can cause diffuse interstitial infiltrates on chest radiographs and symptoms such as dyspnea and nonproductive cough.']
-  EDAR     : ✗ FAIL     — ['Bronchiolitis obliterans', 'Acute interstitial pneumonia', 'Cryptogenic organizing pneumonia']
-
-──────────────────────────────────────────────────────────────────────
-  Bare LLM  : 2/10 (20.0%)
-  RAG       : 5/10  (50.0%)
-  Apiro EDAR: 1/10 (10.0%) ← NEW ENGINE
-======================================================================
-
