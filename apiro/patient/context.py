@@ -53,7 +53,7 @@ Rules:
 - chief_complaint MUST be the ACUTE presenting problem, not a chronic background condition.
 - symptoms: only symptoms present at this visit, not historical ones.
 - labs: include only labs mentioned with values (e.g. "CRP": "290 mg/L").
-- history: chronic/pre-existing conditions only, not the acute problem.
+- history: chronic/pre-existing conditions, prior surgeries, and medical devices/implants (e.g., catheters) ONLY, not the acute problem.
 - If a field has no data, use null for strings/ints or [] for arrays or {{}} for dicts.
 - Output ONLY the JSON object. No preamble, no explanation.
 

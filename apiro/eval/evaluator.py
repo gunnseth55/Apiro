@@ -75,12 +75,6 @@ def _check_synthesis_hit(
             logger.error(f"[_check_synthesis_hit] Semantic similarity failed: {e}")
 
     return False, "miss"
-auc < bf_auc * (1.0 - EVAL_AUC_TIEBREAKER_MARGIN):
-        return "entropy_first"
-    if ef_auc > 0 and bf_auc < ef_auc * (1.0 - EVAL_AUC_TIEBREAKER_MARGIN):
-        return "breadth_first"
-
-    return "tie"
 
 
 def _print_summary(summary: dict) -> None:
