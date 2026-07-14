@@ -52,9 +52,10 @@ class NERExtractor:
             
         axioms = []
         for word, label in merged_axioms:
+            sentence = f"The patient presents with the clinical finding of {word}."
             ax = ClinicalAxiom(
                 id="",
-                text=word,
+                text=sentence,
                 domain=label,
                 polarity="affirmed",
                 value=None,

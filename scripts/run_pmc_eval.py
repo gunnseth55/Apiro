@@ -48,6 +48,7 @@ def run_evaluation(real_components: bool):
         from apiro.graph.contradiction import ContradictionDetector
         from apiro.entropy.engine import EntropyEngine
         from apiro.corpus.embedder import Embedder
+        from apiro.axioms.extractor import AxiomExtractor
 
         # Checks
         try:
@@ -70,6 +71,7 @@ def run_evaluation(real_components: bool):
 
         chroma_adapter = _ChromaAdapter(embedder)
         entropy_engine = EntropyEngine(model=PRIMARY_MODEL, ollama_url=OLLAMA_BASE_URL)
+        axiom_extractor = AxiomExtractor()
         
         class OllamaLLMClient:
             def __init__(self, url, model):
@@ -388,12 +390,30 @@ def run_evaluation(real_components: bool):
             for s in case["seed_nodes"]
         ]
         
+        if real_components:
+            logger.info("  Extracting deterministic clinical axioms...")
+            axioms = axiom_extractor.extract(vignette)
+            enriched_vignette = vignette + "\n\n[Deterministic Clinical Findings]\n"
+            for ax in axioms:
+                enriched_vignette += f"- {ax.text}\n"
+                seeds.append(Node(
+                    id=ax.id,
+                    claim=ax.text,
+                    entropy_score=0.01,
+                    domain=ax.domain,
+                    depth=0
+                ))
+            logger.info(f"  Extracted {len(axioms)} axioms and anchored them to the graph.")
+            vignette_to_pass = enriched_vignette
+        else:
+            vignette_to_pass = vignette
+            
         traversal_res = traversal.run(
             seed_nodes=seeds,
             graph=graph,
             max_depth=6,
             case_name=case_id,
-            vignette=vignette
+            vignette=vignette_to_pass
         )
         
         apiro_output = traversal_res.synthesis

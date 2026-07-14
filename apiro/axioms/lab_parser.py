@@ -41,9 +41,10 @@ class LabParser:
                     except ValueError:
                         val = None
                         
+                sentence = f"The patient has a lab result or vital sign showing {match.group(0).strip()}."
                 ax = ClinicalAxiom(
                     id="",
-                    text=match.group(0).strip(),
+                    text=sentence,
                     domain="lab" if name.lower() not in ["bp", "blood pressure", "temp", "temperature", "hr", "heart rate", "rr"] else "vital",
                     polarity="affirmed",
                     value=val,
