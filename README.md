@@ -201,6 +201,13 @@ pip install -e .
 ### 2. Building the Corpus & Vector Database
 The persistent database directory (`data/chroma_db/`) is excluded from Git to prevent large binary files in version control. After checking out the codebase, you must populate your local vector database. **We recommend loading at least 50k to 100k records for a viable corpus:**
 
+> [!IMPORTANT]
+> **Required Data Downloads:**
+   - **PMC-Patients Dataset:** Download `PMC-Patients-V2.json` (~837MB) from [HuggingFace Datasets](https://huggingface.co/datasets/zhaofangqi/PMC-Patients) and place it in the `data/` directory.
+   - **Human Phenotype Ontology (HPO):** Download the raw ontology and annotations files, placing them under `data/ontology/`:
+     - `hp.obo` $\to$ [Download Link](http://purl.obolibrary.org/obo/hp.obo)
+     - `phenotype.hpoa` $\to$ [Download Link](http://purl.obolibrary.org/obo/hp/hpoa/phenotype.hpoa)
+
 ```bash
 # Ingest clinical textbooks (requires sufficient volume for graph paths)
 python -m apiro.corpus.build_corpus --sources textbooks --max-records 50000
