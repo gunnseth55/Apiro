@@ -90,8 +90,14 @@ To prevent the engine from jumping to wild conclusions or getting lost in tangen
 * **Depth 0 (Anchors):** Sort by **lowest entropy** ($1.0 - H$). The engine anchors on solid facts and lab values first (e.g., establishing a certain ground truth of "Elevated AST/ALT").
 * **Depth $\ge$ 1 (Exploration):** Sort by **highest entropy** ($H$). The engine actively targets uncertainty, exploring competing hypotheses and rare conditions.
 
-### 3. Traversal Control Logic (Classic Mode)
-* **Contradiction Detection (`contradiction.py`):** Uses a MiniLM cross-encoder NLI model combined with a NegEx (negation detection) layer. If the cross-encoder flags an NLI contradiction between two active nodes and there is no negation mismatch, a contradiction edge is written in the graph.
+### 3. Hybrid Deterministic Guardrails (Phase 5)
+To prevent the generative LLM from hallucinating paths that ignore concrete clinical findings, Apiro uses a **Hybrid Pre-processing Pipeline**:
+* **Medical NER:** A Hugging Face PyTorch token classifier (`d4data/biomedical-ner-all`) extracts all deterministic clinical findings from the vignette.
+* **Regex Lab Parser:** Hardcoded heuristics parse lab results and vitals (e.g., Potassium, Blood Pressure) to prevent the LLM from making math errors on threshold values.
+These extracted findings are syntactically formatted and injected into the Belief Graph as **Absolute Certainty (0.01 entropy) Seed Nodes**. 
+
+### 4. Traversal Control Logic
+* **Contradiction Detection (`contradiction.py`):** Uses a MiniLM cross-encoder NLI model. When the LLM explores the graph and generates a new hypothesis, the built-in Contradiction Detector automatically cross-references it against every other node in the graph. If a hallucinated path contradicts one of the deterministic Seed Nodes (e.g. suggesting *Hypokalemia* when the Lab Parser seeded *Potassium 5.6*), the NLI model intercepts and mathematically soft-prunes it!
 * **Rabbit Hole Prevention (`traversal.py`):** Halts expansion down a specific branch if the engine hits consecutive zero-entropy steps (signifying that we are stuck in a cycle of trivial, low-information facts).
 * **Saturation Detection (`traversal.py`):** Terminates the entire traversal when the change in average graph entropy stabilizes (i.e. rolling average entropy variance drops below a set threshold), indicating that the engine has learned all it can.
 
@@ -189,6 +195,8 @@ source venv/bin/activate  (cmd: venv\Scripts\activate)
 pip install -r requirements.txt
 pip install -e . 
 ```
+> [!NOTE]
+> **Model Downloads:** Hugging Face models (NER, NLI Cross-Encoder) are downloaded automatically on the first execution of `scripts/run_pmc_eval.py` or the FastAPI server. No manual downloading or pushing of model files is required.
 
 ### 2. Building the Corpus & Vector Database
 The persistent database directory (`data/chroma_db/`) is excluded from Git to prevent large binary files in version control. After checking out the codebase, you must populate your local vector database. **We recommend loading at least 50k to 100k records for a viable corpus:**
