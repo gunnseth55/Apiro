@@ -24,9 +24,10 @@ PRIMARY_MODEL    = "llama3.1:8b"        # Configured to use the locally availabl
 TOP_LOGPROBS     = 20                   # top-k logprobs for entropy computation (Ollama max is 20)
 MAX_FIRST_TOKEN  = 1                    # only first token for entropy
 MAX_ANSWER_TOKENS = 80                  # short answer generation
-ENTROPY_TEMPERATURES = [0.3, 0.7, 1.2] # temperatures for weighted entropy
-# Temperature weights — highest weight on T=0.3 (purest signal, least noise)
-ENTROPY_TEMP_WEIGHTS = {0.3: 0.6, 0.7: 0.3, 1.2: 0.1}
+ENTROPY_TEMPERATURES = [0.3]            # single temperature — T=0.3 is the cleanest signal
+# Temperature weights — T=0.3 is dominant (was 0.6 weight in 3-sample scheme);
+# using a single sample eliminates the 3x call overhead with negligible quality loss.
+ENTROPY_TEMP_WEIGHTS = {0.3: 1.0}
 
 # ---------------------------------------------------------------------------
 # Embedding

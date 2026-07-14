@@ -39,6 +39,10 @@ class BeliefGraph:
         self._expansion_log: list[dict] = []  # ordered history of expanded nodes
         self.max_depth = max_depth
         self.max_nodes = max_nodes
+        
+        # Semantic matching caches
+        self._embedder = None
+        self._embeddings: dict[str, np.ndarray] = {}  # node_id -> embedding
 
     # ------------------------------------------------------------------
     # Mutation
@@ -96,7 +100,8 @@ class BeliefGraph:
             depth_aware: If False (default), sorts strictly by entropy_score descending
                          — the standard baseline contract expected by unit tests.
                          If True, uses depth-aware scoring for the entropy-first traversal:
-                           - Depth 0 (anchors): score = 1.0 - entropy (follow certainty first)
+                           - Depth 0 (seeds): score = 2.0 - entropy, guaranteeing all seeds
+                             are expanded before any derived child node (starvation-proof).
                            - Depth >= 1 (derived): score = entropy (chase uncertainty/differentials)
         """
         candidates = [n for n in self.nodes.values() if not n.resolved and not n.is_rabbit_hole]
@@ -104,8 +109,8 @@ class BeliefGraph:
         if depth_aware:
             def score(n: Node) -> float:
                 h = n.entropy_score if n.entropy_score is not None else 0.5
-                # Depth 0: anchor on certainty. Depth >=1: explore uncertainty.
-                base_score = (1.0 - h) if n.depth == 0 else h
+                # Depth 0: always prioritize seed nodes to prevent starvation
+                base_score = (2.0 - h) if n.depth == 0 else h
                 return base_score - getattr(n, "contradiction_penalty", 0.0)
         else:
             def score(n: Node) -> float:
@@ -148,6 +153,47 @@ class BeliefGraph:
     def node_count(self) -> int:
         """Return total number of nodes (alias for n_nodes, used by traversal)."""
         return len(self.nodes)
+
+    def _get_embedder(self):
+        if self._embedder is None:
+            from sentence_transformers import SentenceTransformer
+            from apiro.config import EMBED_MODEL
+            self._embedder = SentenceTransformer(EMBED_MODEL, device="cpu")
+        return self._embedder
+
+    def find_semantic_match(self, claim: str, threshold: float = 0.92) -> Optional[Node]:
+        """
+        Find an existing node in the graph with a semantically equivalent claim.
+        Returns the Node if one exists above the similarity threshold, else None.
+        """
+        if not self.nodes:
+            return None
+            
+        embedder = self._get_embedder()
+        new_emb = embedder.encode(claim, normalize_embeddings=True)
+        
+        # Ensure all existing nodes are embedded
+        unembedded = [n for n in self.nodes.values() if n.id not in self._embeddings]
+        if unembedded:
+            texts = [n.claim for n in unembedded]
+            embs = embedder.encode(texts, normalize_embeddings=True)
+            for n, emb in zip(unembedded, embs):
+                self._embeddings[n.id] = emb
+                
+        # Find highest cosine similarity
+        best_match = None
+        best_score = -1.0
+        
+        for n_id, emb in self._embeddings.items():
+            score = np.dot(new_emb, emb)
+            if score > best_score:
+                best_score = score
+                best_match = self.nodes[n_id]
+                
+        if best_match and best_score >= threshold:
+            return best_match
+            
+        return None
 
     # ------------------------------------------------------------------
     # Statistics

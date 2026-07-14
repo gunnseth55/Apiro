@@ -27,6 +27,7 @@ from typing import Optional
 
 from apiro.config import CONTRADICTION_THRESHOLD_EF, CONTRADICTION_PENALTY
 from apiro.graph.belief_graph import BudgetExceededError
+from apiro.graph.critic import CriticEngine
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +97,7 @@ class ApiroTraversal:
         self.contradiction = contradiction
         self.log_dir     = log_dir
         self._traversal_log: list[dict] = []
+        self.critic = CriticEngine(llm_client=expander.llm_client)
 
     # ── Logging helpers ───────────────────────────────────────────────────────
 
@@ -127,7 +129,6 @@ class ApiroTraversal:
         max_depth: int = 8,
         case_name: str = "run",
         vignette: str = None,
-        on_event = None,
     ) -> TraversalResult:
         self._on_event = on_event
         """
@@ -164,6 +165,16 @@ class ApiroTraversal:
         # ── Main loop ─────────────────────────────────────────────────────────
         while True:
             iteration += 1
+
+            # ── Stop condition 0: Global Critic Halting ───────────────────────
+            if iteration >= 10 and iteration % 5 == 0 and self.critic.evaluate_halting(graph, vignette=vignette):
+                stop_reason = "critic_halt"
+                logger.info(f"[Traversal] Global Critic approved halting at iteration {iteration}.")
+                self._log({
+                    "event":       "critic_halt_fired",
+                    "iteration":   iteration,
+                })
+                break
 
             # ── Stop condition 1: Saturation ─────────────────────────────────
             if self.saturation.is_saturated(graph):
@@ -235,7 +246,7 @@ class ApiroTraversal:
             })
 
             try:
-                new_nodes = self.expander.expand(node, graph)
+                new_nodes = self.expander.expand(node, graph, vignette=vignette)
             except BudgetExceededError as e:
                 logger.warning(f"[Traversal] Budget exceeded: {e}. Stopping traversal gracefully.")
                 stop_reason = "budget_exceeded"

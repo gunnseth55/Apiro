@@ -1,0 +1,282 @@
+[
+  {
+    "case_id": "pmc_case_1",
+    "target": "Multidrug-resistant tuberculosis",
+    "bare_llm": {
+      "success": false,
+      "output": [
+        "1. Cutaneous Tuberculosis (M. tuberculosis infection)",
+        "2. Mycobacterium marinum Infection",
+        "3. Mycobacterium abscessus Infection"
+      ]
+    },
+    "rag": {
+      "success": true,
+      "output": [
+        "Here are the top 3 differential diagnoses:",
+        "* **Tuberculosis Lymphadenitis**: a form of extrapulmonary tuberculosis that presents with painless swelling of lymph nodes, often in the posterior cervical or supraclavicular regions.",
+        "* **Disseminated Tuberculosis**: a condition where M. tuberculosis infects multiple organs and systems, including lymph nodes, skin, and bones."
+      ]
+    },
+    "edar": {
+      "success": false,
+      "output": [
+        "Tularemia",
+        "Cutaneous small vessel vasculitis",
+        "Bullous impetigo"
+      ]
+    }
+  },
+  {
+    "case_id": "pmc_case_2",
+    "target": "Complicated transseptal puncture due to anomalous intracardiac anatomy",
+    "bare_llm": {
+      "success": false,
+      "output": [
+        "1. Atrial Fibrillation with Atrial Flutter",
+        "2. Mitral Stenosis",
+        "3. Atrial Septal Defect"
+      ]
+    },
+    "rag": {
+      "success": false,
+      "output": [
+        "Here are the top 3 differential diagnoses for a 70-year-old male patient with paroxysmal atrial fibrillation and atrial flutter, as well as concomitant arterial hypertension:",
+        "* Atrial Fibrillation (AF) - chronic AF is often asymptomatic but may present with shortness of breath, chest pain, or palpitations; physical exam reveals irregularly irregular pulse.",
+        "* Hypertrophic Cardiomyopathy (HCM) - impaired contractility and/or relaxation, left ventricular cavity size increased in diastole, ejection fraction decreased."
+      ]
+    },
+    "edar": {
+      "success": false,
+      "output": [
+        "Atrial tachyarrhythmia with short pr interval",
+        "Atrial standstill 1",
+        "Atrial fibrillation, familial, 9"
+      ]
+    }
+  },
+  {
+    "case_id": "pmc_case_3",
+    "target": "Osteoid Osteoma",
+    "bare_llm": {
+      "success": false,
+      "output": [
+        "1. Ethmoid Sinus Malignancy (e.g., Squamous Cell Carcinoma)",
+        "2. Mucocele of the Ethmoid Sinus with Secondary Infection",
+        "3. Rhinogenic Orbital Pseudotumor"
+      ]
+    },
+    "rag": {
+      "success": false,
+      "output": [
+        "Here are the top 3 differential diagnoses based on the clinical presentation:",
+        "* **Meningioma of the tuberculum sellae**: This tumor can cause compression of the optic nerve and chiasm, leading to visual loss and optic atrophy.",
+        "* **Craniopharyngioma**: This tumor can also compress the optic nerve and chiasm, causing visual loss and optic atrophy, and is more common in children and adolescents."
+      ]
+    },
+    "edar": {
+      "success": false,
+      "output": [
+        "Isolated optic neuritis",
+        "Retinal degeneration-nanophthalmos-glaucoma syndrome",
+        "Optic atrophy 1"
+      ]
+    }
+  },
+  {
+    "case_id": "pmc_case_4",
+    "target": "Diaphragmatic Hernia with Intrathoracic Appendicitis",
+    "bare_llm": {
+      "success": false,
+      "output": [
+        "1. Acute appendicitis",
+        "2. Gastroenteritis with possible intestinal obstruction or ileus",
+        "3. Cholecystitis"
+      ]
+    },
+    "rag": {
+      "success": false,
+      "output": [
+        "Here are the top 3 differential diagnoses based on the clinical presentation and retrieved medical context:",
+        "* **Acute Appendicitis**: The patient's symptoms, including right lower quadrant pain, rebound tenderness, guarding, and a positive Rovsing sign, are consistent with acute appendicitis.",
+        "* **Acute Cholecystitis**: The patient's fever, elevated white cell count, and localized right upper quadrant pain suggest an inflammatory process, which is consistent with acute cholecystitis."
+      ]
+    },
+    "edar": {
+      "success": false,
+      "output": [
+        "PPoma",
+        "Pseudomyxoma peritonei",
+        "Neuroendocrine neoplasm of appendix"
+      ]
+    }
+  },
+  {
+    "case_id": "pmc_case_5",
+    "target": "acute cholecystitis",
+    "bare_llm": {
+      "success": true,
+      "output": [
+        "1. Acute pancreatitis",
+        "2. Gastroesophageal reflux disease (GERD) with possible esophagitis",
+        "3. Boerhaave's syndrome"
+      ]
+    },
+    "rag": {
+      "success": true,
+      "output": [
+        "Here are the top 3 differential diagnoses based on the clinical presentation:",
+        "* **Acute Pancreatitis**: The patient's epigastric pain radiating to the back, vomiting, elevated CRP level, and ultrasound findings of gallstones in an abnormal location (left upper quadrant) suggest acute pancreatitis.",
+        "* **Mesenteric Thrombosis or Ischemia**: The patient's intermittent colicky pain, elevated CRP level, and abdominal tenderness could be indicative of mesenteric thrombosis or ischemia, especially given the association with gallstones."
+      ]
+    },
+    "edar": {
+      "success": false,
+      "output": [
+        "Peripheral primitive neuroectodermal tumor",
+        "SAPHO syndrome",
+        "Kaposiform lymphangiomatosis"
+      ]
+    }
+  },
+  {
+    "case_id": "pmc_case_6",
+    "target": "posterolateral dislocation of the left elbow in association with Milch type II lateral condyle fracture",
+    "bare_llm": {
+      "success": true,
+      "output": [
+        "1. Posterolateral dislocation of the elbow",
+        "2. Fracture of the elbow (specific type not specified)",
+        "3. Olecranon fracture"
+      ]
+    },
+    "rag": {
+      "success": true,
+      "output": [
+        "\u2022 Posterolateral dislocation of the elbow",
+        "\u2022 Radial head subluxation (Nursemaid's elbow)",
+        "\u2022 Fracture of the olecranon"
+      ]
+    },
+    "edar": {
+      "success": false,
+      "output": [
+        "Osteochondritis dissecans",
+        "Leri pleonosteosis",
+        "Hemophilia A"
+      ]
+    }
+  },
+  {
+    "case_id": "pmc_case_7",
+    "target": "Congenital Cystic Adenomatoid Malformation (CCAM)",
+    "bare_llm": {
+      "success": false,
+      "output": [
+        "1. Monochorionic Triamniotic Triploidy",
+        "2. Complete Hydatidiform Mole (with coexisting triploid fetus)",
+        "3. Partial Molar Pregnancy with a normal fetus and two triploid products of conception"
+      ]
+    },
+    "rag": {
+      "success": false,
+      "output": [
+        "Here are the top 3 differential diagnoses based on the clinical presentation:",
+        "* **Monochorionic Triamniotic Triploid Pregnancy**: Given the patient's history of triplet pregnancies and her current monochorionic triamniotic triplet pregnancy, this diagnosis is a strong consideration.",
+        "* **Twin-to-Twin Transfusion Syndrome (TTTS)**: The presence of an ipsilon zone in a monochorionic triamniotic triplet pregnancy increases the risk for TTTS, which can lead to complications such as fetal growth restriction and demise."
+      ]
+    },
+    "edar": {
+      "success": false,
+      "output": [
+        "Pregnancy loss, recurrent, susceptibility to, 1",
+        "Pregnancy loss, recurrent, susceptibility to, 2",
+        "Pregnancy loss, recurrent, susceptibility to, 3"
+      ]
+    }
+  },
+  {
+    "case_id": "pmc_case_8",
+    "target": "Pneumonia",
+    "bare_llm": {
+      "success": false,
+      "output": [
+        "1. Cervical spine infection (e.g., osteomyelitis)",
+        "2. Spinal epidural abscess",
+        "3. Tuberculous spondylitis"
+      ]
+    },
+    "rag": {
+      "success": true,
+      "output": [
+        "Here are the top 3 differential diagnoses:",
+        "* Acute Respiratory Distress Syndrome (ARDS)",
+        "* Ventilator-Associated Pneumonia (VAP)"
+      ]
+    },
+    "edar": {
+      "success": false,
+      "output": [
+        "Aspergillosis",
+        "Intermediate osteopetrosis",
+        "Spondylometaphyseal dysplasia, 'corner fracture' type"
+      ]
+    }
+  },
+  {
+    "case_id": "pmc_case_9",
+    "target": "acute respiratory distress syndrome (ARDS)",
+    "bare_llm": {
+      "success": false,
+      "output": [
+        "1. **Pneumonia**",
+        "2. **Urosepsis**",
+        "3. **Acute Kidney Injury**"
+      ]
+    },
+    "rag": {
+      "success": true,
+      "output": [
+        "Here are the top 3 differential diagnoses for the patient:",
+        "* **Complicated Urinary Tract Infection (UTI) due to E. coli**: Given the patient's history of repeated hospitalizations for UTIs and her current presentation with severe UTI and ARDS, E. coli is a likely cause.",
+        "* **Enterococcal Urinary Tract Infection (UTI)**: The presence of leukocytes in the urine and systemic manifestations such as fever suggest an enterococcal UTI, particularly given the patient's comorbidities and indwelling catheter."
+      ]
+    },
+    "edar": {
+      "success": true,
+      "output": [
+        "Severe acute respiratory syndrome",
+        "Atresia of urethra",
+        "Urachal diverticulum"
+      ]
+    }
+  },
+  {
+    "case_id": "pmc_case_10",
+    "target": "Central venous catheter dislocation",
+    "bare_llm": {
+      "success": false,
+      "output": [
+        "1. Superior vena cava syndrome (SVCS)",
+        "2. Catheter-related thrombosis or central line-associated infection",
+        "3. Pulmonary embolism (PE)"
+      ]
+    },
+    "rag": {
+      "success": false,
+      "output": [
+        "Here are the top 3 differential diagnoses based on the clinical presentation:",
+        "* **Superior Vena Cava Syndrome (SVCS)**: Given the patient's history of metastatic breast cancer and symptoms such as dyspnea, intermittent coughing, and general weakness.",
+        "* **Pulmonary Lymphangitic Carcinomatosis**: A complication of advanced malignancy, which can cause diffuse interstitial infiltrates on chest radiographs and symptoms such as dyspnea and nonproductive cough."
+      ]
+    },
+    "edar": {
+      "success": false,
+      "output": [
+        "Bronchiolitis obliterans",
+        "Acute interstitial pneumonia",
+        "Cryptogenic organizing pneumonia"
+      ]
+    }
+  }
+]

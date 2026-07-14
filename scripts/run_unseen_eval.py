@@ -31,7 +31,7 @@ from apiro.graph.traversal import ApiroTraversal
 
 def run_evaluation(real_components: bool):
     # Load distractor cases
-    cases_path = PROJECT_ROOT / "data" / "pmc_cases.json"
+    cases_path = PROJECT_ROOT / "data" / "unseen_cases.json"
     with open(cases_path) as f:
         cases = json.load(f)
 
@@ -383,8 +383,7 @@ def run_evaluation(real_components: bool):
             seed_nodes=seeds,
             graph=graph,
             max_depth=6,
-            case_name=case_id,
-            vignette=vignette
+            case_name=case_id
         )
         
         apiro_output = traversal_res.synthesis
