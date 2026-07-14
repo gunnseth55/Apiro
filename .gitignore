@@ -58,6 +58,7 @@ DEVELOPER_NOTES.md
 PROJECT_STATUS.md
 implementation_plan.md
 data/PMC-Patients-V2.json
+data/ontology/
 data/*.json
 !data/pmc_cases.json
 !data/distractor_cases.json
