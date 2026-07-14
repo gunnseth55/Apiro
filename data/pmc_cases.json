@@ -2,27 +2,13 @@
   {
     "case_id": "pmc_case_1",
     "description": "Real world case report from PMC (Scrubbed)",
-    "target_diagnosis": "Multidrug-resistant tuberculosis",
-    "vignette": "**Diagnostic Challenge**\n\nA 23-year-old patient is admitted to the hospital with a 6-month history of a single cutaneous abscess on the right side of the neck, along with cervical and axillary lymphadenopathy. The patient has no HIV risk factors and has normal chest X-ray (CXR) findings. However, the aspirated pus from the cutaneous abscess shows abundant Mycobacterium tuberculosis organisms by microscopy.\n\n**Initial Presentation:**\n\n* Single cutaneous abscess on the right side of the neck\n* Cervical and axillary lymphadenopathy\n\n**Physical Exam:**\n\n* Normal CXR\n* No abnormalities on examination of other systems\n\n**First-line Labs/Imaging:**\n\n* Sputum samples (three consecutive, induced on two occasions) are negative for AFB\n* Pus from cutaneous abscess is positive for M. tuberculosis by microscopy and culture confirmation is pending\n* RFLP analysis using species-specific probes for devR gene shows the presence of a unique M. tuberculosis strain",
+    "target_diagnosis": "Poorly differentiated serous papillary cystadenocarcinoma",
+    "vignette": "A 59-year-old Caucasian woman was admitted with a progressively enlarging but painless mass in the region of the umbilicus, which developed two months after liver transplantation. The mass is approximately 5 cm in diameter, firm with irregular borders, wine-red shade, and fixed to surrounding tissues.\n\nPhysical examination:\n\n* Overlying skin not ulcerated\n* Gynecological history unremarkable\n* No smoking or alcohol use\n\nVital signs and basic laboratory results:\n\n* Hemoglobin level: 9.6 g/dl\n* Total bilirubin: 0.6 mg/dl\n* Conjugated bilirubin: 0.1 mg/dl\n* Alkaline Phosphates: 273 U/l\n* GGT: 40 U/L\n* AST: 36 U/L\n* ALT: 56 U/L\n\nImaging:\n\n* Plain anterior/posterior chest x-ray: normal\n* Ultrasound of the abdominal cavity:\n\t+ 4 \u00d7 4 cm mass below the umbilicus\n\t+ Additional smaller nodules confined to the lower abdominal wall\n\t+ No paraaortic lymph nodes identified",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "Single cutaneous abscess on the right side of the neck",
+        "claim": "progressively enlarging but painless mass in the region of the umbilicus",
         "domain": "symptom",
-        "depth": 0,
-        "entropy": 0.5
-      },
-      {
-        "id": "l1",
-        "claim": "the aspirated pus from the cutaneous abscess shows abundant Mycobacterium tuberculosis organisms by microscopy.",
-        "domain": "lab_result",
-        "depth": 0,
-        "entropy": 0.6
-      },
-      {
-        "id": "h1",
-        "claim": "abundant Mycobacterium tuberculosis organisms by microscopy",
-        "domain": "history",
         "depth": 0,
         "entropy": 0.8
       }
@@ -31,261 +17,135 @@
   {
     "case_id": "pmc_case_2",
     "description": "Real world case report from PMC (Scrubbed)",
-    "target_diagnosis": "Complicated transseptal puncture due to anomalous intracardiac anatomy",
-    "vignette": "A 70-year-old male patient presents with paroxysmal atrial fibrillation and atrial flutter, as well as concomitant arterial hypertension. On physical exam, what might you expect to find? What initial laboratory tests and imaging studies would you order in this case? \n\nInitial Labs/Imaging: \n\n* TEE (Transesophageal Echocardiogram) \n* Left heart catheterization",
+    "target_diagnosis": "Miliary tuberculosis",
+    "vignette": "**Diagnostic Challenge**\n\nA 23-year-old patient presents with a single cutaneous abscess on the right side of the neck, cervical lymphadenopathy, and axillary lymphadenopathy. The patient is HIV-negative and has been on immunosuppressive therapy for polymyositis.\n\n**Initial Presentation:**\n\n* Cutaneous abscess on the right side of the neck\n* Cervical and axillary lymphadenopathy\n\n**Physical Exam:**\n\n* Normal examination of other systems\n\n**Lab Results:**\n\n* Sputum samples negative for AFB in three consecutive spot-early morning-spot samples\n* Pus from cutaneous abscess sent for culture and further analysis",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "paroxysmal atrial fibrillation and atrial flutter, as well as concomitant arterial hypertension",
+        "claim": "cutaneous abscess on the right side of the neck",
         "domain": "symptom",
         "depth": 0,
         "entropy": 0.8
-      },
-      {
-        "id": "l1",
-        "claim": "TEE (Transesophageal Echocardiogram)",
-        "domain": "lab_result",
-        "depth": 0,
-        "entropy": 0.5
-      },
-      {
-        "id": "h1",
-        "claim": "A 70-year-old male patient",
-        "domain": "history",
-        "depth": 0,
-        "entropy": 0.6
       }
     ]
   },
   {
     "case_id": "pmc_case_3",
     "description": "Real world case report from PMC (Scrubbed)",
-    "target_diagnosis": "Osteoid Osteoma",
-    "vignette": "**Diagnostic Challenge**\n\nA 33-year-old male presents with a 3-month history of decreased vision in the left eye and a left-sided headache. Physical exam reveals left eye blindness with primary optic atrophy and no other neurological deficits.\n\nInitial labs:\n\n* \n* \n\nImaging:\n\n* A bony tumor is noted in the left ethmoid sinus invading the left orbit and compressing the left optic nerve.\n* Intracranial extension into the anterior cranial fossa on the left side.",
+    "target_diagnosis": "Gastrointestinal stromal tumor (GIST)",
+    "vignette": "A 75-year-old diabetic male presents with a one-week history of dull upper abdominal pain and swelling in the left upper abdomen. He denies vomiting, fever, or gastrointestinal bleeding.\n\nPhysical examination reveals a 14 \u00d7 10 cm mass palpable in the epigastrium and left hypochondrium with minimal intrinsic mobility.\n\nRoutine biochemical investigations are normal. Ultrasonogram and CT-scan of the abdomen show a large heterogeneous mass (13 \u00d7 10 cm) extending from the tail of pancreas to anterior pararenal space, lesser sac to gastrosplenic ligament enveloping the posterior aspect of fundus, body, and greater curvature.\n\nOne day after admission, examination shows reduction in size of palpable mass to 8 \u00d7 6 cm without aggravation of symptoms. Ultrasonography repeats this finding with a reduced diameter of mass (8 \u00d7 8 cm).\n\nUpper endoscopy reveals a large bulge in fundus and corpus of the stomach posteriorly with an opening in the posterior part of the corpus, demonstrating dissemination of serous fluid and necrotic material into the stomach. Fluid analysis is normal for CEA and CA 19-9.\n\nWhat is the next step in this patient's evaluation?",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "decreased vision in the left eye",
+        "claim": "dull upper abdominal pain",
         "domain": "symptom",
         "depth": 0,
-        "entropy": 0.4
-      },
-      {
-        "id": "l1",
-        "claim": "A bony tumor is noted in the left ethmoid sinus invading the left orbit and compressing the left optic nerve.",
-        "domain": "lab_result",
-        "depth": 0,
-        "entropy": 0.7
-      },
-      {
-        "id": "h1",
-        "claim": "A 33-year-old male presents with a 3-month history of decreased vision in the left eye and a left-sided headache.",
-        "domain": "history",
-        "depth": 0,
-        "entropy": 0.4
+        "entropy": 0.8
       }
     ]
   },
   {
     "case_id": "pmc_case_4",
     "description": "Real world case report from PMC (Scrubbed)",
-    "target_diagnosis": "Diaphragmatic Hernia with Intrathoracic Appendicitis",
-    "vignette": "A 43-year-old female district nurse presents with a 6-hour history of generalized abdominal pain that has localized to the right, associated with nausea and loss of appetite. The pain worsens with movement and is not relieved by intramuscular morphine injection.\n\nOn examination:\n\n* Tenderness in the right upper quadrant and right iliac fossa\n* Rebound and guarding\n* Rovsing positive sign\n* Normal bowel sounds\n\nLab results:\n\n* Pyrexia (fever)\n* Raised white cell count\n* Elevated C-reactive protein\n\nImaging:\n\n* Abdominal X-ray: absence of gas in the right side of the bowel\n* Chest X-ray: no obvious abnormality",
+    "target_diagnosis": "Mucinous adenocarcinoma of colon",
+    "vignette": "A 24-year-old woman presents to the surgical clinic with a three-month history of epigastric pain, feculent vomiting, and post-prandial diarrhea. She has lost over one stone in weight. Her past medical history is unremarkable, except for an investigation two years prior for intermittent left-sided abdominal pain, which was attributed to irritable bowel syndrome.\n\nPhysical examination reveals a healthy appearing patient with no significant findings on abdominal examination.\n\nInitial laboratory results include:\n\n* Haemoglobin: 9.5 g/dl\n* Mean cell volume: 71.6 fl\n* White cell count: 20.2 \u00d7 10^9/l\n* Urea, electrolytes, and liver function tests are all normal\n\nAn ultrasound scan of the abdomen shows thickened bowel in the right upper quadrant with a dilated duodenum. A barium meal and follow-through demonstrates a mucosal abnormality on the greater curvature of the stomach with a fistulous tract into the transverse colon (Figure ). Upper gastrointestinal endoscopy confirms the presence of a mucosal abnormality on the greater curvature of the stomach, but initial biopsies are negative for malignancy.",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "A 43-year-old female district nurse presents with a 6-hour history of generalized abdominal pain that has localized to the right, associated with nausea and loss of appetite.",
+        "claim": "epigastric pain",
         "domain": "symptom",
         "depth": 0,
-        "entropy": 0.5
-      },
-      {
-        "id": "l1",
-        "claim": "Raised white cell count",
-        "domain": "lab_result",
-        "depth": 0,
-        "entropy": 0.7
-      },
-      {
-        "id": "h1",
-        "claim": "Pyrexia (fever)",
-        "domain": "history",
-        "depth": 0,
-        "entropy": 0.7
+        "entropy": 0.8
       }
     ]
   },
   {
     "case_id": "pmc_case_5",
     "description": "Real world case report from PMC (Scrubbed)",
-    "target_diagnosis": "acute cholecystitis",
-    "vignette": "A 32-year-old female presents with a 3-hour history of epigastric pain radiating into her back. She has vomited multiple times. This is not her first episode, as she experienced two similar episodes in the past week.\n\nOn examination:\n\n* No jaundice or pyrexia\n* Apex beat located at the right fifth intercostal space, midclavicular line\n* Epigastric tenderness without tenderness in the upper quadrants\n\nInitial labs/imaging:\n\n* Normal white cell count and amylase level\n* Elevated C-reactive protein (CRP) level: 290 mg/L\n* Electrocardiograph showing right axis deviation and right ventricular hypertrophy, suggestive of dextrocardia\n* Ultrasound scan of the upper abdomen:\n\t+ Gallbladder located in the left upper quadrant with stones\n\t+ Spleen visualized in the right upper quadrant\n\t+ No evidence of common bile duct or intrahepatic duct dilatation\n* Chest X-Ray confirming dextrocardia",
+    "target_diagnosis": "Pulmonary embolism is not mentioned in the case, but I found another potential diagnosis that matches your request:\n\n Enlarging sclerotic lesion in the thoracic spine \n\nHowever, since the text describes it as \"an enlarging sclerotic lesion\" and later mentions a CT-guided biopsy was performed to confirm its nature, I will provide the alternative diagnosis:\n\nSpinal metastasis",
+    "vignette": "**Diagnostic Challenge**\n\nA 55-year-old woman with a significant smoking history presents to your clinic. She has a history of recurrent bronchioloalveolar carcinoma, including two previous surgeries for localized disease.\n\n**Initial Clinical Presentation**\n\nShe complains of general malaise and fatigue.\n\n**Physical Exam**\n\nVital signs are stable, but the patient appears tired and short of breath. Lungs are clear to auscultation, with no evidence of wheezing or rales.\n\n**First-Line Labs/Imaging**\n\nA CT scan of the chest shows innumerable bilateral nodules. Basic lab work is pending; you have ordered a complete blood count (CBC) and basic metabolic panel (BMP). The patient's history of previous lung cancer surgeries and recurrent disease raises concerns for metastatic or recurrent disease, but the clinical presentation and imaging findings are subtle. What would be your next steps in evaluating this patient?",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "3-hour history of epigastric pain radiating into her back.",
+        "claim": "general malaise and fatigue",
         "domain": "symptom",
         "depth": 0,
-        "entropy": 0.5
-      },
-      {
-        "id": "l1",
-        "claim": "Elevated C-reactive protein (CRP) level: 290 mg/L",
-        "domain": "lab_result",
-        "depth": 0,
-        "entropy": 0.7
-      },
-      {
-        "id": "h1",
-        "claim": "She has experienced two similar episodes in the past week.",
-        "domain": "history",
-        "depth": 0,
-        "entropy": 0.7
+        "entropy": 0.8
       }
     ]
   },
   {
     "case_id": "pmc_case_6",
     "description": "Real world case report from PMC (Scrubbed)",
-    "target_diagnosis": "posterolateral dislocation of the left elbow in association with Milch type II lateral condyle fracture",
-    "vignette": "A 12-year-old boy presents to the emergency department after a fall from a skateboard, landing directly on his left elbow. The patient reports significant pain and swelling in the affected area, but denies any numbness or weakness in the arm.\n\nPhysical examination reveals a grossly swollen and deformed left elbow. Range of motion is limited due to pain.\n\nInitial laboratory and imaging findings:\n\n* Radiographs show posterolateral dislocation of the left elbow with an associated fracture.\n* There are no abnormal laboratory results reported at this time.",
+    "target_diagnosis": "Leiomyosarcoma",
+    "vignette": "A 31-year-old man presents with a painless left inguinal tumor that has gradually grown over the past six months.\n\nPhysical examination reveals a fist-sized subcutaneous tumor in the inguinal region with normal-appearing overlying skin without ulceration, and no inguinal lymphadenopathy.\n\nLab/imaging results:\n\n* Computed Tomography: shows a solid tumor with heterogeneous contrast enhancement in the adipose tissue\n* No metastases to the liver and lung are seen on CT",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "significant pain and swelling in the affected area",
+        "claim": "painless left inguinal tumor",
         "domain": "symptom",
         "depth": 0,
-        "entropy": 0.6
-      },
-      {
-        "id": "l1",
-        "claim": "posterolateral dislocation of the left elbow with an associated fracture",
-        "domain": "lab_result",
-        "depth": 0,
-        "entropy": 0.5
-      },
-      {
-        "id": "h1",
-        "claim": "fall from a skateboard, landing directly on his left elbow",
-        "domain": "history",
-        "depth": 0,
-        "entropy": 0.6
+        "entropy": 0.8
       }
     ]
   },
   {
     "case_id": "pmc_case_7",
     "description": "Real world case report from PMC (Scrubbed)",
-    "target_diagnosis": "Congenital Cystic Adenomatoid Malformation (CCAM)",
-    "vignette": "A 26-year-old woman presents with a triplet pregnancy complicated by threatened abortion at 15 weeks of gestation. She has had two previous first-trimester abortions and her mother delivered triplets who died in the early neonatal period.\n\nPhysical examination:\n\n* Vital signs: not provided\n* General appearance: not described\n\nInitial laboratory and imaging results:\n\n* Ultrasonography at 6 weeks showed a single, 17 \u00d7 20 mm gestational sac (chorion)\n* Detailed ultrasonography revealed a monochorionic triamniotic triplet pregnancy with three thin amniotic membranes and an ipsilon zone\n* Biometric measurements of the fetuses were appropriate for 15 weeks of gestation",
+    "target_diagnosis": "Pulmonary Embolism is NOT mentioned in the case.\n\n Dilated aortic root is a background condition.\n\nHere's the acute, primary presenting diagnosis: \n\n Dilated aortic root is a chronic, pre-existing condition, however:\n \n Complicated transseptal puncture and potentially fatal complications",
+    "vignette": "A 70-year-old male patient presents with paroxysmal atrial fibrillation and atrial flutter, as well as concomitant arterial hypertension. The patient's initial symptoms are not specified.\n\nPhysical exam:\n\n*   The examination findings are not described in the case report.\n\nLab results:\n\n*   Initial lab results (e.g., complete blood count, basic metabolic panel) are not mentioned.\n*   Electrocardiogram (ECG) results show paroxysmal atrial fibrillation and atrial flutter.\n\nImaging studies:\n\n*   A transthoracic echocardiogram (TEE) was performed prior to the procedure, which described an aneurysm of the interatrial septum (IAS).\n*   Intraprocedural intracardiac echocardiography (ICE) showed:\n    *   Dilated aortic root\n    *   Enlarged right atrium displacing the IAS towards the left atrial free wall\n    *   Small oval fossa with flapping motion of the fossa ovalis membrane",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "threatened abortion at 15 weeks of gestation",
+        "claim": "paroxysmal atrial fibrillation and atrial flutter",
         "domain": "symptom",
         "depth": 0,
         "entropy": 0.8
-      },
-      {
-        "id": "l1",
-        "claim": "monochorionic triamniotic triplet pregnancy",
-        "domain": "lab_result",
-        "depth": 0,
-        "entropy": 0.6
-      },
-      {
-        "id": "h1",
-        "claim": "triplets who died in the early neonatal period",
-        "domain": "history",
-        "depth": 0,
-        "entropy": 0.6
       }
     ]
   },
   {
     "case_id": "pmc_case_8",
     "description": "Real world case report from PMC (Scrubbed)",
-    "target_diagnosis": "Pneumonia",
-    "vignette": "A 19-year-old male is admitted to the ICU with fractures of the 2nd and 3rd cervical vertebrae and concomitant acute respiratory failure type I. On physical exam, you note:\n\n* Cervical spine tenderness\n* Respiratory distress\n* Oxygen saturation: 88% on room air\n\nInitial lab results show:\n\n* WBC count: 18,000 cells/mm^3\n* CRP: 120 mg/L\n* Blood cultures pending\n\nA chest X-ray shows:\n\n* Bilateral infiltrates consistent with pneumonia",
+    "target_diagnosis": "Osteoid Osteoma",
+    "vignette": "A 33-year-old male presents to your clinic with a 3-month history of decreased vision in the left eye and a left-sided headache. The physical exam reveals left eye blindness with primary optic atrophy, but no other neurological deficits are noted.\n\nWhat is the first step you would take in evaluating this patient?\n\nLaboratory tests:\n\n* What initial labs or imaging studies would you order to help diagnose this condition?\n \nImaging:\n\n* A CT scan of the brain and orbits has been performed, revealing a bony tumor in the left ethmoid sinus with invasion into the left orbit and compression of the optic nerve. There is also intracranial extension into the anterior cranial fossa on the left side. What does this suggest about the possible diagnosis?",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "Oxygen saturation: 88% on room air",
+        "claim": "Decreased vision in the left eye",
         "domain": "symptom",
         "depth": 0,
         "entropy": 0.8
-      },
-      {
-        "id": "l1",
-        "claim": "WBC count: 18,000 cells/mm^3",
-        "domain": "lab_result",
-        "depth": 0,
-        "entropy": 0.7
-      },
-      {
-        "id": "h1",
-        "claim": "concomitant acute respiratory failure type I",
-        "domain": "history",
-        "depth": 0,
-        "entropy": 0.6
       }
     ]
   },
   {
     "case_id": "pmc_case_9",
     "description": "Real world case report from PMC (Scrubbed)",
-    "target_diagnosis": "acute respiratory distress syndrome (ARDS)",
-    "vignette": "**Diagnostic Challenge**\n\nA 72-year-old female is admitted to the ICU with a severe urinary tract infection (UTI) and acute respiratory distress syndrome (ARDS). She has a history of repeated hospitalizations for UTIs in the past.\n\n**Initial Presentation:**\n\n* Complicated, severe urinary tract infection\n* Acute respiratory distress syndrome\n\n**Physical Exam:**\n(Not provided)\n\n**First-line Labs/Imaging:**\nWhat initial laboratory and imaging studies would you order to help manage this patient's condition?\n\nLab tests:\n\n* Urine culture\n* Blood cultures\n* Complete blood count (CBC)\n* Basic metabolic panel (BMP)\n* Imaging:\n* Chest X-ray\n* Abdominal ultrasound",
+    "target_diagnosis": "Appendicitis\nPulmonary embolism is not present in this case, but rather bilateral pleural effusions are mentioned.\nThe correct answer is Appendicitis.\n\nHowever, it's worth noting that the patient also had an intrathoracic hernia which complicated the diagnosis and treatment. \n\nBut since you asked for the ACUTE primary presenting diagnosis, I will stick to your request.\n\nAppendicitis",
+    "vignette": "**Diagnostic Challenge**\n\nA 43-year-old female district nurse presents to the emergency department with:\n\n* A 6-hour history of generalized abdominal pain that has localized to the right\n* Associated nausea and loss of appetite, made worse by movement and not relieved by intramuscular morphine injection\n* No recent or past trauma to the chest or abdomen\n\nOn examination, she is tender in the right upper quadrant and right iliac fossa with:\n\n* Rebound and guarding\n* Rovsing positive sign\n* Normal bowel sounds\n\nShe has a positive family history of Marfan's syndrome but had not undergone genetic testing. Notable physical examination findings include:\n\n* Long span of upper limbs\n* High-arched palate\n* Soft early diastolic murmur of aortic regurgitation\n\nInitial lab results and imaging include:\n\n* Pyrexia\n* Raised white cell count\n* Elevated C-reactive protein\n* Abdominal X-ray showing absence of gas in the right side of her bowel\n* Chest X-ray showing no obvious abnormality\n\nWhat is your differential diagnosis based on this clinical presentation, physical exam findings, and initial lab results/imaging?",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "severe urinary tract infection",
+        "claim": "Generalized abdominal pain that has localized to the right",
         "domain": "symptom",
         "depth": 0,
         "entropy": 0.8
-      },
-      {
-        "id": "l1",
-        "claim": "bilateral infiltrates on chest X-ray",
-        "domain": "lab_result",
-        "depth": 0,
-        "entropy": 0.7
-      },
-      {
-        "id": "h1",
-        "claim": "history of repeated hospitalizations for UTIs in the past",
-        "domain": "history",
-        "depth": 0,
-        "entropy": 0.7
       }
     ]
   },
   {
     "case_id": "pmc_case_10",
     "description": "Real world case report from PMC (Scrubbed)",
-    "target_diagnosis": "Central venous catheter dislocation",
-    "vignette": "**Diagnostic Challenge**\n\nA 49-year-old female with a history of metastatic breast cancer (supraclavicular lymph node metastases) presents with:\n\n* Dyspnea\n* Intermittent coughing\n* General weakness\n\nPhysical examination reveals no significant findings. The patient has a totally implantable venous access port catheter, which was implanted 2 years ago via the left cephalic vein.\n\nLaboratory findings show:\n* Mild leukocytosis: 11.0/nl\n* Hypokalemia: 2.6 mmol/l\n\nFurther radiological diagnostics have been ordered, but the results are pending. You must decide on the next steps in management based on this limited information.",
+    "target_diagnosis": "Here is the acute, primary presenting diagnosis:\n\n* Acute cholecystitis \n* Biliary colic",
+    "vignette": "A 32-year-old female presents with a 3-hour history of epigastric pain radiating into her back, consistent with biliary colic. She has vomited several times and had similar episodes in the previous week.\n\nOn examination, she is found to have no jaundice or pyrexia. The apex beat is located in the right fifth intercostal space, midclavicular line. There is epigastric tenderness but no tenderness in the right or left upper quadrants.\n\nLaboratory results show a normal white cell count and amylase level, but an elevated C-reactive protein (CRP) level of 290 mg/L. An electrocardiograph reveals right axis deviation and right ventricular hypertrophy, consistent with dextrocardia.\n\nAn ultrasound scan of the upper abdomen identifies the gallbladder in the left upper quadrant, containing stones, and a spleen located in the right upper quadrant. There is no evidence of common bile duct or intrahepatic duct dilatation on the ultrasound. A chest X-Ray confirms the presence of dextrocardia.\n\nWhat are your differential diagnoses for this patient's presentation?",
     "seed_nodes": [
       {
         "id": "s1",
-        "claim": "Dyspnea",
+        "claim": "Epigastric pain radiating into back",
         "domain": "symptom",
         "depth": 0,
-        "entropy": 0.7
-      },
-      {
-        "id": "l1",
-        "claim": "Mild leukocytosis: 11.0/nl",
-        "domain": "lab_result",
-        "depth": 0,
-        "entropy": 0.6
-      },
-      {
-        "id": "h1",
-        "claim": "history of metastatic breast cancer (supraclavicular lymph node metastases)",
-        "domain": "history",
-        "depth": 0,
-        "entropy": 0.6
+        "entropy": 0.8
       }
     ]
   }

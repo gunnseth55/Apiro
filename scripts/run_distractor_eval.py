@@ -98,7 +98,10 @@ def run_evaluation(real_components: bool):
                 return self.generate(prompt)
 
         llm_client = OllamaLLMClient(OLLAMA_BASE_URL, PRIMARY_MODEL)
-        contradiction = ContradictionDetector()
+        contradiction = ContradictionDetector(
+            model=PRIMARY_MODEL,
+            ollama_url=OLLAMA_BASE_URL,
+        )
         expander = NodeExpander(
             entropy_engine=entropy_engine,
             chroma_client=chroma_adapter,
@@ -383,7 +386,8 @@ def run_evaluation(real_components: bool):
             seed_nodes=seeds,
             graph=graph,
             max_depth=6,
-            case_name=case_id
+            case_name=case_id,
+            vignette=vignette,
         )
         
         apiro_output = traversal_res.synthesis

@@ -57,7 +57,9 @@ figures/
 DEVELOPER_NOTES.md
 PROJECT_STATUS.md
 implementation_plan.md
-*.log
+data/PMC-Patients-V2.json
+data/*.json
+!data/pmc_cases.json
+!data/distractor_cases.json
+!data/unseen_cases.json
 
-# Secrets / Config
-.env
