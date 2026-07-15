@@ -390,10 +390,20 @@ def run_evaluation(real_components: bool):
             enriched_vignette = vignette + "\n\n[Deterministic Clinical Findings]\n"
             for ax in axioms:
                 enriched_vignette += f"- {ax.text}\n"
+                
+                # Weight-aware and polarity-aware entropy anchoring
+                base_entropy = 0.01 + (1.0 - getattr(ax, "weight", 0.5)) * 0.15
+                if getattr(ax, "polarity", "affirmed") == "negated":
+                    entropy = max(0.4, base_entropy + 0.3)
+                elif getattr(ax, "polarity", "affirmed") == "historical":
+                    entropy = max(0.3, base_entropy + 0.2)
+                else:
+                    entropy = base_entropy
+                    
                 seeds.append(Node(
                     id=ax.id,
                     claim=ax.text,
-                    entropy_score=0.01,
+                    entropy_score=round(entropy, 4),
                     domain=ax.domain,
                     depth=0
                 ))

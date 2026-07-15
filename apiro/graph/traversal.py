@@ -318,9 +318,14 @@ class ApiroTraversal:
                         elif existing.depth == 0:
                             weaker = new_node
                         else:
-                            new_h      = new_node.entropy_score  or 0.0
-                            existing_h = existing.entropy_score  or 0.0
-                            weaker = new_node if new_h <= existing_h else existing
+                            # Penalize the deeper (more speculative/derived) node
+                            if new_node.depth != existing.depth:
+                                weaker = new_node if new_node.depth > existing.depth else existing
+                            else:
+                                # Depths are equal: penalize the more uncertain (higher entropy) node
+                                new_h      = new_node.entropy_score  or 0.0
+                                existing_h = existing.entropy_score  or 0.0
+                                weaker = new_node if new_h >= existing_h else existing
 
                         weaker.contradiction_penalty = CONTRADICTION_PENALTY
                         logger.info(

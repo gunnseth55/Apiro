@@ -41,9 +41,13 @@ class CriticEngine:
         if not vignette:
             return False
             
-        # Get top confident nodes that are not rabbit holes
-        candidates = [n for n in graph.nodes.values() if not n.is_rabbit_hole]
-        candidates.sort(key=lambda n: n.entropy_score if n.entropy_score is not None else 0.0, reverse=True)
+        # Filter to generated hypotheses (depth > 0) that are not rabbit holes or heavily penalized
+        candidates = [
+            n for n in graph.nodes.values()
+            if n.depth > 0 and not n.is_rabbit_hole and getattr(n, "contradiction_penalty", 0.0) < 0.5
+        ]
+        # Sort by entropy ascending (lowest entropy/uncertainty first = most certain)
+        candidates.sort(key=lambda n: n.entropy_score if n.entropy_score is not None else 1.0)
         top_nodes = candidates[:top_k]
         
         if not top_nodes:
