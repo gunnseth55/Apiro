@@ -1,273 +1,163 @@
-# Apiro: A Curiosity Engine for Biomedical Graph Traversal
+# 🩺 Apiro · AI Clinical Detective
 
-Apiro is an agentic "AI Detective" designed to navigate biomedical knowledge graphs to diagnose complex clinical cases. The `main` branch supports two core execution paradigms:
-1. **Hypothesis-Testing Traversal (HT)**: (Default engine for evaluations and CLI execution). Combines System 1 LLM clinical intuition (Oracle) with System 2 deterministic RAG evidence matching and clinical Bayesian prior scoring.
-2. **Apiro Classic Traversal (Entropy-First)**: (Default engine for Web UI and CLI search). Navigates a Belief Graph by explicitly chasing Shannon Entropy (uncertainty) logprobs at decision boundaries, guided by depth-aware frontier scoring.
-
-This document serves as the primary **onboarding and contributor guide** for anyone joining the project.
+> **Apiro** is an entropy-first AI clinical reasoning engine. Instead of relying on brute-force RAG or simple zero-shot prompting, Apiro dynamically builds and traverses a **Belief Graph** of clinical claims, actively chasing **Shannon Entropy** (epistemic uncertainty) to navigate toward highly accurate differential diagnoses.
 
 ---
 
-## 📖 The Core Vision
+## 🚀 The Core Vision
 
-Imagine a clinician faced with a complex patient presenting with a rash, joint pain, and profound fatigue. Dozens of potential diseases—from common rheumatoid arthritis to rare systemic autoimmune conditions like Lupus—could fit this profile. A human doctor must:
-1. **Anchor** on the solid, known clinical facts (the symptoms and lab results).
-2. **Explore** the gaps in their knowledge (the differentials, rare conditions, and high-uncertainty claims) to rule out alternatives.
-3. **Synthesize** a final diagnosis.
+When faced with a complex patient, a clinical expert does not simply recall facts. They reason through a structured cognitive loop:
+1. **Anchor on Certainty:** Establish the ground truth from solid clinical data (e.g., severe lab values, physical signs).
+2. **Chase Uncertainty:** Formulate competing differentials and actively seek out information that splits the decision boundaries, ruling out alternative diagnoses.
+3. **Prune Contradictions:** Resolve conflicting data points and eliminate clinical tangents.
+4. **Synthesize:** Compile a targeted differential diagnosis.
 
-Apiro translates this clinical reasoning process into a graph traversal algorithm driven by **Information Theory**. It acts as an active detective that searches through a biomedical corpus, measuring what it knows and *what it doesn't know*, to map a path to the correct diagnosis.
-
----
-
-## 📁 Repository Layout & File Responsibilities
+Apiro translates this exact human reasoning flow into a mathematical graph traversal algorithm guided by **Information Theory**.
 
 ```
-.
-├── README.md                   # Onboarding, architecture, and developer guide
-├── Log.md                      # Comprehensive project history, architectural shifts, and evaluations
-├── PROJECT_STATUS.md           # Active state, benchmarks, and known risks
-├── DEVELOPER_NOTES.md          # File classification map (production vs debug), cleanup, and configs
-├── pyproject.toml              # Project configuration and packaging
-├── requirements.txt            # Python dependencies
-├── scripts/
-│   ├── app.py                  # FastAPI web server and UI backend
-│   ├── investigate.py          # Free-text clinical CLI detective tool
-│   ├── run_phase3_eval.py      # Entry point for running Phase 3 benchmarks
-│   └── visualize_graph.py      # D3.js force-directed graph generator
-├── data/
-│   ├── phase3_results.json     # Stored results of Phase 3 evaluations
-│   └── traversal_log_ef_eval.jsonl # Traversal step logs for debugging
-├── tests/
-│   ├── test_html_spec.py       # Integration and data validation tests
-│   └── test_phase2.py          # Unit tests for the graph engine
-└── apiro/
-    ├── corpus/                 # Corpus parsing, chunking, and ChromaDB adapters
-    ├── entropy/
-    │   └── engine.py           # Epistemic uncertainty calculation
-    ├── eval/
-    │   └── evaluator.py        # CaseEvaluator logic and metrics
-    └── graph/
-        ├── belief_graph.py     # BeliefGraph structure and frontier queue sorting
-        ├── node.py             # Node schema (depth, claim, entropy)
-        ├── edge.py             # Edge schema (relation mapping)
-        ├── expander.py         # RAG-based node expansion and top-3 synthesis (includes hybrid domain classifier)
-        ├── traversal.py        # ApiroTraversal (Entropy-First algorithm)
-        ├── breadth_first.py    # BreadthFirstTraversal (Baseline algorithm)
-        └── contradiction.py    # NLI Cross-Encoder + NegEx contradiction detector
+                [ Patient Vignette ]
+                         │
+                         ▼
+           ┌───────────────────────────┐
+           │ Axiom Extraction (System) │
+           └─────────────┬─────────────┘
+                         │
+                         ▼
+        ┌─────────────────────────────────┐
+        │  Depth 0: Anchor on Certainty   │  ◄── Low Entropy First
+        │   (Add Lab/Symptom Seed Nodes)  │
+        └────────────────┬────────────────┘
+                         │
+                         ▼
+         ┌───────────────────────────────┐
+         │ Depth >= 1: Chase Uncertainty │  ◄── High Entropy First
+         │  (Retrieve RAG & Expand Graph)│
+         └───────────────┬───────────────┘
+                         │
+                         ▼
+        ┌─────────────────────────────────┐
+        │  Contradiction & Soft-Pruning   │  ◄── NLI Cross-Encoder Gauntlet
+        │   (Isolate & Penalize Tangents) │
+        └────────────────┬────────────────┘
+                         │
+                         ▼
+           ┌───────────────────────────┐
+           │ Saturation & Stop Check   │
+           └─────────────┬─────────────┘
+                         │
+                         ▼
+        ┌─────────────────────────────────┐
+        │   Final Differential Synthesis   │
+        └─────────────────────────────────┘
 ```
 
 ---
 
-## 📐 Architecture & Key Design Principles
-
-Apiro's traversal strategy is defined by three main pillars:
-
-```mermaid
-graph TD
-    A[Patient Case / Seeds] --> B[Depth 0: Anchor on Certainty]
-    B --> C[Depth >= 1: Chase Uncertainty]
-    C --> D[Contradiction & Saturation Check]
-    D --> E[Synthesize Final Top-3 Differential]
-```
+## 🧠 Core Mathematical Concepts
 
 ### 1. Epistemic Uncertainty (The Entropy Engine)
-Instead of semantic similarity search, Apiro's navigation is guided by **epistemic uncertainty**.
-For any claim, we query the model's confidence boundary by forcing its response into a binary `{Yes, No}` vocabulary when asked if the claim is clinically supported by retrieved context:
+For any clinical claim, Apiro queries the model's confidence boundary. We force the LLM to output a binary `{Yes, No}` on whether a claim is clinically supported by retrieved RAG context, and extract token-level log probabilities:
 
-$$\text{Prompt} \implies P(\text{Yes}) + P(\text{No}) = 1.0$$
+$$P(\text{Yes}) + P(\text{No}) = 1.0$$
 
-We calculate the Shannon Entropy ($H$) over these token probabilities:
+We calculate the **Shannon Entropy** ($H$) over these token probabilities:
 
 $$H = -P(\text{Yes})\log_2 P(\text{Yes}) - P(\text{No})\log_2 P(\text{No})$$
 
-* If the model is certain the claim is true or false: $P(\text{Yes}) \to 1$ or $0 \implies H \to 0$ (Low Entropy).
-* If the model is genuinely uncertain of its clinical support: $P(\text{Yes}) \approx P(\text{No}) \approx 0.5 \implies H \to \log_2(2) = 1.0$ (High Entropy).
+* **Low Entropy ($H \to 0$):** The model is certain the claim is true or false ($P(\text{Yes}) \to 1$ or $0$).
+* **High Entropy ($H \to 1.0$):** The model is highly uncertain ($P(\text{Yes}) \approx P(\text{No}) \approx 0.5$). 
 
-This mathematically captures the decision boundary where medical opinions or clinical guidelines diverge.
+Apiro targets these high-entropy decision boundaries to gather information where clinical opinions or guidelines diverge.
 
-### 2. Depth-Aware Frontier Scoring (Anchor vs. Explore)
-To prevent the engine from jumping to wild conclusions or getting lost in tangents, we implement a depth-aware scoring heuristic to sort our exploration frontier queue (`get_frontier()` in `belief_graph.py`):
-* **Depth 0 (Anchors):** Sort by **lowest entropy** ($1.0 - H$). The engine anchors on solid facts and lab values first (e.g., establishing a certain ground truth of "Elevated AST/ALT").
-* **Depth $\ge$ 1 (Exploration):** Sort by **highest entropy** ($H$). The engine actively targets uncertainty, exploring competing hypotheses and rare conditions.
+### 2. Depth-Aware Frontier Scoring
+To keep the engine anchored in clinical truth and avoid wild tangents, Apiro's frontier queue is sorted dynamically:
+* **Depth 0 (Anchors):** Sorted by **lowest entropy** ($1.0 - H$). Establish the clinical foundation first.
+* **Depth $\ge$ 1 (Exploration):** Sorted by **highest entropy** ($H$). Actively resolve the most uncertain clinical nodes.
 
-### 3. Hybrid Deterministic Guardrails (Phase 5)
-To prevent the generative LLM from hallucinating paths that ignore concrete clinical findings, Apiro uses a **Hybrid Pre-processing Pipeline**:
-* **Medical NER:** A Hugging Face PyTorch token classifier (`d4data/biomedical-ner-all`) extracts all deterministic clinical findings from the vignette.
-* **Regex Lab Parser:** Hardcoded heuristics parse lab results and vitals (e.g., Potassium, Blood Pressure) to prevent the LLM from making math errors on threshold values.
-These extracted findings are syntactically formatted and injected into the Belief Graph as **Absolute Certainty (0.01 entropy) Seed Nodes**. 
-
-### 4. Traversal Control Logic
-* **Contradiction Detection (`contradiction.py`):** Uses a MiniLM cross-encoder NLI model. When the LLM explores the graph and generates a new hypothesis, the built-in Contradiction Detector automatically cross-references it against every other node in the graph. If a hallucinated path contradicts one of the deterministic Seed Nodes (e.g. suggesting *Hypokalemia* when the Lab Parser seeded *Potassium 5.6*), the NLI model intercepts and mathematically soft-prunes it!
-* **Rabbit Hole Prevention (`traversal.py`):** Halts expansion down a specific branch if the engine hits consecutive zero-entropy steps (signifying that we are stuck in a cycle of trivial, low-information facts).
-* **Saturation Detection (`traversal.py`):** Terminates the entire traversal when the change in average graph entropy stabilizes (i.e. rolling average entropy variance drops below a set threshold), indicating that the engine has learned all it can.
-
-### 4. Hypothesis-Testing Traversal (HT Mode)
-To bypass the computational limits, CUDA instabilities, and latency issues of dynamic graph expansion, the default traversal mode is set to a structured hypothesis-testing model:
-* **System 1 (HypothesisOracle)**: Uses a single, fast LLM call to extract clinical findings into a structured `PatientContext` and generate $N=12$ candidate diagnoses based on its internal base rates.
-* **System 2 (EvidenceMatcher)**: A deterministic matching algorithm (0 LLM calls) that queries the vector corpus (`apiro_corpus`) for clinical evidence matching each candidate disease.
-* **Clinical Priors (BayesianScorer)**: Computes final probabilities by matching candidates against demographic constraints (age, gender) and history.
+### 3. Traversal Control Logic
+* **Contradiction Detection:** Uses a MiniLM cross-encoder NLI model. When two active claims contradict, the weaker node receives a `CONTRADICTION_PENALTY` (default `0.8`), pushing it to the bottom of the traversal queue.
+* **Rabbit Hole Prevention:** Stops expanding a path if the engine hits consecutive zero-entropy steps (signaling a loop of trivial, low-information facts).
+* **Saturation Stopping:** Halts the entire traversal when rolling average entropy variance drops below a set threshold, indicating the engine has learned all it can.
 
 ---
 
-## 🛠️ Step-by-Step Traversal Trace
-
-When a patient case (e.g. `synthetic_case_1.json`) is run, the engine executes the following loop:
+## 📂 Codebase Architecture
 
 ```
-1. Initialize BeliefGraph with seed nodes (symptoms, lab findings at Depth 0).
-2. For each seed node, compute baseline Entropy using the EntropyEngine.
-3. LOOP (until Saturation, Max Nodes, or Frontier is empty):
-    a. Sort the frontier queue using Depth-Aware Scoring.
-    b. Dequeue the highest-scoring Node (the current "clue").
-    c. Retrieve relevant corpus text chunks using ChromaDB.
-    d. Call NodeExpander (RAG + LLM) to generate exactly 3 child hypotheses.
-    e. Add child nodes to the graph (assigned Depth = Parent Depth + 1).
-    f. Compute Entropy for each child node.
-    g. Run ContradictionDetector against existing nodes.
-    h. Evaluate Saturation and Rabbit Hole conditions.
-4. Call NodeExpander.synthesize_differential(graph) to produce the final top-3 diagnoses.
+.
+├── apiro/
+│   ├── axioms/             # Clinical text parsers and NER extractors
+│   ├── corpus/             # ChromaDB vector store builders and scrapers
+│   ├── entropy/            # Epistemic certainty and Shannon Entropy engine
+│   ├── eval/               # Case evaluation judges and metrics
+│   ├── graph/              # BeliefGraph, Node/Edge schemas, and Traversals
+│   │   ├── belief_graph.py
+│   │   ├── contradiction.py
+│   │   ├── expander.py
+│   │   ├── rabbit_hole.py
+│   │   ├── saturation.py
+│   │   └── traversal.py    # Main Entropy-First traversal algorithm
+│   ├── config.py           # Global tuning params (Theta, Entropy temps, etc.)
+│   └── run.py              # Engine runner CLI entry point
+├── data/                   # Ontologies, case datasets, and local logs
+├── scripts/
+│   ├── app.py              # FastAPI Web UI server with live SSE streaming
+│   ├── investigate.py      # Free-text clinical CLI detective
+│   └── run_pmc_eval.py     # Distractor-resilience evaluation script
+└── tests/                  # Pytest verification suites
 ```
 
 ---
 
-## 📋 Key Data Schemas & Formats
+## 🛠️ Onboarding & Setup
 
-### 1. Clinical Case File Input
-Input files are stored in JSON format containing a list of clinical findings (seeds) and the final target diagnosis.
-```json
-{
-  "case_id": "case_01",
-  "target_diagnosis": "Acute Myocardial Infarction",
-  "findings": [
-    {
-      "claim": "Substernal chest pain radiating to left arm",
-      "domain": "symptom"
-    },
-    {
-      "claim": "ST-segment elevation in leads V1-V4",
-      "domain": "ecg"
-    }
-  ]
-}
-```
-
-### 2. Belief Graph Export Schema
-The graph can be exported to JSON via `graph.export_json()`, yielding this format:
-```json
-{
-  "nodes": [
-    {
-      "id": "node_0",
-      "claim": "ST-segment elevation in leads V1-V4",
-      "depth": 0,
-      "entropy_score": 0.05,
-      "domain": "ecg",
-      "resolved": true
-    },
-    {
-      "id": "node_0_c1",
-      "claim": "Anterior myocardial infarction",
-      "depth": 1,
-      "entropy_score": 0.85,
-      "domain": "pathophysiology",
-      "resolved": false
-    }
-  ],
-  "edges": [
-    {
-      "source": "node_0",
-      "target": "node_0_c1",
-      "relation": "expands"
-    }
-  ]
-}
-```
-
----
-
-## 👩‍💻 Contributor's Quickstart & Development Workflows
-
-### 1. Virtual Environment Setup
-Ensure you run python 3.10+ and install editable package dependencies:
+### 1. Installation
+Ensure you are using Python 3.10+ in a clean virtual environment:
 ```bash
 python3 -m venv venv
-source venv/bin/activate  (cmd: venv\Scripts\activate)
+source venv/bin/activate
 pip install -r requirements.txt
-pip install -e . 
+pip install -e .
 ```
-> [!NOTE]
-> **Model Downloads:** Hugging Face models (NER, NLI Cross-Encoder) are downloaded automatically on the first execution of `scripts/run_pmc_eval.py` or the FastAPI server. No manual downloading or pushing of model files is required.
 
-### 2. Building the Corpus & Vector Database
-The persistent database directory (`data/chroma_db/`) is excluded from Git to prevent large binary files in version control. After checking out the codebase, you must populate your local vector database. **We recommend loading at least 50k to 100k records for a viable corpus:**
+### 2. Seeding the Medical Corpus
+Apiro retrieves context from a local vector store to evaluate claims. The database (`data/chroma_db/`) is gitignored. Rebuild your local corpus by running:
+```bash
+# Ingest textbooks and medical knowledge sources
+python -m apiro.corpus.build_corpus --sources textbooks medrag hpo clinvar openfda --max-records 100000
+```
 
 > [!IMPORTANT]
-> **Required Data Downloads:**
-   - **PMC-Patients Dataset:** Download `PMC-Patients-V2.json` (~837MB) from [HuggingFace Datasets](https://huggingface.co/datasets/zhaofangqi/PMC-Patients) and place it in the `data/` directory.
-   - **Human Phenotype Ontology (HPO):** Download the raw ontology and annotations files, placing them under `data/ontology/`:
-     - `hp.obo` $\to$ [Download Link](http://purl.obolibrary.org/obo/hp.obo)
-     - `phenotype.hpoa` $\to$ [Download Link](http://purl.obolibrary.org/obo/hp/hpoa/phenotype.hpoa)
-
-```bash
-# Ingest clinical textbooks (requires sufficient volume for graph paths)
-python -m apiro.corpus.build_corpus --sources textbooks --max-records 50000
-
-# Ingest multiple medical sources (MedRAG/PubMed, HPO, ClinVar, OpenFDA) with full record volume
-python -m apiro.corpus.build_corpus --sources medrag hpo clinvar openfda --max-records 100000
-
-# Rebuild the database from scratch (deletes existing collection first)
-python -m apiro.corpus.build_corpus --sources textbooks medrag --clear --max-records 100000
-```
-
-### 3. Testing and Stubs
-To avoid burning active OpenAI/Anthropic API credits during graph development or unit test runs, we provide a deterministic stub suite:
-* **Stub Clients:** Located in `tests/` and test harnesses. They cycle through preset responses or generate mock clinical nodes deterministically.
-* **Running Tests:**
-  ```bash
-  pytest tests/
-  ```
-
-### 4. Running a Local Traversal
-You can run a traversal using either the default Hypothesis-Testing (HT) engine or the Classic Generative Expansion engine:
-```bash
-# A. Run the default Hypothesis-Testing engine CLI on a case
-python -m apiro.run --case data/synthetic_case_1.json --mode hypothesis
-
-# B. Run the Classic Generative Expansion engine CLI on a case
-python -m apiro.run --case data/synthetic_case_1.json --mode classic
-
-# C. Launch the interactive FastAPI web server and UI (runs Classic engine)
-uvicorn scripts.app:app --host 0.0.0.0 --port 8000
-
-# D. Run the Classic clinical vignette free-text detective CLI
-python scripts/investigate.py "72yo male presenting with sudden substernal chest pain..."
-```
-
-### 5. Extending Search Strategies
-* **Modifying sorting behavior:** Edit `get_frontier()` in [belief_graph.py](file:///home/theroid/PycharmProjects/Apiro/apiro/graph/belief_graph.py) to implement new heuristic frontier weights.
-* **Adding dynamic stop rules:** Implement new rules inside `check_stop_conditions()` in [traversal.py](file:///home/theroid/PycharmProjects/Apiro/apiro/graph/traversal.py).
-* **Refining hypothesis branching:** Update `expand_node()` inside [expander.py](file:///home/theroid/PycharmProjects/Apiro/apiro/graph/expander.py) to tweak the RAG context templates.
+> To run the evaluation suite, download the **PMC-Patients-V2** dataset (`PMC-Patients-V2.json` ~837MB) from [HuggingFace Datasets](https://huggingface.co/datasets/zhaofangqi/PMC-Patients) and place it in the `data/` directory.
 
 ---
 
-## 🎢 Project History (The Ups and Downs)
+## 🚀 Running Apiro
 
-**Note:** For the complete, detailed history of Apiro—including our transition from the original Entropy Engine (Apiro 1.0), to Hypothesis Testing (HT), and finally to Evidence-Driven Abductive Reasoning (EDAR)—please read the definitive [Log.md](Log.md).
+### FastAPI Web Interface (With Live Visualizer)
+Apiro includes a premium web interface featuring a live, interactive 3-column UI:
+* **Left:** Clinical input form and real-time execution statistics.
+* **Center:** Thought log showing clinical steps slide in as the model reasons.
+* **Right:** A dynamically built D3 force-directed belief graph.
 
-Building Apiro was not a straight path. Over successive cycles of debugging and evaluation, we hit several roadblocks:
+Start the FastAPI development server:
+```bash
+uvicorn scripts.app:app --host 127.0.0.1 --port 8000
+```
+Open `http://localhost:8000` in your browser.
 
-### ❌ The Tangent Trap (Blind Uncertainty)
-* **What went wrong:** Originally, the engine chased uncertainty (highest entropy) immediately from the start. This caused the engine to ignore crucial clinical seed nodes (like positive lab results) and immediately follow highly uncertain, tangential claims, ending up in irrelevant "rabbit holes."
-* **How we fixed it:** We introduced **Depth-Aware Frontier Scoring**. By forcing the engine to prioritize certain nodes at Depth 0, we established a firm "anchor" in clinical truth before allowing the curiosity engine to explore the high-entropy differentials.
+### Free-Text CLI Investigator
+Input any raw clinical scenario or patient chart dump directly into the terminal:
+```bash
+python scripts/investigate.py
+```
+Or pass the clinical vignette directly:
+```bash
+python scripts/investigate.py -f "45-year-old male with sudden substernal chest pain radiating to the left arm, sweating, and elevated Troponin."
+```
 
-### ❌ Entropy Semantics Drift
-* **What went wrong:** During code changes, the prompt for the entropy engine drifted from measuring clinical support (`"Is this claim clinically supported?"`) to measuring relevance or interest. This destroyed the mathematical validity of the entropy signal, making it a measure of "interest" rather than true epistemic uncertainty.
-* **How we fixed it:** We reverted the engine to its original clinically-supported prompt, restoring clean binary entropy boundaries.
-
-### ❌ The Evaluator Metric Trap
-* **What went wrong:** Our Phase 3 evaluator checked for a "diagnostic hit" by scanning all raw expanded graph nodes for exact substring matches of the ground truth. This resulted in false negatives (e.g., the engine successfully synthesized "Systemic Lupus Erythematosus", but the ground truth was "Neuropsychiatric systemic lupus erythematosus [NPSLE]", resulting in a FAIL).
-* **How we fixed it:** We shifted the evaluation target from intermediate nodes to the final synthesized differential diagnosis. We replaced binary substring matching with a combined metric of substring checks and **SentenceTransformer semantic similarity (cosine similarity with a 0.75 threshold)**, matching clinical intents accurately.
-
-### ❌ The 1.6 GB Model Memory Bloat
-* **What went wrong:** Early versions used a heavy `facebook/bart-large-mnli` model (~1.6 GB memory footprint) in `domain_classifier.py` to identify whether a patient finding was a `symptom`, `lab`, `imaging`, etc. This made deployment slow, wasted memory, and was completely redundant.
-* **How we fixed it:** We deleted the zero-shot classifier module entirely and implemented a lightweight, hybrid keyword + dot-product semantic fallback in [expander.py](file:///home/theroid/PycharmProjects/Apiro/apiro/graph/expander.py) that reuses the already loaded SentenceTransformer embeddings, reducing the extra memory overhead to exactly 0 MB.
+### Run Distractor-Resilience Evaluation
+Evaluate Apiro's performance against standard zero-shot LLMs and RAG baselines on real-world cases:
+```bash
+python scripts/run_pmc_eval.py --real
+```
