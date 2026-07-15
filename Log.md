@@ -180,14 +180,20 @@ Here is the commit-by-commit record of the Apiro codebase:
 *   **The Rationale**: We hypothesized that LLM hallucination could be completely eliminated by forcing a rigid mathematical system to evaluate generated hypotheses against undeniable medical facts.
 *   **The Build**: Created the `feature/hadce` branch. Removed generative expansion entirely. Built a 3-part deterministic engine:
     1.  **Axiom Extractor**: Uses Hugging Face Medical NER (`d4data/biomedical-ner-all`) and Regex parsing to pull hard facts (labs/vitals/symptoms) from a vignette.
-    2.  **Hypothesis Gauntlet**: Hypotheses are generated via repeated sampling (Method B) and cross-referenced against the Axioms via a MiniLM cross-encoder. If a hypothesis contradicts an Axiom, it is instantly killed.
+    2.  **Hypothesis Gauntlet**: Hypotheses are generated via repeated sampling (Method B) and cross-references against the Axioms via a MiniLM cross-encoder. If a hypothesis contradicts an Axiom, it is instantly killed.
     3.  **Expected Information Gain (EIG) Engine**: Pure matrix math calculating KL-Divergence to choose the next optimal query.
 *   **The Result**: The architecture was mathematically flawless but clinically pessimistic. A small 8B model couldn't generate initial hypotheses accurate enough to survive the ruthless NLI Gauntlet, leading to a 20% success rate on the PMC Distractor dataset. The strict mathematical cage stripped away the LLM's greatest strength: abstract generative inference.
+*   **Commits**:
+    -   **`7e00fac` (Jul 12)**: Merge branch 'feature/hadce' into main.
 
 ### Phase 7: Hybrid Apiro (The Ultimate Merge)
 *   **The Rationale**: We realized Apiro Classic's generative fluidity was a feature, not a bug. But HADCE's deterministic NLP extractors were incredible guardrails. 
 *   **The Build (`feature/hybrid-apiro`)**: Branched from the optimized Apiro Classic (`feature/optimization-eval`). We ported the Hugging Face NER and Regex Lab Parser from HADCE. We structurally formatted the extracted facts into sentences (e.g. *"The patient has a lab result showing Potassium of 5.6"*) and injected them into the Apiro Classic Belief Graph as **Absolute Certainty (0.01 entropy) Seed Nodes**.
 *   **The Result**: The ultimate cognitive multiplier. The LLM retains full generative freedom to explore the graph and generate hypotheses via Medical RAG. However, Apiro Classic's native Contradiction Detector cross-references every single hallucinated hypothesis against the deterministic Seed Nodes. If the LLM hallucinates a path that contradicts the deterministic NLP extraction, the NLI model instantly intercepts and mathematically soft-prunes the path.
+*   **Commits**:
+    -   **`fdc3a3e` (Jul 13)**: Merge branch 'feature/hybrid-apiro' into main.
+    -   **`ea0d14b` (Jul 13)**: feat(hybrid-apiro): inject HADCE NLP extractors as seed nodes in Apiro Classic.
+    -   **`25dfd78` (Jul 13)**: docs: update README with Hybrid Apiro architecture.
 
 ### Phase 8: Hybrid Apiro Systems Optimization (July 2026)
 *   **The Rationale**: Although Hybrid Apiro was clinically superior, it suffered from sequential latency bottlenecks: generating and scoring node entropy one by one, and verifying NLI contradictions node-by-node.
@@ -195,6 +201,26 @@ Here is the commit-by-commit record of the Apiro codebase:
     1.  **NLI Matrix Batching**: Rewrote `traversal.py` to bundle new node contradiction comparisons into batches, performing up to 16 checks in a single GPU tensor forward pass via `check_batch()`.
     2.  **Concurrent LLM/RAG Scoring**: Utilized `ThreadPoolExecutor` in `expander.py` to calculate the entropy scores of all 3 generated child hypotheses in parallel, eliminating the sequential wait time.
 *   **The Result**: Latency dropped from ~32 seconds to ~28 seconds per case (with the remaining time constrained purely by local Ollama generation throughput). The structural math and clinical pathways remained perfectly preserved. Accuracy on the PMC distractor dataset scored **40%** due to stochastic variations in LLM generation, proving the robustness of the combined guardrails.
+*   **Commits**:
+    -   **`d66e94e` (Jul 14)**: Merge branch 'feature/hybrid-apiro-optimization' into main (restoring and finalizing optimized classic traversal).
+    -   **`bb803f5` (Jul 14)**: perf(hybrid-apiro): enable NLI matrix batching and concurrent LLM generation.
+    -   **`94fae84` (Jul 14)**: docs: add note about automatic Hugging Face model downloads in README.
+    -   **`ec87508` (Jul 14)**: docs: document Phase 8 systems optimization in Log.md.
+
+### Phase 9: Repository Cleanup & Unification (July 2026)
+*   **The Rationale**: With the optimized Hybrid Apiro engine finalized, the codebase was heavily cluttered with dead branches, experimental directories (like `apiro/edar/`, `apiro/hypothesis/`, `apiro/curiosity/`), and temporary developer logs. We needed to prune everything except the production Hybrid Apiro components to ensure a flawless default state on the `main` branch.
+*   **The Build**: Checked out a clean repository, verified active component imports, unified CLI/Web app interfaces, and deleted all legacy directories.
+*   **Commits**:
+    -   **`73e5d19` (Jul 14)**: chore: remove failed EDAR engine code and temp debug files.
+    -   **`4316148` (Jul 14)**: chore: remove redundant HT code, clean repository, and align CLI/Web app with Hybrid Apiro engine.
+    -   **`fb65c6b` (Jul 14)**: chore: restore classic saturation and rabbit hole detectors, and fix traversal signatures.
+    -   **`3b11cc6` (Jul 14)**: chore: remove HADCE evaluation comparisons from run_pmc_eval.py and update case dataset.
+    -   **`5120220` (Jul 14)**: chore: remove unsupported vignette argument from synthesize_differential call in traversal.py.
+    -   **`9012e90` (Jul 14)**: chore: remove unused distractor cases, old traversal logs, synthetic case files, and root structure.txt file.
+    -   **`5a5098d` (Jul 14)**: chore: remove empty apiro/nlp package.
+    -   **`eb93029` (Jul 15)**: docs: remake README.md from scratch for clean onboarding and architecture overview.
+    -   **`3ed67d9` (Jul 15)**: docs: add Deterministic Clinical Anchoring (Axiom & NER Extraction) section to README.md.
+    -   **`36e0df4` (Jul 15)**: docs: add generate_pmc_cases.py and repair_corpus.py to codebase layout in README.md.
 
 ---
 
