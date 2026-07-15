@@ -53,7 +53,7 @@ Apiro translates this exact human reasoning flow into a mathematical graph trave
 
 ---
 
-## 🧠 Core Mathematical Concepts
+## 🧠 Core Concepts & Traversal Logic
 
 ### 1. Epistemic Uncertainty (The Entropy Engine)
 For any clinical claim, Apiro queries the model's confidence boundary. We force the LLM to output a binary `{Yes, No}` on whether a claim is clinically supported by retrieved RAG context, and extract token-level log probabilities:
@@ -78,6 +78,12 @@ To keep the engine anchored in clinical truth and avoid wild tangents, Apiro's f
 * **Contradiction Detection:** Uses a MiniLM cross-encoder NLI model. When two active claims contradict, the weaker node receives a `CONTRADICTION_PENALTY` (default `0.8`), pushing it to the bottom of the traversal queue.
 * **Rabbit Hole Prevention:** Stops expanding a path if the engine hits consecutive zero-entropy steps (signaling a loop of trivial, low-information facts).
 * **Saturation Stopping:** Halts the entire traversal when rolling average entropy variance drops below a set threshold, indicating the engine has learned all it can.
+
+### 4. Deterministic Clinical Anchoring (Axiom & NER Extraction)
+Before the dynamic graph traversal begins, Apiro anchors itself in the patient's ground truth through a deterministic parsing pipeline (`AxiomExtractor`):
+* **Named Entity Recognition (NER):** Uses the Hugging Face transformer model `d4data/biomedical-ner-all` to extract clinically significant medical concepts (symptoms, signs, diseases).
+* **Laboratory Value Parsing:** Utilizes the `LabParser` regex rules to match numeric lab results (e.g. "Hemoglobin 9.5 g/dL") and flag abnormal bounds.
+* **Negation Classification:** Filters and classifies findings as `affirmed` or `negated` (e.g., "no chest pain") to ensure only confirmed clinical facts are seeded at Depth 0.
 
 ---
 
