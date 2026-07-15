@@ -108,7 +108,9 @@ Before the dynamic graph traversal begins, Apiro anchors itself in the patient's
 ├── data/                   # Ontologies, case datasets, and local logs
 ├── scripts/
 │   ├── app.py              # FastAPI Web UI server with live SSE streaming
+│   ├── generate_pmc_cases.py # Dataset challenge case generator
 │   ├── investigate.py      # Free-text clinical CLI detective
+│   ├── repair_corpus.py    # Corpus database utility
 │   └── run_pmc_eval.py     # Distractor-resilience evaluation script
 └── tests/                  # Pytest verification suites
 ```
