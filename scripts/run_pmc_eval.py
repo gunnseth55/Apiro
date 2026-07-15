@@ -46,8 +46,6 @@ def run_evaluation(real_components: bool):
         from apiro.graph.contradiction import ContradictionDetector
         from apiro.entropy.engine import EntropyEngine
         from apiro.corpus.embedder import Embedder
-        from apiro.axioms.extractor import AxiomExtractor
-
         # Checks
         try:
             r = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=5)
@@ -461,9 +459,9 @@ def run_evaluation(real_components: bool):
     for r in results:
         print(f"Case {r['case_id']}: {r['description']}")
         print(f"  Target Diagnosis : {r['target']}")
-        print(f"  Bare LLM Success : {'✓ SUCCESS' if r['bare_llm']['success'] else '✗ FAILED (Hallucinated distractor)'}")
-        print(f"  RAG Success      : {'✓ SUCCESS' if r['rag']['success'] else '✗ FAILED (Hallucinated distractor)'}")
-        print(f"  Apiro Success    : {'✓ SUCCESS' if r['apiro']['success'] else '✗ FAILED'}")
+        print(f"  Bare LLM Success : {'[PASS]' if r['bare_llm']['success'] else '[FAIL] (Hallucinated distractor)'}")
+        print(f"  RAG Success      : {'[PASS]' if r['rag']['success'] else '[FAIL] (Hallucinated distractor)'}")
+        print(f"  Apiro Success    : {'[PASS]' if r['apiro']['success'] else '[FAIL]'}")
         print("-" * 65)
         
     print(f"Bare LLM Total Success: {bare_wins}/{len(results)} ({bare_wins/len(results)*100:.1f}%)")
