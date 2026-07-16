@@ -52,6 +52,18 @@ class AxiomExtractor:
         return axioms
 
     def _filter_overlaps(self, ner_entities: list, lab_axioms: list) -> list:
-        # Simple overlap prevention logic
-        # For now, just return all NER entities. In a real system, we'd check text spans.
-        return ner_entities
+        # Prevent duplicates: if an NER entity word is already present inside
+        # the match text of a lab/vital axiom, discard the duplicate NER entity.
+        filtered = []
+        prefix = "The patient presents with the clinical finding of "
+        for ner in ner_entities:
+            word = ner.text[len(prefix):].rstrip(".").strip().lower() if ner.text.startswith(prefix) else ner.text.lower()
+            
+            overlap = False
+            for lab in lab_axioms:
+                if word in lab.text.lower():
+                    overlap = True
+                    break
+            if not overlap:
+                filtered.append(ner)
+        return filtered

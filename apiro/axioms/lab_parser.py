@@ -16,6 +16,22 @@ LAB_PATTERNS = [
 ]
 
 class LabParser:
+    IGNORED_NAMES = {
+        "a", "the", "in", "on", "at", "to", "is", "was", "for", "with", "of", "an", "and", "or", "by",
+        "over", "under", "about", "around", "approximately", "history", "prior", "some", "few", "many",
+        "several", "no", "not", "any", "all", "each", "every", "both", "one", "two", "three", "four",
+        "five", "six", "seven", "eight", "nine", "ten", "first", "second", "third", "last", "next",
+        "previous", "old", "years", "months", "days", "weeks", "hours", "minutes", "seconds", "year",
+        "month", "day", "week", "hour", "minute", "second", "age", "stone", "stones", "kg", "lbs", "male",
+        "female", "woman", "man", "patient", "caucasians", "caucasian", "white", "black", "asian", "hispanic"
+    }
+
+    IGNORED_UNITS = {
+        "year", "years", "month", "months", "day", "days", "week", "weeks", "hour", "hours", "minute",
+        "minutes", "second", "seconds", "stone", "stones", "old", "year-old", "years-old", "month-old",
+        "months-old", "yo", "y/o", "kg", "lbs"
+    }
+
     def __init__(self):
         pass
         
@@ -28,8 +44,15 @@ class LabParser:
                 val_str = match.group(2)
                 unit = match.group(3) if match.lastindex >= 3 else None
                 
-                # Filter out obvious false positives
-                if len(name) < 2 or name.lower() in ["a", "the", "in", "on", "at", "to", "is", "was", "for", "with"]:
+                # Check for false positives in names and units
+                name_lower = name.lower()
+                unit_lower = unit.lower() if unit else ""
+                
+                if len(name) < 2 or name_lower in self.IGNORED_NAMES:
+                    continue
+                if unit_lower in self.IGNORED_UNITS:
+                    continue
+                if any(word in self.IGNORED_NAMES for word in name_lower.split()):
                     continue
                     
                 # Handle BP specifically
@@ -45,7 +68,7 @@ class LabParser:
                 ax = ClinicalAxiom(
                     id="",
                     text=sentence,
-                    domain="lab" if name.lower() not in ["bp", "blood pressure", "temp", "temperature", "hr", "heart rate", "rr"] else "vital",
+                    domain="lab" if name_lower not in ["bp", "blood pressure", "temp", "temperature", "hr", "heart rate", "rr"] else "vital",
                     polarity="affirmed",
                     value=val,
                     unit=unit,

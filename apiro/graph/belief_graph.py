@@ -155,10 +155,13 @@ class BeliefGraph:
         return len(self.nodes)
 
     def _get_embedder(self):
+        global _SHARED_EMBEDDER
         if self._embedder is None:
-            from sentence_transformers import SentenceTransformer
-            from apiro.config import EMBED_MODEL
-            self._embedder = SentenceTransformer(EMBED_MODEL, device="cpu")
+            if "_SHARED_EMBEDDER" not in globals() or _SHARED_EMBEDDER is None:
+                from sentence_transformers import SentenceTransformer
+                from apiro.config import EMBED_MODEL
+                globals()["_SHARED_EMBEDDER"] = SentenceTransformer(EMBED_MODEL, device="cpu")
+            self._embedder = globals()["_SHARED_EMBEDDER"]
         return self._embedder
 
     def find_semantic_match(self, claim: str, threshold: float = 0.92) -> Optional[Node]:

@@ -46,8 +46,6 @@ def run_evaluation(real_components: bool):
         from apiro.graph.contradiction import ContradictionDetector
         from apiro.entropy.engine import EntropyEngine
         from apiro.corpus.embedder import Embedder
-        from apiro.axioms.extractor import AxiomExtractor
-
         # Checks
         try:
             r = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=5)
@@ -392,10 +390,20 @@ def run_evaluation(real_components: bool):
             enriched_vignette = vignette + "\n\n[Deterministic Clinical Findings]\n"
             for ax in axioms:
                 enriched_vignette += f"- {ax.text}\n"
+                
+                # Weight-aware and polarity-aware entropy anchoring
+                base_entropy = 0.01 + (1.0 - getattr(ax, "weight", 0.5)) * 0.15
+                if getattr(ax, "polarity", "affirmed") == "negated":
+                    entropy = max(0.4, base_entropy + 0.3)
+                elif getattr(ax, "polarity", "affirmed") == "historical":
+                    entropy = max(0.3, base_entropy + 0.2)
+                else:
+                    entropy = base_entropy
+                    
                 seeds.append(Node(
                     id=ax.id,
                     claim=ax.text,
-                    entropy_score=0.01,
+                    entropy_score=round(entropy, 4),
                     domain=ax.domain,
                     depth=0
                 ))
@@ -461,9 +469,9 @@ def run_evaluation(real_components: bool):
     for r in results:
         print(f"Case {r['case_id']}: {r['description']}")
         print(f"  Target Diagnosis : {r['target']}")
-        print(f"  Bare LLM Success : {'✓ SUCCESS' if r['bare_llm']['success'] else '✗ FAILED (Hallucinated distractor)'}")
-        print(f"  RAG Success      : {'✓ SUCCESS' if r['rag']['success'] else '✗ FAILED (Hallucinated distractor)'}")
-        print(f"  Apiro Success    : {'✓ SUCCESS' if r['apiro']['success'] else '✗ FAILED'}")
+        print(f"  Bare LLM Success : {'[PASS]' if r['bare_llm']['success'] else '[FAIL] (Hallucinated distractor)'}")
+        print(f"  RAG Success      : {'[PASS]' if r['rag']['success'] else '[FAIL] (Hallucinated distractor)'}")
+        print(f"  Apiro Success    : {'[PASS]' if r['apiro']['success'] else '[FAIL]'}")
         print("-" * 65)
         
     print(f"Bare LLM Total Success: {bare_wins}/{len(results)} ({bare_wins/len(results)*100:.1f}%)")

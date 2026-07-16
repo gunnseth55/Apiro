@@ -68,6 +68,8 @@ NEGEX_PATTERNS = re.compile(
 
 # Pairs of antonym keywords. If claim_a has a word from set A and claim_b has
 # the corresponding word from set B (or vice versa), they are likely contradictory.
+# Pairs of antonym keywords. If claim_a has a word from set A and claim_b has
+# the corresponding word from set B (or vice versa), they are likely contradictory.
 _ANTONYM_PAIRS: list[tuple[set, set]] = [
     ({"indicated", "safe", "beneficial", "recommended", "first-line"},
      {"contraindicated", "avoid", "dangerous", "do not use", "prohibited"}),
@@ -77,19 +79,27 @@ _ANTONYM_PAIRS: list[tuple[set, set]] = [
      {"absent", "not present", "ruled out", "excluded", "no evidence"}),
     ({"fever", "pyrexia", "febrile", "temperature elevated"},
      {"afebrile", "no fever", "apyrexial", "temperature normal"}),
+    ({"hypokalemia", "low potassium"}, {"hyperkalemia", "high potassium"}),
+    ({"hypothyroidism", "low thyroid"}, {"hyperthyroidism", "high thyroid"}),
+    ({"hypoglycemia", "low glucose", "low blood sugar"}, {"hyperglycemia", "high glucose", "high blood sugar"}),
+    ({"anemia", "low hemoglobin"}, {"polycythemia", "high hemoglobin"}),
+    ({"leukopenia", "low wbc"}, {"leukocytosis", "high wbc"}),
+    ({"acidosis", "low ph"}, {"alkalosis", "high ph"}),
+    ({"left", "left-sided"}, {"right", "right-sided"}),
 ]
 
-# Medical entity keywords — pairs sharing these are considered HIGH-SIMILARITY
-# and will be escalated to the LLM judge if a negation is also detected.
-_MEDICAL_ENTITY_WORDS = re.compile(
-    r"\b(aspirin|warfarin|heparin|metformin|metoprolol|lisinopril|"
-    r"troponin|creatinine|sodium|potassium|hemoglobin|glucose|bilirubin|"
-    r"fever|pain|dyspnea|cough|edema|hemorrhage|infarction|embolism|"
-    r"infection|sepsis|cancer|tumor|carcinoma|lymphoma|"
-    r"kidney|liver|lung|heart|brain|thyroid|adrenal|"
-    r"hypertension|hypotension|tachycardia|bradycardia)\b",
-    re.IGNORECASE,
-)
+_CLINICAL_STOPWORDS = {
+    "patient", "clinical", "finding", "findings", "presents", "presenting", "presents with",
+    "showing", "history", "result", "results", "normal", "abnormal", "elevated", "decreased",
+    "increased", "reduced", "low", "high", "positive", "negative", "absent", "present", "with",
+    "without", "have", "has", "had", "shows", "showed", "was", "were", "are", "is", "about",
+    "above", "after", "before", "during", "been", "being", "cause", "caused", "primary", "secondary",
+    "acute", "chronic", "mild", "severe", "moderate", "suspected", "probable", "likely", "unlikely",
+    "sign", "signs", "symptom", "symptoms", "disease", "diseases", "disorder", "disorders", "condition",
+    "conditions", "findings", "finding", "test", "tests", "examination", "exam", "report", "reported",
+    "reveal", "reveals", "revealed", "show", "shows", "shown", "evidence", "level", "levels", "value",
+    "values", "result-old"
+}
 
 CONTRADICTION_JUDGE_PROMPT = """\
 You are a clinical logician. Given two clinical findings about the same patient, determine if they logically EXCLUDE each other.
@@ -147,11 +157,15 @@ class ContradictionDetector:
 
     @classmethod
     def should_check(cls, claim_a: str, claim_b: str) -> bool:
-        """Same gate as before: only check hypothesis-hypothesis or same-group seed pairs."""
+        """Checks hypothesis-hypothesis, same-group seed pairs, or cross-group escalations."""
         type_a = cls._seed_type(claim_a)
         type_b = cls._seed_type(claim_b)
 
         if type_a is None and type_b is None:
+            return True
+
+        # Cross-group escalation: if the claims are related, check them
+        if cls._shares_medical_entities(claim_a, claim_b):
             return True
 
         if type_a is not None and type_b is not None:
@@ -249,15 +263,27 @@ class ContradictionDetector:
         # No strong keyword signal found — ambiguous, escalate to LLM if needed
         return None
 
-    def _shares_medical_entities(self, claim_a: str, claim_b: str) -> bool:
+    @classmethod
+    def _shares_medical_entities(cls, claim_a: str, claim_b: str) -> bool:
         """
         True if the two claims share at least one medical entity keyword.
-        Claims sharing entities are semantically related and worth checking.
-        Claims with no shared entities are topically unrelated → not contradictions.
+        Uses generic word-overlap logic excluding clinical and English stopwords.
         """
-        entities_a = set(m.group().lower() for m in _MEDICAL_ENTITY_WORDS.finditer(claim_a))
-        entities_b = set(m.group().lower() for m in _MEDICAL_ENTITY_WORDS.finditer(claim_b))
-        return bool(entities_a & entities_b)
+        ABBREVIATIONS = {"gist", "tsh", "acs", "pe", "bp", "egf", "crp", "nmo", "ms", "achr", "mg"}
+        
+        def get_keywords(text: str) -> set[str]:
+            words = re.findall(r"\b[a-zA-Z\-]{2,}\b", text.lower())
+            kws = set()
+            for w in words:
+                if w in ABBREVIATIONS:
+                    kws.add(w)
+                elif len(w) >= 4 and w not in _CLINICAL_STOPWORDS:
+                    kws.add(w)
+            return kws
+
+        kws_a = get_keywords(claim_a)
+        kws_b = get_keywords(claim_b)
+        return bool(kws_a & kws_b)
 
     # ── Stage 2: LLM judge ────────────────────────────────────────────────────
 

@@ -347,6 +347,23 @@ class NodeExpander:
         return chunks, is_grounded
 
 
+    def _sanitize_vignette(self, vignette: str) -> str:
+        if not vignette:
+            return ""
+        # Remove common adversarial/jailbreak prompt injection markers
+        bad_words = [
+            r"\bignore\b.*\b(instructions|rules|prompt|above|previous)\b",
+            r"\bforget\b.*\b(instructions|rules|prompt|above|previous)\b",
+            r"\bdo\s+not\s+follow\b",
+            r"\bsystem\s*:",
+            r"\buser\s*:",
+            r"\bassistant\s*:",
+        ]
+        sanitized = vignette
+        for pattern in bad_words:
+            sanitized = re.sub(pattern, "", sanitized, flags=re.IGNORECASE)
+        return sanitized.strip()
+
     def _build_prompt(self, node: Node, chunks: list[str], graph, is_grounded: bool = True, vignette: str = None) -> str:
         """
         Build the hypothesis-generation prompt.
@@ -360,7 +377,8 @@ class NodeExpander:
         seeds = [n.claim for n in graph.nodes.values() if n.depth == 0]
         seed_context = "\n".join(f"  - {s}" for s in seeds) if seeds else "  - [No seed context]"
         
-        case_context = f"Original Clinical Vignette:\n{vignette}\n\nSeed Findings:\n{seed_context}" if vignette else seed_context
+        sanitized_vignette = self._sanitize_vignette(vignette)
+        case_context = f"Original Clinical Vignette:\n{sanitized_vignette}\n\nSeed Findings:\n{seed_context}" if sanitized_vignette else seed_context
 
         if not is_grounded:
             return PARAMETRIC_PROMPT_TEMPLATE.format(
@@ -441,17 +459,30 @@ class NodeExpander:
             
         return scores[:len(hypotheses)]
 
+    # Regex to detect preamble/header lines that are NOT actual hypotheses.
+    # LLMs often prefix their output with labels like "Hypotheses:" or "Output:"
+    # which must be stripped before parsing.
+    _PREAMBLE_RE = re.compile(
+        r"^(hypothes[ie]s?|output|answer|diagnos[ie]s?|differential|results?|response|here are|the top|my top|list)\s*:?\s*$",
+        re.IGNORECASE,
+    )
+
     def _parse_hypotheses(self, llm_output: str) -> list[str]:
         """
         Parse the LLM's output into exactly 3 hypothesis strings.
-        Defensive: strips numbering, drops empty lines, pads if fewer than 3 returned.
+        Defensive: strips preamble headers, numbering, drops empty lines,
+        pads if fewer than 3 returned.
         """
         lines = llm_output.strip().split("\n")
         hypotheses = []
         for line in lines:
             clean = re.sub(r"^[\d]+[\.)] \s*|^[-*•]\s*", "", line.strip())
-            if clean:
-                hypotheses.append(clean)
+            if not clean:
+                continue
+            # Skip preamble/header lines that are not actual clinical claims
+            if self._PREAMBLE_RE.match(clean):
+                continue
+            hypotheses.append(clean)
 
         if len(hypotheses) > 3:
             hypotheses = hypotheses[:3]
@@ -666,13 +697,26 @@ class NodeExpander:
                 unique_claims.append(n.claim)
                 seen.add(n.claim)
 
+        # Collect negated/ruled-out findings separately to guide the synthesis
+        ruled_out = []
+        for n in graph.nodes.values():
+            if "denies" in n.claim.lower() or getattr(n, "polarity", "") == "negated":
+                clean_claim = n.claim.strip()
+                if clean_claim not in ruled_out:
+                    ruled_out.append(clean_claim)
+
+        ruled_out_text = ""
+        if ruled_out:
+            ruled_out_text = "=== RULED-OUT/NEGATED FINDINGS (Do NOT contradict these) ===\n" + "\n".join(f"  - {claim}" for claim in ruled_out) + "\n\n"
+
         evidence_text = "\n".join(f"  - {claim}" for claim in unique_claims)
 
         prompt = (
             "You are Apiro, a precise clinical differential-diagnosis engine.\n\n"
             "Your task: given the following high-signal clinical evidence (pre-filtered to remove"
-            " known dead-ends and contradictions), generate the top 3 most likely specific"
+            " known dead-ends and contradictions) and ruled-out findings, generate the top 3 most likely specific"
             " clinical diagnoses.\n\n"
+            f"{ruled_out_text}"
             "=== HIGH-SIGNAL GATHERED EVIDENCE ===\n"
             f"{evidence_text}\n\n"
             "=== STRICT RULES ===\n"
