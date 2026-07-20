@@ -248,7 +248,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     border: 1px solid var(--border2);
     border-left: 3px solid var(--accent);
     border-radius: 8px;
-    overflow: hidden;
+    margin-bottom: 6px;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
   .field-card:focus-within {
@@ -269,6 +269,11 @@ INDEX_HTML = r"""<!DOCTYPE html>
     cursor: pointer;
     user-select: none;
     transition: background 0.15s;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface2);
+    border-radius: 8px 8px 0 0;
   }
   .field-card-header:hover { background: rgba(255,255,255,0.03); }
   .field-card-icon  { font-size: 13px; line-height: 1; }
@@ -295,9 +300,12 @@ INDEX_HTML = r"""<!DOCTYPE html>
   .field-card.collapsed .field-card-body { display: none; }
   .field-card textarea {
     height: 68px;
+    max-height: 68px;
     width: 100%;
     resize: none;
+    overflow-y: auto;
   }
+
 
   .toggle-row {
     display: flex;
@@ -651,6 +659,16 @@ INDEX_HTML = r"""<!DOCTYPE html>
     </div>
   </div>
   <div id="status-pill">Idle</div>
+   <div class="divider"></div>
+    <div class="section-label">Run Statistics</div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 10px;">
+      <div><span class="stat-k">Nodes: </span><span class="stat-v" id="sv-nodes">—</span></div>
+      <div><span class="stat-k">Edges: </span><span class="stat-v" id="sv-edges">—</span></div>
+      <div><span class="stat-k">Rabbit Holes: </span><span class="stat-v" id="sv-rabbits">—</span></div>
+      <div><span class="stat-k">Contradictions: </span><span class="stat-v" id="sv-contras">—</span></div>
+      <div><span class="stat-k">Stop Reason: </span><span class="stat-v" id="sv-stop">—</span></div>
+      <div><span class="stat-k">Duration: </span><span class="stat-v accent" id="sv-dur">—</span></div>
+    </div>
 </header>
 
 <!-- ── Main layout ─────────────────────────────────────────────────────────── -->
@@ -734,16 +752,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       Real-time seed entropy (slower)
     </label>
     <button id="run-btn" onclick="startInvestigation()">▶ Run Detective</button>
-    <div class="divider"></div>
-    <div class="section-label">Run Statistics</div>
-    <div class="stats-grid">
-      <div class="stat-row"><span class="stat-k">Nodes</span><span class="stat-v" id="sv-nodes">—</span></div>
-      <div class="stat-row"><span class="stat-k">Edges</span><span class="stat-v" id="sv-edges">—</span></div>
-      <div class="stat-row"><span class="stat-k">Rabbit Holes</span><span class="stat-v" id="sv-rabbits">—</span></div>
-      <div class="stat-row"><span class="stat-k">Contradictions</span><span class="stat-v" id="sv-contras">—</span></div>
-      <div class="stat-row"><span class="stat-k">Stop Reason</span><span class="stat-v" id="sv-stop">—</span></div>
-      <div class="stat-row"><span class="stat-k">Duration</span><span class="stat-v accent" id="sv-dur">—</span></div>
-    </div>
+   
   </div>
 
   <!-- CENTER: Thought Log -->
@@ -1011,7 +1020,62 @@ function addDxBanner(dx) {
 function handleEvent(ev) {
   const t = ev.event;
 
-  if (t === 'patient_context_extracted') {
+  /* ── Classic ApiroTraversal events ─────────────────────────────────────── */
+
+  if (t === 'seed_added') {
+    addCard('seed', '🌱', 'Seed Node', `depth ${ev.depth || 0}`,
+      `Anchored clinical axiom:<br><b style="color:var(--text)">${ev.claim}</b>`,
+      ev.domain, ev.entropy, '');
+    addNodeToGraph(ev);
+    nCount++; updateStats();
+  }
+  else if (t === 'expanding') {
+    addCard('expand', '🔍', 'Expanding', `iter ${ev.iteration}`,
+      `Investigating: <b style="color:var(--text)">${ev.claim}</b>`,
+      null, ev.entropy, `depth ${ev.depth}`);
+  }
+  else if (t === 'node_expanded') {
+    addCard('expand', '🧩', 'Node Expanded', `depth ${ev.depth}`,
+      `<b style="color:var(--text)">${ev.claim}</b>`,
+      ev.domain, ev.entropy, ev.parent_id ? `← ${ev.parent_id}` : '');
+    addNodeToGraph(ev);
+    nCount++; eCount++; updateStats();
+  }
+  else if (t === 'rabbit_hole_flagged') {
+    addCard('rabbit', '🐇', 'Rabbit Hole', `depth ${ev.depth}`,
+      `Flagged as unproductive — pruned from frontier:<br><b style="color:var(--text)">${ev.claim}</b>`,
+      null, ev.entropy, '');
+    markRabbitHole(ev.node_id);
+    rCount++; updateStats();
+  }
+  else if (t === 'contradiction_flagged') {
+    addCard('contra', '⚡', 'Contradiction', `score ${(ev.score||0).toFixed(2)}`,
+      `<b style="color:var(--danger)">${ev.node_a}</b><br>↔ contradicts ↔<br><b style="color:var(--danger)">${ev.node_b}</b>`,
+      null, null, ev.negation_detected ? 'negation' : '');
+    // Mark the link as contradicted in the D3 graph
+    for (const link of linksData) {
+      if ((link.target === ev.node_a || link.target.id === ev.node_a) ||
+          (link.target === ev.node_b || link.target.id === ev.node_b)) {
+        link.contra = true;
+      }
+    }
+    refreshGraph();
+    cCount++; updateStats();
+  }
+  else if (t === 'saturation_fired') {
+    addCard('sat', '🎯', 'Saturation Reached', `iter ${ev.iteration}`,
+      `Graph has converged — entropy is stable.<br>Avg H=${(ev.avg_entropy||0).toFixed(3)}, variance=${(ev.variance||0).toFixed(4)}, trend=${(ev.trend||0).toFixed(4)}`,
+      null, ev.avg_entropy, '');
+  }
+  else if (t === 'critic_halt_fired') {
+    addCard('sat', '🛑', 'Critic Halt', `iter ${ev.iteration}`,
+      `Global Critic approved halting — sufficient evidence gathered.`,
+      null, null, '');
+  }
+
+  /* ── Hypothesis-Testing mode events (kept for compat) ─────────────────── */
+
+  else if (t === 'patient_context_extracted') {
     addCard('seed', '🧑‍⚕️', 'Patient Profile', '', `Synthesized presentation:<br><b style="color:var(--text)">${ev.summary}</b>`, null, null, '');
   }
   else if (t === 'hypotheses_generated') {
@@ -1030,10 +1094,17 @@ function handleEvent(ev) {
   else if (t === 'enrichment_seed') {
     addCard('expand', '🔍', 'Deep Dive', '', `Investigating literature for:<br><b style="color:var(--text)">${ev.hypothesis}</b>`, null, null, '');
   }
+
+  /* ── Shared events ────────────────────────────────────────────────────── */
+
   else if (t === 'traversal_complete') {
     const dx = ev.synthesis || [];
     savedDx = dx;
     if (dx.length) { addDxBanner(dx); if (activeTab === 'dx') renderDx(dx); }
+    // Update final stats from the complete event
+    nCount = ev.total_nodes || nCount;
+    eCount = ev.total_edges || eCount;
+    updateStats();
     document.getElementById('sv-stop').textContent = ev.stop_reason || '—';
     document.getElementById('sv-dur').textContent  = ev.duration_seconds ? `${(+ev.duration_seconds).toFixed(1)}s` : '—';
     setStatus('done', `✓ Done · ${(ev.duration_seconds||0).toFixed(1)}s`);
@@ -1043,6 +1114,7 @@ function handleEvent(ev) {
     setStatus('idle', 'Error');
   }
 }
+
 
 /* ─── Status pill ──────────────────────────────────────────────────────────── */
 function setStatus(state, text) {
