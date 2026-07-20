@@ -242,6 +242,63 @@ INDEX_HTML = r"""<!DOCTYPE html>
   }
   .hint { font-size: 10px; color: var(--muted); line-height: 1.5; }
 
+  /* ── Structured field cards ─────────────────────────────────────────────── */
+  .field-card {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .field-card:focus-within {
+    box-shadow: 0 0 0 2px var(--accent-g);
+  }
+  .field-card.fc-profile  { border-left-color: #60a5fa; }
+  .field-card.fc-symptoms { border-left-color: #ec4899; }
+  .field-card.fc-labs     { border-left-color: #8b5cf6; }
+  .field-card.fc-imaging  { border-left-color: #3b82f6; }
+  .field-card.fc-history  { border-left-color: #f59e0b; }
+  .field-card.fc-meds     { border-left-color: #10b981; }
+
+  .field-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .field-card-header:hover { background: rgba(255,255,255,0.03); }
+  .field-card-icon  { font-size: 13px; line-height: 1; }
+  .field-card-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted2);
+    flex: 1;
+  }
+  .field-card-chevron {
+    font-size: 9px;
+    color: var(--muted);
+    transition: transform 0.2s cubic-bezier(0.16,1,0.3,1);
+  }
+  .field-card.collapsed .field-card-chevron { transform: rotate(-90deg); }
+  .field-card-body {
+    padding: 0 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .field-card.collapsed .field-card-body { display: none; }
+  .field-card textarea {
+    height: 68px;
+    width: 100%;
+    resize: none;
+  }
+
   .toggle-row {
     display: flex;
     align-items: center;
@@ -601,10 +658,72 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
   <!-- LEFT: Input -->
   <div id="input-panel">
-    <div class="form-group">
-      <div class="section-label">Clinical Findings</div>
-      <textarea id="findings-input" placeholder="e.g. 45yo male, substernal chest pain, troponin 2.1, ST elevation V3-V5, diaphoresis, dyspnoea"></textarea>
-      <div class="hint">Patient history, symptoms, labs, imaging — separated by commas.</div>
+    <div class="section-label">Clinical Input</div>
+
+    <div class="field-card fc-profile" id="fc-profile">
+      <div class="field-card-header" onclick="toggleCard('fc-profile')">
+        <span class="field-card-label">Patient Profile</span>
+        <span class="field-card-chevron">▾</span>
+      </div>
+      <div class="field-card-body">
+        <textarea id="input-profile" placeholder="e.g. 45yo male, non-smoker, BMI 28"></textarea>
+        <div class="hint">Age, sex, ethnicity, lifestyle factors</div>
+      </div>
+    </div>
+
+    <div class="field-card fc-symptoms" id="fc-symptoms">
+      <div class="field-card-header" onclick="toggleCard('fc-symptoms')">
+        <span class="field-card-label">Symptoms</span>
+        <span class="field-card-chevron">▾</span>
+      </div>
+      <div class="field-card-body">
+        <textarea id="input-symptoms" placeholder="e.g. substernal chest pain, diaphoresis, dyspnoea, nausea"></textarea>
+        <div class="hint">Chief complaint + associated symptoms</div>
+      </div>
+    </div>
+
+    <div class="field-card fc-labs" id="fc-labs">
+      <div class="field-card-header" onclick="toggleCard('fc-labs')">
+        <span class="field-card-label">Labs &amp; Vitals</span>
+        <span class="field-card-chevron">▾</span>
+      </div>
+      <div class="field-card-body">
+        <textarea id="input-labs" placeholder="e.g. Troponin 2.1 ng/mL, BP 140/90 mmHg, HR 102 bpm"></textarea>
+        <div class="hint">Include units where possible (ng/mL, mmHg…)</div>
+      </div>
+    </div>
+
+    <div class="field-card fc-imaging" id="fc-imaging">
+      <div class="field-card-header" onclick="toggleCard('fc-imaging')">
+        <span class="field-card-label">Imaging &amp; ECG</span>
+        <span class="field-card-chevron">▾</span>
+      </div>
+      <div class="field-card-body">
+        <textarea id="input-imaging" placeholder="e.g. ST elevation V3-V5, LVH on echo, bilateral infiltrates on CXR"></textarea>
+        <div class="hint">X-ray, CT, echo, MRI, ECG findings</div>
+      </div>
+    </div>
+
+    <div class="field-card fc-history" id="fc-history">
+      <div class="field-card-header" onclick="toggleCard('fc-history')">
+        <span class="field-card-label">Medical History</span>
+        <span class="field-card-chevron">▾</span>
+      </div>
+      <div class="field-card-body">
+        <textarea id="input-history" placeholder="e.g. hypertension, type 2 diabetes, prior MI 2019, family history of CAD"></textarea>
+        <div class="hint">Comorbidities, prior diagnoses, family history</div>
+      </div>
+    </div>
+
+    <div class="field-card fc-meds" id="fc-meds">
+      <div class="field-card-header" onclick="toggleCard('fc-meds')">
+        <span class="field-card-label">Medications</span>
+        <span class="field-card-chevron">▾</span>
+      </div>
+      <div class="field-card-body">
+        <textarea id="input-meds" placeholder="e.g. aspirin 81mg, metoprolol 50mg, lisinopril 10mg"></textarea>
+        <div class="hint">Current medications and dosages</div>
+      </div>
     </div>
     <div class="form-group">
       <div class="section-label">Max Graph Depth</div>
@@ -630,12 +749,12 @@ INDEX_HTML = r"""<!DOCTYPE html>
   <!-- CENTER: Thought Log -->
   <div id="thought-panel">
     <div id="thought-header">
-      <span class="panel-title-lg">🧠 Detective's Reasoning</span>
+      <span class="panel-title-lg">Detective's Reasoning</span>
       <span id="thought-count">0 thoughts</span>
     </div>
     <div id="thought-log">
       <div id="log-empty">
-        <div class="e-icon">🔬</div>
+        <div class="e-icon">🔍</div>
         <p>Enter clinical findings and click <strong>Run Detective</strong> to watch the AI reason through the case in real time.</p>
       </div>
     </div>
@@ -879,7 +998,7 @@ function addDxBanner(dx) {
   const el = document.createElement('div');
   el.className = 'dx-banner';
   el.innerHTML = `
-    <div class="dx-banner-title">🏁 Final Differential Diagnosis</div>
+    <div class="dx-banner-title">Final Differential Diagnosis</div>
     <ul class="dx-list">
       ${dx.map((d, i) => `<li class="dx-item"><span class="dx-rank ${ranks[i]||''}">#${i+1}</span><span>${d}</span></li>`).join('')}
     </ul>`;
@@ -932,12 +1051,25 @@ function setStatus(state, text) {
   el.className = state === 'running' ? 'running' : (state === 'done' ? 'done' : '');
 }
 
+/* ─── Section card collapse ────────────────────────────────────────────────── */
+function toggleCard(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
 /* ─── Main investigation ───────────────────────────────────────────────────── */
 async function startInvestigation() {
-  const findings = document.getElementById('findings-input').value.trim();
+  const parts = [
+    document.getElementById('input-profile').value.trim(),
+    document.getElementById('input-symptoms').value.trim(),
+    document.getElementById('input-labs').value.trim(),
+    document.getElementById('input-imaging').value.trim(),
+    document.getElementById('input-history').value.trim(),
+    document.getElementById('input-meds').value.trim(),
+  ].filter(v => v.length > 0);
+  const findings = parts.join(', ');
   const maxDepth = parseInt(document.getElementById('depth-input').value) || 5;
   const realEnt  = document.getElementById('real-entropy-input').checked;
-  if (!findings) { alert('Please enter clinical findings.'); return; }
+  if (!findings) { alert('Please fill in at least one clinical section.'); return; }
 
   // Reset all state
   nodesData = []; linksData = [];
